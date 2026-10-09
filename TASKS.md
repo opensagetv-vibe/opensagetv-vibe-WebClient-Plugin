@@ -533,6 +533,11 @@ Deliver independently verifiable builds and a durable parity ledger without regr
 
 ## Checklist change ledger
 
+- 2026-10-09 final pre-commit review: correct the historical changelog's stale
+  Unreleased heading to its actual publication date. WEB-017 remains closed in
+  ledger, WEB-014/open field work remains unchecked; regenerated source manifest
+  and unchanged runtime. Workspace publication/order review unchanged.
+
 - [x] **WEB-017 publication reconciled2026-10-09.** Approved beta3.2.30
   source/artifacts were already published2026-09-29 and Linux/Windows catalog
   entries merged. Independent downloads match GitHub digests and both catalog

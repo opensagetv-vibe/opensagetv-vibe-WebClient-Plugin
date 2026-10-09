@@ -4,7 +4,7 @@
   catalog entries against independent downloads/GitHub digests/catalog MD5.
   WEB-017 closes; remaining field gates stay open and runtime is unchanged.
 
-## 3.2.30 — Unreleased
+## 3.2.30 — 2026-09-29
 
 - Imported the owner-supplied 3.2.29 P14/DVD-startup-recovery tree into the
   `opensagetv-vibe-web-client-plugin` project without discarding its historical
