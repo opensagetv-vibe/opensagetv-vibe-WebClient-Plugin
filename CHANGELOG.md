@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-10-09: verified the already-public3.2.30 beta and merged platform
+  catalog entries against independent downloads/GitHub digests/catalog MD5.
+  WEB-017 closes; remaining field gates stay open and runtime is unchanged.
+
 ## 3.2.30 — Unreleased
 
 - Imported the owner-supplied 3.2.29 P14/DVD-startup-recovery tree into the

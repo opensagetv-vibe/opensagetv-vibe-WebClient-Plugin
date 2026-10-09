@@ -14,7 +14,9 @@ discovery uses its `SageTVTranscoder` bridge and never selects SageTV's stock
 `ffmpeg` directly. The explicit transcoder/legacy FFmpeg override exists only
 for isolated regression tests and commissioning diagnostics.
 
-This project is not yet approved for public plugin publication.
+The approved3.2.30 beta is published on GitHub and listed in the SageTV plugin
+catalog. Its open DVD/long-run/additional-browser gates remain explicit; beta
+publication is not a claim that the full physical matrix is complete.
 
 ## 3.2.29 imported baseline
 

@@ -2,6 +2,12 @@
 
 ## 3.2.30 publication checkpoint
 
+2026-10-09 reconciliation: existing public beta3.2.30 and both merged catalog
+entries independently verify against downloaded assets/GitHub SHA256 and
+catalog MD5. Runtime/package inputs have no newer source changes; no binary
+version bump. WEB-017 closes; WEB-014 and all field rows remain open. Historical
+approval/pending-publication text below does not override this current state.
+
 The user explicitly approved creation of the public
 `opensagetv-vibe/opensagetv-vibe-web-client-plugin` repository and initial
 plugin release. The source/privacy audit found no embedded credentials or

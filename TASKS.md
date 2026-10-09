@@ -16,11 +16,6 @@ Last updated: 2026-09-27
   software fallback after input EOS. Title/chapter/audio/subtitle selection,
   Stop/replay, representative physical/menu-less discs, and long-run teardown
   remain open; the complete DVD matrix is therefore not yet claimed.
-- [ ] WEB-017 Publish the explicitly approved 3.2.30 beta source repository and
-  plugin artifacts, verify public hashes and repository checks, and submit the
-  dependency-correct SageTV plugin catalog entry while retaining every open
-  physical acceptance row as an explicit limitation.
-
 ## Imported historical task ledger
 
 # v3.2.29 field fix — DVD menu retained frame
@@ -537,6 +532,16 @@ Deliver independently verifiable builds and a durable parity ledger without regr
 - [ ] Retest the real SageTV recording with Copy fallback OFF/ON and export diagnostics for direct comparison.
 
 ## Checklist change ledger
+
+- [x] **WEB-017 publication reconciled2026-10-09.** Approved beta3.2.30
+  source/artifacts were already published2026-09-29 and Linux/Windows catalog
+  entries merged. Independent downloads match GitHub digests and both catalog
+  MD5s; platform FFmpeg-plugin dependencies remain correct. No newer runtime
+  exists, so no artificial version bump. Original acceptance: publish approved
+  beta/source, verify public hashes/CI and submit dependency-correct catalog
+  entries while retaining open physical limitations. WEB-014 remains unchecked.
+  Pre-commit ledger/source-manifest review completed; workspace publication
+  priority reviewed, no new full matrix or server changes.
 
 - 2026-10-08 pre-commit source-sync review: workflow policy and manifest only;
   browser/player runtime is unchanged. Regenerate/check the tracked manifest;
