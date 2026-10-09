@@ -538,6 +538,11 @@ Deliver independently verifiable builds and a durable parity ledger without regr
 
 ## Checklist change ledger
 
+- 2026-10-08 pre-commit source-sync review: workflow policy and manifest only;
+  browser/player runtime is unchanged. Regenerate/check the tracked manifest;
+  source synchronization does not close WEB-014 or publish plugin artifacts.
+  Completed checkoffs remain here; workspace order reviewed305.
+
 | Revision | Date | Change |
 |---|---|---|
 | 9 | 2026-09-30 | Applied the workspace pre-commit task-maintenance rule: active sections now contain unchecked work only, while all 93 completed checkoffs retain their IDs, evidence, phase context, and parent context under this checklist change ledger. |
