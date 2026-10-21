@@ -1,5 +1,9 @@
 # OpenSageTV Vibe Web Client Plugin
 
+Repository: https://github.com/opensagetv-vibe/opensagetv-vibe-WebClient-Plugin
+
+Repository naming does not change the installed plugin IDs, WAR or settings.
+
 Current development version: **3.2.30**. This stock-SageTV-compatible
 Jetty WAR provides a browser MiniClient, recording player, captions/subtitles,
 DVD playback, diagnostics, and HTML5 compatibility transcoding.

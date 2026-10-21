@@ -2,6 +2,12 @@
 
 ## 3.2.30 publication checkpoint
 
+2026-10-21 PLUGIN-RENAME-001: canonical GitHub/local source is now
+opensagetv-vibe-WebClient-Plugin. PACKAGE_ID follows the source name; installed
+plugin IDs, WAR, routes, settings and immutable beta3.2.30 remain unchanged.
+Local Java8/JDK11 build, package and automated source/stream contracts are the
+affected validation; no new binary publication or physical DVD claim.
+
 2026-10-09 reconciliation: existing public beta3.2.30 and both merged catalog
 entries independently verify against downloaded assets/GitHub SHA256 and
 catalog MD5. Runtime/package inputs have no newer source changes; no binary

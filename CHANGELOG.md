@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-10-21: rename source repository to opensagetv-vibe-WebClient-Plugin;
+  update canonical metadata, preserving installed IDs and beta3.2.30 assets.
+  Affected local build/package/source checks only; no playback changes.
+
 - 2026-10-09: verified the already-public3.2.30 beta and merged platform
   catalog entries against independent downloads/GitHub digests/catalog MD5.
   WEB-017 closes; remaining field gates stay open and runtime is unchanged.

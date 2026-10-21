@@ -7,6 +7,7 @@
 
 Last updated: 2026-09-27
 
+
 - [ ] WEB-014 Verify applicable authored-DVD startup, menu, SPU, navigation,
   title/chapter/audio/subtitle, fallback, and teardown gates on `.232`.
   The exact-path authored Vibe fixture now starts hardware HLS, advances video,
@@ -532,6 +533,13 @@ Deliver independently verifiable builds and a durable parity ledger without regr
 - [ ] Retest the real SageTV recording with Copy fallback OFF/ON and export diagnostics for direct comparison.
 
 ## Checklist change ledger
+
+- [x] **PLUGIN-RENAME-001 (2026-10-21):** Canonical WebClient-Plugin GitHub/
+  local identity and PACKAGE_ID; installed IDs/WAR/Jetty/settings unchanged.
+  Java8/JDK11 build, deterministic package and complete automated source/
+  stream validation pass (optional Chromium gate not requested). Regenerated
+  source manifest; existing beta3.2.30 assets remain immutable. Exact-HEAD CI
+  is required by the shared publication gate, not a new physical DVD claim.
 
 - 2026-10-09 final pre-commit review: correct the historical changelog's stale
   Unreleased heading to its actual publication date. WEB-017 remains closed in
