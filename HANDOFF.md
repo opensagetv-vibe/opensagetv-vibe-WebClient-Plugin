@@ -1,18 +1,29 @@
 # Handoff — OpenSageTV Vibe Web Client 3.3.0 development
 
-## Current publication - authorized2026-11-26
+## Current publication complete2026-11-26
 
-PUBLISH-001 supersedes the previous publication hold for this related batch.
-Build-env pilot, MIM0.4.20, FFmpeg0.1.36, MCP0.1.23 and optional Extension0.1.29
-have exact-head green CI; runtime/plugin assets are digest verified. Android115
-and Web3.3.0 follow serial CI checks. Submit only the eight affected SageTV
-catalog manifests, then reply to Android issue4 without closing it. Catalog
-availability requires upstream maintainer merge; do not claim it is already in
-the public plugin list merely because GitHub releases exist.
-Full Web local validation passes; WAR909573ad and installer2ce42385 are unchanged
-from WEB-133 physical-server qualification. Packaging metadata/date, reviewed
-Android inventory and the obsolete legacy-entry source assertion are updated.
-No server restarts, Core changes or new phone/platform certification this turn.
+PUBLISH-001 / WP17-006 completed on explicit user approval. Seven related
+repositories are pushed with serial exact-head green CI. Public releases:
+MIM0.4.20, FFmpeg0.1.36, MCP0.1.23, optional Extension0.1.29, Android0.5.115
+and Web3.3.0 beta. All release assets/tag targets verified. Official SageTV
+catalog https://github.com/OpenSageTV/sagetv-plugin-repo/pull/132 contains only
+the eight affected manifests/nine verified package URLs; upstream merge and
+catalog refresh are pending. Android issue4 comment7203809155 is posted and
+issue OPEN. No future publication or background monitoring is authorized.
+
+Web release commit6619d750 / CI45900857621: full clean runner passes after
+pinning the real provider test dependency and correcting a video-only fixture
+that fitted FFmpeg6's startup queue. Normal DVD A/V hold/refill/FLUSH/Stop
+passes both6/8. No production Java/JS change in those CI fixes. WAR909573ad and
+installer2ce42385 are unchanged from WEB-133 installed qualification; later
+publication-ledger updates are documentation only and do not retag/repack.
+Android115/e5969a5d: source1107/five skips, JVM789/one skip, strict APK and
+build pass; DEX/native/resource-table match qualified Non-Pro e8f7ec12, only
+TV touch navigation.xml/signing differ. Original ONN trigger/HLS drain/native
+Safari/Windows/receiver scope limits remain explicit. No server restart, Core
+change, device install or new physical-phone certification. Compact publication
+and retirement records: artifacts/results/PUBLISH-001. Current task lists and
+workspace order are reconciled; independent backlog is not silently closed.
 
 ## Current2026-11-26 - WEB-133 compact settings tabs complete
 

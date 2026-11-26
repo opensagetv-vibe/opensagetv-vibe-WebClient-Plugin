@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "revision": 13,
-  "date": "2026-11-20",
+  "revision": 14,
+  "date": "2026-11-26",
   "canonical": "TASKS.md",
-  "runtime_version": "3.3.0 development",
+  "runtime_version": "3.3.0 beta",
   "implementation_started": true,
   "instructions": "Generated mirror of TASKS.md. TASKS.md is authoritative; preserve dated scope/evidence. Current WP07-001 stock-role capture is closed; this does not certify all-disc P08/P09 behavior.",
   "user_scope_reduction": {
@@ -1950,21 +1950,21 @@
           "title": "Publication and upstream deltas",
           "work": "Create commits/PRs/tags/releases or remote uploads only on explicit user request. Schedule no background monitoring automatically; future upstream reviews record a new pin and delta.",
           "acceptance": "Local ZIP delivery is distinct from approved remote publication; no surprise changes to either repository.",
-          "status": "AWAITING_PUBLICATION_APPROVAL",
-          "evidence": []
+          "status": "COMPLETE_PUBLISHED_SCOPED",
+          "evidence": ["https://github.com/opensagetv-vibe/opensagetv-vibe-WebClient-Plugin/releases/tag/v3.3.0", "https://github.com/OpenSageTV/sagetv-plugin-repo/pull/132", "artifacts/results/PUBLISH-001/RESULT.md"]
         }
       ],
       "exit_gate": "Independent artifact/source validation, honest support notes, exact hashes, task evidence and a safe upgrade/rollback path are complete.",
-      "status": "AWAITING_PUBLICATION_APPROVAL"
+      "status": "COMPLETE_PUBLISHED_SCOPED"
     }
   ],
-  "package_kind": "STOCK_LINUX_DEVELOPMENT_SCOPED_ACCEPTANCE",
+  "package_kind": "STOCK_SERVER_BETA_SCOPED_ACCEPTANCE",
   "progress": {
-    "completed": 120,
+    "completed": 121,
     "total": 127,
     "removed": 3,
     "flagged": 2
   },
-  "next_task": "WP17-006",
-  "release_status": "Installed unpublished3.3.0 manager151352/WAR4bf65fda; browser assets unchanged117.2/input117.1/playback116.1.120of127 WP tasks complete in stated scopes,3removed,2starred observations,2pending: WP15-002 unavailable transformed-input contract and WP17-006 publication hold. P15 four stock alternatives qualified, not private-Core implementations; P16 qualified scope with stars; P17 local package current/publication pending. Both installed host engines10 DVD/optional/native fallback rows each and clean195-input/14-command/package/live/stock20 pass. Original203329/024848Z possibly fixed/not repeatable, reopen only on recurrence. No new phone/full matrix, Core change, commit/push/publication."
+  "next_task": "Independent scoped backlog in TASKS.md; catalog PR132 awaits upstream merge",
+  "release_status": "User-authorized3.3.0 beta published2026-11-26 from6619d750 with verified WAR909573ad/package2ce42385 and exact-head CI45900857621. Catalog PR132 submitted, merge pending.121of127 WP tasks complete in stated scopes,3removed,2starred,1unavailable WP15-002; no private-Core/all-platform certification. P15 stock alternatives, P16 stars and original field limitations remain explicit. Independent WEB tasks are not silently closed; no new physical-phone/full matrix or Core change."
 }

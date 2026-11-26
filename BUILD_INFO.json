@@ -1,6 +1,6 @@
 {
   "version": "3.3.0",
-  "phase": "STOCK-SERVER-BETA-QUALIFIED-SCOPES-PUBLICATION-AUTHORIZED",
+  "phase": "STOCK-SERVER-BETA-QUALIFIED-SCOPES-RELEASED",
   "development_snapshot": "3.3.0.20261126.201843",
   "stock_extension_contract_revision": 1,
   "stock_dvd_profile_apply_revision": 1,
@@ -48,7 +48,7 @@
   "p14_local_tasks_complete": 7,
   "p14_field_tasks_pending": 0,
   "p14_field_gates": [],
-  "next_task": "PUBLISH-001: user authorized coordinated beta publication2026-11-26; verify exact-head CI and immutable assets, submit SageTV catalog manifests and reply to Android issue4 without closing. WEB-123 receiver qualification remains separate; iOS Google Web Sender and Fire TV Matter are not supported by merely invoking AirPlay. WEB-121 latest tuner collision corrected/150s phone-qualified; older pipe origin and prior stars remain unproven. Native-Safari adaptation and platform limits remain explicit.",
+  "next_task": "PUBLISH-001 complete2026-11-26: public3.3.0 beta/verified assets, catalog PR132 awaiting upstream merge, Android issue4 release reply posted and issue OPEN. WEB-123 receiver qualification remains separate; iOS Google Web Sender and Fire TV Matter are not supported by merely invoking AirPlay. WEB-121 latest tuner collision corrected/150s phone-qualified; older pipe origin and prior stars remain unproven. Native-Safari adaptation and platform limits remain explicit.",
   "historical_validation_counts_3_2_30": {
     "p02_architecture": 34,
     "p13_gfx_lifecycle_java": 8,

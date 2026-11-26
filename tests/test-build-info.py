@@ -22,7 +22,7 @@ class BuildInfoTests(unittest.TestCase):
     def test_version_and_development_boundary(self):
         self.assertEqual(self.info['version'], (ROOT / 'VERSION').read_text().strip())
         self.assertEqual('2026-11-26', self.info['release_date'])
-        self.assertIn('PUBLICATION-AUTHORIZED', self.info['phase'])
+        self.assertIn('QUALIFIED-SCOPES-RELEASED', self.info['phase'])
 
     def test_clean_ci_has_verified_real_provider_dependency(self):
         workflow = (ROOT / '.github/workflows/repository-checks.yml').read_text()

@@ -12,8 +12,8 @@ two competing visible switches. Independent adjacent graph/info icons keep the
 long-press menu open. Completed-source HLS idle refill and short-target MPEG-TS
 refill start earlier without raising maximum/startup or overriding native Safari.
 See [Browser settings](docs/SETTINGS.md) for exact controls and platform limits.
-User-authorized3.3.0 beta publication is in progress; validation is recorded in
-TASKS.md. SageTV catalog availability follows upstream review/merge.
+The [3.3.0 beta is published](https://github.com/opensagetv-vibe/opensagetv-vibe-WebClient-Plugin/releases/tag/v3.3.0);
+validation is recorded in TASKS.md. SageTV catalog PR132 awaits upstream merge.
 
 Current development uses only the **STV/SageMC MiniClient**. Old index/client
 bookmarks redirect there; legacy/Wasm players are no longer offered or cached.

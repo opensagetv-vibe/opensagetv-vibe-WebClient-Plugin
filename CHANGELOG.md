@@ -1,8 +1,10 @@
 # Changelog
 
-## 3.3.0 beta release preparation (2026-11-26)
+## 3.3.0 beta (2026-11-26)
 
 - User authorized coordinated GitHub publication and SageTV catalog submission.
+- Public release assets and exact-head CI verified; eight-manifest catalog
+  PR132 submitted. Android0.5.115 issue4 reply posted without closing it.
 - Publish the stock-compatible MiniClient/PWA, mobile browsing, playback recovery,
   caption, shared adaptation and compact settings work documented below.
 - Full local Java/Node/generated validation passes. WEB-133's installed

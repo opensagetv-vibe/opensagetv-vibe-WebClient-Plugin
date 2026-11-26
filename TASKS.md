@@ -7,12 +7,10 @@
 
 Last updated: 2026-11-26 UTC
 
-- [ ] **PUBLISH-001 - User-authorized coordinated publication.** Publish the
-  qualified Android115, Web3.3.0, FFmpeg0.1.36/MIM0.4.20, MCP0.1.23 and
-  optional Extension0.1.29 updates. Verify the build-environment pilot and each
-  pushed repository's CI before the next push; verify immutable release assets,
-  then submit the SageTV catalog update and reply to Android issue4 without
-  closing it. Preserve native-Safari, original-trigger and platform limitations.
+PUBLISH-001 is complete to publication/submission scope. Related GitHub releases
+are public with verified assets; SageTV catalog PR132 awaits upstream merge.
+Android issue4 has a release/retest reply and remains OPEN. See the ledger and
+artifacts/results/PUBLISH-001/RESULT.md; no outstanding field gate is promoted.
 
 ## Settings and statistics parity
 
@@ -90,7 +88,7 @@ including their linked parent rows. This disposition supersedes older dated
 "still open" notes below; it does not rewrite their historical failure evidence.
 P15's stock alternatives are qualified with one unavailable transformed-input
 item, P16 qualified scope with starred observations, and
-P17 awaiting publication approval; none is a blanket fully-completed phase.
+P17's scoped publication is complete; none is a blanket all-feature phase.
 
 Final physical route2026-11-20: user confirms cellular/VPN. Actual HDMI/BLE
 menu redraw/recording/fullscreen/seek/CEA/EOF/resume and authored DVD root/
@@ -722,10 +720,12 @@ Prove the browser implementation on real playback paths rather than inheriting A
 
 ## P17 — Release, manifests and future parity maintenance
 
-**Phase status: AWAITING PUBLICATION APPROVAL — not released/fully closed.**
+**Phase status: SCOPED BETA PUBLISHED.**
 Local source/build/package/metadata and ledger subtasks are complete in their
 recorded scopes. Original rollback testing was explicitly removed, not passed.
-WP17-006 remains pending; no commit/push/tag/release is authorized here.
+WP17-006 completed on explicit user2026-11-26 authorization. GitHub3.3.0 beta
+is public; catalog PR132 awaits upstream review. This does not qualify deferred
+platform/capability or starred observations, or authorize future releases.
 
 Deliver independently verifiable builds and a durable parity ledger without regressing the working installation.
 
@@ -733,10 +733,8 @@ Deliver independently verifiable builds and a durable parity ledger without regr
 **References:** U01, U02, B01 (see `docs/parity/SOURCES.md`).
 **Existing integration points:** `README.md`, `handoff.md`, `CHANGELOG.md`, `BUILD_INFO.json`, `PROJECT_MANIFEST.sha256`, `scripts/package-local-plugin.py`, `dist/`.
 
-- [ ] **WP17-006 — Publication and upstream deltas.** Create commits/PRs/tags/releases or remote uploads only on explicit user request. Schedule no background monitoring automatically; future upstream reviews record a new pin and delta.
-  **Acceptance:** Local ZIP delivery is distinct from approved remote publication; no surprise changes to either repository.
-  **Current2026-11-19:** AWAITING_PUBLICATION_APPROVAL. Current3.3.0 is an installed development candidate only. Final publication requires explicit approval; no surprise commit/push/PR/tag/release or scheduled monitoring. Future upstream delta work remains explicit.
-  **Evidence:** docs/parity/2026-11-17-ACCEPTANCE.md; current owning task ledger and compact results; docs/parity/CURRENT_FEATURE_MATRIX.md.
+Future upstream reviews require an explicit task, new pin and reviewed delta;
+no background monitoring or future release authorization is inferred here.
 
 **Phase exit gate:** Independent artifact/source validation, honest support notes, exact hashes, task evidence and a safe upgrade/rollback path are complete.
 
@@ -746,6 +744,20 @@ The original Copy fallback OFF/ON and report comparison is complete in WEB-103
 below; do not retain a duplicate active checkbox or rerun it as a new matrix.
 
 ## Checklist change ledger
+
+- [x] **PUBLISH-001 / WP17-006 - Coordinated publication (2026-11-26).**
+  Seven related repository updates pushed, pilot/serial exact-head CI passed;
+  public Android115, Web3.3.0 beta, FFmpeg0.1.36/MIM0.4.20, MCP0.1.23 and
+  optional Extension0.1.29 assets SHA256/tag verified. Eight catalog manifests,
+  nine unique public package assets/MD5 validated; official OpenSageTV plugin
+  catalog PR132 submitted, generated aggregate untouched, maintainer merge
+  pending. Android issue4 comment7203809155 posted after public115 and state
+  independently OPEN. Preserve original-trigger, HLS drain, native-Safari and
+  deferred platform/receiver limits. No device install/restart/Core change or
+  unrelated matrix replay. Owning compact RESULT records tests, immutable
+  release commits, corrected CI harness, artifact retirement and exact links.
+  Workspace suggested order reviewed: remove this publication priority, keep
+  independent dependencies and affected-only future matrices unchanged.
 
 - [x] **PUBLISH-001 portable DVD pacing oracle (2026-11-26).** Exact isolated
   Ubuntu24/FFmpeg6 reproduces the old video-only35s fixture entirely consumed
