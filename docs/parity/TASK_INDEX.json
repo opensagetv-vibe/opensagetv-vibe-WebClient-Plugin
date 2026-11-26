@@ -1970,5 +1970,5 @@
     "flagged": 2
   },
   "next_task": null,
-  "release_status": "User-authorized3.3.0 beta published2026-11-26 from6619d750 with verified WAR909573ad/package2ce42385 and exact-head CI45900857621. Catalog PR132 submitted, merge pending.121of127 WP tasks complete in stated scopes,3removed,2starred,1unavailable WP15-002; no private-Core/all-platform certification. P15 stock alternatives, P16 stars and original field limitations remain explicit. Independent WEB tasks are not silently closed; no new physical-phone/full matrix or Core change."
+  "release_status": "User-authorized3.3.0 beta published2026-11-26 from6619d750 with verified WAR909573ad/package2ce42385 and exact-head CI45900857621. Catalog PR132 mergedee824fbb; official355-entry aggregate/checksum refreshcf367959 published on explicit admin approval.121of127 WP tasks complete in stated scopes,3removed,2starred,1unavailable WP15-002; no private-Core/all-platform certification. P15 stock alternatives, P16 stars and original field limitations remain explicit. Independent WEB tasks are not silently closed; no new physical-phone/full matrix or Core change."
 }

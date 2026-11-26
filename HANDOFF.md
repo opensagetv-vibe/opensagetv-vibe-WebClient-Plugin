@@ -7,8 +7,13 @@ repositories are pushed with serial exact-head green CI. Public releases:
 MIM0.4.20, FFmpeg0.1.36, MCP0.1.23, optional Extension0.1.29, Android0.5.115
 and Web3.3.0 beta. All release assets/tag targets verified. Official SageTV
 catalog https://github.com/OpenSageTV/sagetv-plugin-repo/pull/132 contains only
-the eight affected manifests/nine verified package URLs; upstream merge and
-catalog refresh are pending. Android issue4 comment7203809155 is posted and
+the eight affected manifests/nine verified package URLs. Explicit admin approval
+mergedee824fbb; official buildxml.sh regeneration publishes catalog/checksum
+cf367959 (355 exact authoritative manifests, no existing identifier dropped).
+Normal regeneration also exposes the previously approved TMDB0.2.1 source;
+its existing public package MD5 is verified, no TMDB source/release change.
+Generated artifact preserves inherited source whitespace; no unrelated source
+manifest edits were published. Android issue4 comment7203809155 is posted and
 issue OPEN. No future publication or background monitoring is authorized.
 
 Web release commit6619d750 / CI45900857621: full clean runner passes after

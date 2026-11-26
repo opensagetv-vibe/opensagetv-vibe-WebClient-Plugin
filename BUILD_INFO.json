@@ -48,7 +48,7 @@
   "p14_local_tasks_complete": 7,
   "p14_field_tasks_pending": 0,
   "p14_field_gates": [],
-  "next_task": "PUBLISH-001 complete2026-11-26: public3.3.0 beta/verified assets, catalog PR132 awaiting upstream merge, Android issue4 release reply posted and issue OPEN. WEB-123 receiver qualification remains separate; iOS Google Web Sender and Fire TV Matter are not supported by merely invoking AirPlay. WEB-121 latest tuner collision corrected/150s phone-qualified; older pipe origin and prior stars remain unproven. Native-Safari adaptation and platform limits remain explicit.",
+  "next_task": "PUBLISH-001 complete2026-11-26: public3.3.0 beta/verified assets, catalog PR132 mergedee824fbb and official355-entry aggregate/checksum refreshedcf367959 on explicit admin approval, Android issue4 release reply posted and issue OPEN. WEB-123 receiver qualification remains separate; iOS Google Web Sender and Fire TV Matter are not supported by merely invoking AirPlay. WEB-121 latest tuner collision corrected/150s phone-qualified; older pipe origin and prior stars remain unproven. Native-Safari adaptation and platform limits remain explicit.",
   "historical_validation_counts_3_2_30": {
     "p02_architecture": 34,
     "p13_gfx_lifecycle_java": 8,

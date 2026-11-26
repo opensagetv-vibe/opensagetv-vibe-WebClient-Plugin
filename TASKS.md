@@ -8,7 +8,8 @@
 Last updated: 2026-11-26 UTC
 
 PUBLISH-001 is complete to publication/submission scope. Related GitHub releases
-are public with verified assets; SageTV catalog PR132 awaits upstream merge.
+are public with verified assets; SageTV catalog PR132 is merged and generated
+catalog refreshcf367959 is published using the official generator.
 Android issue4 has a release/retest reply and remains OPEN. See the ledger and
 artifacts/results/PUBLISH-001/RESULT.md; no outstanding field gate is promoted.
 
@@ -724,7 +725,7 @@ Prove the browser implementation on real playback paths rather than inheriting A
 Local source/build/package/metadata and ledger subtasks are complete in their
 recorded scopes. Original rollback testing was explicitly removed, not passed.
 WP17-006 completed on explicit user2026-11-26 authorization. GitHub3.3.0 beta
-is public; catalog PR132 awaits upstream review. This does not qualify deferred
+is public; catalog PR132 is merged and its aggregate refreshed. This does not qualify deferred
 platform/capability or starred observations, or authorize future releases.
 
 Deliver independently verifiable builds and a durable parity ledger without regressing the working installation.
@@ -747,7 +748,7 @@ below; do not retain a duplicate active checkbox or rerun it as a new matrix.
 
 - [x] **WP17-006 — Publication and upstream deltas.** Create commits/PRs/tags/releases or remote uploads only on explicit user request. Schedule no background monitoring automatically; future upstream reviews record a new pin and delta.
   **Acceptance:** Local ZIP delivery is distinct from approved remote publication; no surprise changes to either repository.
-  **Current2026-11-26:** COMPLETE_PUBLISHED_SCOPED. User explicitly authorized the coordinated batch;3.3.0 beta/related releases and verified assets are public. Catalog PR132 submitted; user now additionally authorizes its approval/merge using confirmed admin permissions. Keep this stable ID as its own canonical checked ledger row so generated parity/fix mirrors can reconcile it; do not combine it into the PUBLISH-001 title. No future releases/monitoring or deferred physical acceptance inferred.
+  **Current2026-11-26:** COMPLETE_PUBLISHED_SCOPED. User explicitly authorized the coordinated batch and catalog approval using confirmed admin permissions. Public releases/assets verified; PR132 mergedee824fbb, official generator produces355 exact source manifests/no identifier loss; generated aggregate/checksum publishedcf367959. Keep this stable ID as its own canonical checked ledger row so generated parity/fix mirrors reconcile it. No future releases/monitoring or deferred physical acceptance inferred.
   **Evidence:** https://github.com/opensagetv-vibe/opensagetv-vibe-WebClient-Plugin/releases/tag/v3.3.0; https://github.com/OpenSageTV/sagetv-plugin-repo/pull/132; artifacts/results/PUBLISH-001/RESULT.md.
 
 - [x] **PUBLISH-001 / WP17-006 - Coordinated publication (2026-11-26).**
@@ -756,7 +757,8 @@ below; do not retain a duplicate active checkbox or rerun it as a new matrix.
   optional Extension0.1.29 assets SHA256/tag verified. Eight catalog manifests,
   nine unique public package assets/MD5 validated; official OpenSageTV plugin
   catalog PR132 submitted, generated aggregate untouched, maintainer merge
-  pending. Android issue4 comment7203809155 posted after public115 and state
+  initially pending, then merged on explicit admin authorization; official
+  catalog/checksum refreshcf367959 published. Android issue4 comment7203809155 posted after public115 and state
   independently OPEN. Preserve original-trigger, HLS drain, native-Safari and
   deferred platform/receiver limits. No device install/restart/Core change or
   unrelated matrix replay. Owning compact RESULT records tests, immutable
