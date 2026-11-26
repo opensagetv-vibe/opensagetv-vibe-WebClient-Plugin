@@ -23,7 +23,15 @@ public final class DvdReadAheadRuntimeSmoke {
         AtomicBoolean stop=new AtomicBoolean();AtomicReference<Throwable> failure=new AtomicReference<Throwable>();Thread writer=null;
         try{
             Path file=dir.resolve("title.vob");
-            Process generated=new ProcessBuilder(ffmpeg,"-hide_banner","-loglevel","error","-y","-f","lavfi","-i","testsrc2=size=352x288:rate=25:duration=35","-c:v","mpeg2video","-b:v","3500k","-g","12","-f","dvd",file.toString()).redirectErrorStream(true).start();
+            // Include the normal DVD AC-3 track. A video-only35s/875-picture
+            // fixture fits inside FFmpeg6's1024-packet input queue, which can
+            // consume it before any output metric exists. That measures the
+            // converter's startup queue, not the application's pacing loop.
+            Process generated=new ProcessBuilder(ffmpeg,"-hide_banner","-loglevel","error","-y",
+                    "-f","lavfi","-i","testsrc2=size=352x288:rate=25:duration=35",
+                    "-f","lavfi","-i","sine=frequency=440:sample_rate=48000:duration=35",
+                    "-map","0:v","-map","1:a","-c:v","mpeg2video","-b:v","3500k","-g","12",
+                    "-c:a","ac3","-b:a","192k","-f","dvd",file.toString()).redirectErrorStream(true).start();
             ByteArrayOutputStream diagnostic=new ByteArrayOutputStream();byte[] buffer=new byte[4096];for(int n;(n=generated.getInputStream().read(buffer))>=0;)diagnostic.write(buffer,0,n);
             require(generated.waitFor(30,TimeUnit.SECONDS)&&generated.exitValue()==0,"generate bounded PS: "+diagnostic.toString("UTF-8"));
             final byte[] data=Files.readAllBytes(file);dvd.init(0);int first=Math.min(32768,data.length);dvd.push(push(data,0,first,0));
@@ -42,7 +50,11 @@ public final class DvdReadAheadRuntimeSmoke {
             }catch(Throwable e){if(!stop.get())failure.set(e);}},"dvd-read-ahead-test-writer");writer.start();
             long end=System.currentTimeMillis()+15000;
             while(System.currentTimeMillis()<end&&!hls.dvdReadAheadPaused){HlsSessionManager.refreshMetrics(hls);Thread.sleep(20);}
-            require(failure.get()==null,"native writer error");require(hls.dvdReadAheadPaused,"real converter must yield before encoding whole35s title");
+            require(failure.get()==null,"native writer error");
+            require(hls.dvdReadAheadPaused,"real converter must yield before encoding whole35s title; produced="
+                    +hls.hlsSeconds+", consumed="+dvd.input().totalRead()+"/"+data.length
+                    +", ready="+hls.playlistReady+", running="+hls.running+", exit="+hls.exitCode
+                    +", waits="+hls.dvdReadAheadWaits+", stderr="+hls.stderrTail);
             double held=hls.hlsSeconds;long consumed=dvd.input().totalRead();Thread.sleep(300);HlsSessionManager.refreshMetrics(hls);
             require(hls.hlsSeconds<22&&hls.hlsSeconds>=14,"bounded actual lead, seconds="+hls.hlsSeconds);
             require(dvd.input().totalRead()<=consumed+32768,"feeder stays held without frame progress");

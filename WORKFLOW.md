@@ -1,5 +1,12 @@
 # Common project workflow
 
+DVD read-ahead runtime qualification uses a normal generated MPEG-2/AC-3 DVD
+fixture on FFmpeg6 and8. A short video-only fixture can fit entirely inside
+the converter's bounded1024-packet input queue before output metrics exist;
+that does not exercise application pacing. Do not assert universal time-lead
+limits on that startup queue. Retain real14s pacing/refill/FLUSH/Stop checks
+and include produced/consumed/readiness/exit/waits/stderr on failure.
+
 Clean CI process-control tests need the real provider lifecycle classes, not
 stubs or a sibling checkout assumption. Fetch the pinned public FFmpeg0.1.36
 JAR ZIP, verify SHA25660d58439250eec189fd3002088a0f869389bd16a2b901cb3054f9286705a9274,

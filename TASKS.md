@@ -747,6 +747,17 @@ below; do not retain a duplicate active checkbox or rerun it as a new matrix.
 
 ## Checklist change ledger
 
+- [x] **PUBLISH-001 portable DVD pacing oracle (2026-11-26).** Exact isolated
+  Ubuntu24/FFmpeg6 reproduces the old video-only35s fixture entirely consumed
+  before output (35s/10,700,800bytes/exit0/waits0), while FFmpeg8 held it.
+  875video packets fit the existing1024-packet converter queue; this was not
+  evidence of a failed pacing callback. Normal DVD video+AC-3 fixture now
+  passes real14.52s hold/refill/FLUSH/Stop on both versions. Keep diagnostic
+  context on assertion failure and add the checksum-pinned clean-CI dependency
+  contract. No production Java/JS/WAR change or waived check; short video-only
+  input may legitimately fit a bounded decoder queue. Workspace order reviewed;
+  exact-head CI still precedes Web publication and catalog submission.
+
 - [x] **PUBLISH-001 CI dependency correction (2026-11-26).** First clean Web
   runner passed source/build/generated metadata but stopped at the required
   provider lifecycle test JAR, absent outside reusable DEV. Pin the already

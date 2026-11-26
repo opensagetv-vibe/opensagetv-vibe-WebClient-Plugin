@@ -24,6 +24,16 @@ class BuildInfoTests(unittest.TestCase):
         self.assertEqual('2026-11-26', self.info['release_date'])
         self.assertIn('PUBLICATION-AUTHORIZED', self.info['phase'])
 
+    def test_clean_ci_has_verified_real_provider_dependency(self):
+        workflow = (ROOT / '.github/workflows/repository-checks.yml').read_text()
+        self.assertIn('releases/download/v0.1.36/SageTVFFmpegPlugin-jar-0.1.36.zip', workflow)
+        self.assertIn('60d58439250eec189fd3002088a0f869389bd16a2b901cb3054f9286705a9274', workflow)
+        self.assertIn('sha256sum --check --strict', workflow)
+        self.assertIn('SAGETV_FFMPEG_PLUGIN_JAR: ${{ runner.temp }}', workflow)
+        helper = (ROOT / 'scripts/prepare-process-control-tests.sh').read_text()
+        self.assertIn('cd build/manual/test-classes', helper)
+        self.assertNotIn('cd build/manual/classes', helper)
+
     def test_current_artifact_hashes(self):
         paths = {'war_sha256': ROOT / 'dist/SageTVWebPlayer.war',
                  'local_installer_sha256': self.package / ('sagetv-webplayer-' + self.info['version'] + '.zip'),
