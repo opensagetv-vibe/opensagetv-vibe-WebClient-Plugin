@@ -745,6 +745,11 @@ below; do not retain a duplicate active checkbox or rerun it as a new matrix.
 
 ## Checklist change ledger
 
+- [x] **WP17-006 — Publication and upstream deltas.** Create commits/PRs/tags/releases or remote uploads only on explicit user request. Schedule no background monitoring automatically; future upstream reviews record a new pin and delta.
+  **Acceptance:** Local ZIP delivery is distinct from approved remote publication; no surprise changes to either repository.
+  **Current2026-11-26:** COMPLETE_PUBLISHED_SCOPED. User explicitly authorized the coordinated batch;3.3.0 beta/related releases and verified assets are public. Catalog PR132 submitted; user now additionally authorizes its approval/merge using confirmed admin permissions. Keep this stable ID as its own canonical checked ledger row so generated parity/fix mirrors can reconcile it; do not combine it into the PUBLISH-001 title. No future releases/monitoring or deferred physical acceptance inferred.
+  **Evidence:** https://github.com/opensagetv-vibe/opensagetv-vibe-WebClient-Plugin/releases/tag/v3.3.0; https://github.com/OpenSageTV/sagetv-plugin-repo/pull/132; artifacts/results/PUBLISH-001/RESULT.md.
+
 - [x] **PUBLISH-001 / WP17-006 - Coordinated publication (2026-11-26).**
   Seven related repository updates pushed, pilot/serial exact-head CI passed;
   public Android115, Web3.3.0 beta, FFmpeg0.1.36/MIM0.4.20, MCP0.1.23 and

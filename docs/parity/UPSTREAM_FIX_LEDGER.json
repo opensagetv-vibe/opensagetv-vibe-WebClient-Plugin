@@ -2508,10 +2508,10 @@
       "test_mapping_status": "PLANNED_PHASE_ACCEPTANCE; not a completed test assertion",
       "current_resolution": {
         "state": "NOT_APPLICABLE_RETAIN_REASON",
-        "completed_targets": [],
-        "open_targets": [
+        "completed_targets": [
           "WP17-006"
         ],
+        "open_targets": [],
         "evidence": [
           "TASKS.md#checklist-change-ledger",
           "docs/parity/TASK_INDEX.json"
@@ -9527,5 +9527,5 @@
     "evidence": "docs/parity/p01/UPSTREAM_RELEVANT_TESTS.json"
   },
   "exhaustive_intake_note": "The frozen literal changelog census and relevant regression-source census are complete. The 248-row functional ledger is normalized many-to-one; it does not imply every upstream item is ported or accepted in WebPlayer.",
-  "current_resolution_date": "2026-11-20"
+  "current_resolution_date": "2026-11-26"
 }

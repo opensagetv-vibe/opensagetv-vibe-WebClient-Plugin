@@ -1951,11 +1951,15 @@
           "work": "Create commits/PRs/tags/releases or remote uploads only on explicit user request. Schedule no background monitoring automatically; future upstream reviews record a new pin and delta.",
           "acceptance": "Local ZIP delivery is distinct from approved remote publication; no surprise changes to either repository.",
           "status": "COMPLETE_PUBLISHED_SCOPED",
-          "evidence": ["https://github.com/opensagetv-vibe/opensagetv-vibe-WebClient-Plugin/releases/tag/v3.3.0", "https://github.com/OpenSageTV/sagetv-plugin-repo/pull/132", "artifacts/results/PUBLISH-001/RESULT.md"]
+          "evidence": [
+            "https://github.com/opensagetv-vibe/opensagetv-vibe-WebClient-Plugin/releases/tag/v3.3.0",
+            "https://github.com/OpenSageTV/sagetv-plugin-repo/pull/132",
+            "artifacts/results/PUBLISH-001/RESULT.md"
+          ]
         }
       ],
       "exit_gate": "Independent artifact/source validation, honest support notes, exact hashes, task evidence and a safe upgrade/rollback path are complete.",
-      "status": "COMPLETE_PUBLISHED_SCOPED"
+      "status": "CLOSED_WITH_USER_WAIVERS"
     }
   ],
   "package_kind": "STOCK_SERVER_BETA_SCOPED_ACCEPTANCE",
@@ -1965,6 +1969,6 @@
     "removed": 3,
     "flagged": 2
   },
-  "next_task": "Independent scoped backlog in TASKS.md; catalog PR132 awaits upstream merge",
+  "next_task": null,
   "release_status": "User-authorized3.3.0 beta published2026-11-26 from6619d750 with verified WAR909573ad/package2ce42385 and exact-head CI45900857621. Catalog PR132 submitted, merge pending.121of127 WP tasks complete in stated scopes,3removed,2starred,1unavailable WP15-002; no private-Core/all-platform certification. P15 stock alternatives, P16 stars and original field limitations remain explicit. Independent WEB tasks are not silently closed; no new physical-phone/full matrix or Core change."
 }
