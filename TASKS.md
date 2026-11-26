@@ -747,6 +747,14 @@ below; do not retain a duplicate active checkbox or rerun it as a new matrix.
 
 ## Checklist change ledger
 
+- [x] **PUBLISH-001 CI dependency correction (2026-11-26).** First clean Web
+  runner passed source/build/generated metadata but stopped at the required
+  provider lifecycle test JAR, absent outside reusable DEV. Pin the already
+  published FFmpeg0.1.36 ZIP and verify SHA256 before extracting test-only
+  classes. No playback/package change, no skipped required gate. Re-run exact
+  head CI before Web publication/catalog submission; independent release and
+  original field limitations remain unchanged. Workspace order reviewed.
+
 - [x] **WEB-133 - Restore compact settings tabs (2026-11-26).** Six single-row,
   horizontally scrollable tabs; one active panel; Left/Right/Home/End support.
   Remove long static explanations/duplicated selected values, retain dynamic

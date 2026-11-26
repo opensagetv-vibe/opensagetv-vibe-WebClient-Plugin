@@ -1,5 +1,13 @@
 # Common project workflow
 
+Clean CI process-control tests need the real provider lifecycle classes, not
+stubs or a sibling checkout assumption. Fetch the pinned public FFmpeg0.1.36
+JAR ZIP, verify SHA25660d58439250eec189fd3002088a0f869389bd16a2b901cb3054f9286705a9274,
+extract only SageTVFFmpegPlugin.jar into runner temporary storage and set
+SAGETV_FFMPEG_PLUGIN_JAR. prepare-process-control-tests.sh imports only the four
+bounded lifecycle classes into test-classes, never the WAR. Local reusable DEV
+may use its already-built provider. A missing dependency is not a waived gate.
+
 WEB-133 supersedes only WEB-132's settings navigation: use visible
 `#settings-tab-{app,playback,transcoding,input,diagnostics,recovery}` controls,
 not details.open or hidden legacy aliases. browser-settings-parity.py checks

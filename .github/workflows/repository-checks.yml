@@ -38,6 +38,15 @@ jobs:
       - name: Install build dependencies
         run: sudo apt-get update && sudo apt-get install -y ffmpeg libservlet-api-java
 
+      - name: Fetch verified process-control test dependency
+        run: |
+          mkdir -p "$RUNNER_TEMP/vibe-deps"
+          curl --fail --location --retry 2 \
+            https://github.com/opensagetv-vibe/opensagetv-vibe-FFmpeg-Plugin/releases/download/v0.1.36/SageTVFFmpegPlugin-jar-0.1.36.zip \
+            --output "$RUNNER_TEMP/vibe-deps/provider.zip"
+          printf '%s  %s\n' 60d58439250eec189fd3002088a0f869389bd16a2b901cb3054f9286705a9274 "$RUNNER_TEMP/vibe-deps/provider.zip" | sha256sum --check --strict
+          unzip -p "$RUNNER_TEMP/vibe-deps/provider.zip" SageTVFFmpegPlugin.jar > "$RUNNER_TEMP/vibe-deps/SageTVFFmpegPlugin.jar"
+
       - name: Build package
         run: |
           bash scripts/build-local.sh
@@ -46,6 +55,7 @@ jobs:
       - name: Run generated and source validation
         env:
           TEST_FFMPEG: /usr/bin/ffmpeg
+          SAGETV_FFMPEG_PLUGIN_JAR: ${{ runner.temp }}/vibe-deps/SageTVFFmpegPlugin.jar
         run: bash scripts/validate.sh
 
       - name: Verify Vibe project contracts
