@@ -1952,9 +1952,9 @@
           "acceptance": "Local ZIP delivery is distinct from approved remote publication; no surprise changes to either repository.",
           "status": "COMPLETE_PUBLISHED_SCOPED",
           "evidence": [
-            "https://github.com/opensagetv-vibe/opensagetv-vibe-WebClient-Plugin/releases/tag/v3.3.0",
-            "https://github.com/OpenSageTV/sagetv-plugin-repo/pull/132",
-            "artifacts/results/PUBLISH-001/RESULT.md"
+            "TASKS.md",
+            "CHANGELOG.md",
+            "HANDOFF.md"
           ]
         }
       ],
