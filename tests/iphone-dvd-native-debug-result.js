@@ -1,0 +1,1 @@
+(()=>({native:window.__iphoneGate?.dvdNativeDebug,video:{time:videoPlane.currentTime,ended:videoPlane.ended,paused:videoPlane.paused,ready:videoPlane.readyState},captionAuthorityUnchanged:localStorage.getItem('sagetvWebCaptionAuthority.v1')===window.__iphoneGate?.companionForm?.captions}))()

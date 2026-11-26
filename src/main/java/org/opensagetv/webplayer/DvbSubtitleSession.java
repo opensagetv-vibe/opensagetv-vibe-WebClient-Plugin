@@ -36,24 +36,31 @@ final class DvbSubtitleSession {
     private final Map<Integer,Integer> continuity=new LinkedHashMap<Integer,Integer>();
     private final SubtitleClock clock=new SubtitleClock();
     private byte[] carry=new byte[0]; private int packetSize,nextTrackId=TRACK_BASE;
-    private String lastSource="",preferredLanguage=""; private long expectedPosition=-1L,playbackAnchorMs,firstMediaPts=-1L;
+    private String lastSource="",preferredLanguage=""; private long expectedPosition=-1L,playbackAnchorMs,firstMediaPts=-1L,latestMediaMs;
+    synchronized long latestMediaMs(){return latestMediaMs;}
     private int selectedTrack=-1,preferredPid=-1,preferredCompositionPage=-1; private boolean enabled;
+    private int fileOffsetMs;
+    private long selectionChangedMs;
+    private long imageCues;
+    synchronized long imageCueCount(){return imageCues;}
     private long observeCalls,observedBytes,transportPackets,patSections,pmtSections,dvbDescriptors,dvbPesPackets,segments,displaySets,emittedCues,clearCues,framingResets,continuityResets,duplicatePackets,malformedUnits,queueRejects;
 
     DvbSubtitleSession(PlaybackSessionContext context,PlaybackSessionContext.Token token,long anchorMs){this(context,token,anchorMs,SubtitleCue.Owner.LOCAL_DVB,context==null?null:context.cues());}
     DvbSubtitleSession(PlaybackSessionContext context,PlaybackSessionContext.Token token,long anchorMs,SubtitleCue.Owner owner,SubtitleCueQueue queue){
-        if(context==null||token==null||owner==null||queue==null)throw new IllegalArgumentException("playback context/token/owner/queue required");this.context=context;this.token=token;this.cueOwner=owner;this.cueQueue=queue;playbackAnchorMs=Math.max(0L,anchorMs);sections.put(Integer.valueOf(0),new SectionAssembler());
+        if(context==null||token==null||owner==null||queue==null)throw new IllegalArgumentException("playback context/token/owner/queue required");this.context=context;this.token=token;this.cueOwner=owner;this.cueQueue=queue;playbackAnchorMs=Math.max(0L,anchorMs);sections.put(Integer.valueOf(0),new SectionAssembler());if(owner==SubtitleCue.Owner.LOCAL_FILE){firstMediaPts=0;clock.anchor(0,playbackAnchorMs);}
     }
+    synchronized void setFileOffsetMs(int offset){if(cueOwner!=SubtitleCue.Owner.LOCAL_FILE)throw new IllegalStateException("File subtitle offset requires LOCAL_FILE");fileOffsetMs=offset;}
+    private long recordingPosition(long pts){long position=clock.sourcePtsToRecordingMs(pts);return cueOwner==SubtitleCue.Owner.LOCAL_FILE?Math.max(0,position+(long)fileOffsetMs):position;}
 
     synchronized void seed(MediaProbe.Info info){if(info==null)return;boolean changed=false;for(MediaProbe.Track t:info.tracks){if(!"dvb-subtitle".equals(t.serviceKind)||t.sourcePid<0||t.compositionPageId<0)continue;int type=t.hearingImpaired?0x20:0x10;if(addService(t.sourcePid,t.language,type,t.compositionPageId,t.ancillaryPageId<0?t.compositionPageId:t.ancillaryPageId))changed=true;}if(changed)resolveSelection();}
-    synchronized void configure(boolean on,int pid,int compositionPage,String language){enabled=on;preferredPid=pid;preferredCompositionPage=compositionPage;preferredLanguage=language==null?"":language.trim().toLowerCase(Locale.ROOT);if(!on){selectedTrack=-1;offerClear(-1L,720,576,true);return;}resolveSelection();}
-    synchronized boolean selectSourcePid(int pid){if(pid<0){enabled=false;preferredPid=-1;preferredCompositionPage=-1;selectedTrack=-1;offerClear(-1L,720,576,true);return true;}enabled=true;preferredPid=pid;preferredCompositionPage=-1;selectedTrack=-1;offerClear(-1L,720,576,true);for(Service s:serviceByKey.values())if(s.pid==pid){selectTrack(s.trackId);return true;}return false;}
+    synchronized void configure(boolean on,int pid,int compositionPage,String language){selectionChangedMs=0;enabled=on;preferredPid=pid;preferredCompositionPage=compositionPage;preferredLanguage=language==null?"":language.trim().toLowerCase(Locale.ROOT);if(!on){selectedTrack=-1;offerClear(-1L,720,576,true);return;}resolveSelection();}
+    synchronized boolean selectSourcePid(int pid){selectionChangedMs=0;if(pid<0){enabled=false;preferredPid=-1;preferredCompositionPage=-1;selectedTrack=-1;offerClear(-1L,720,576,true);return true;}enabled=true;preferredPid=pid;preferredCompositionPage=-1;selectedTrack=-1;offerClear(-1L,720,576,true);for(Service s:serviceByKey.values())if(s.pid==pid){selectTrack(s.trackId);return true;}return false;}
     /** Accept a physical PID before PMT discovery, but fail closed once an inventory is known. */
     synchronized boolean requestSourcePid(int pid){if(pid<0)return selectSourcePid(-1);if(selectSourcePid(pid))return true;return serviceByKey.isEmpty();}
     synchronized boolean selectService(int pid,int compositionPage,String language){for(Service s:serviceByKey.values())if((pid<0||s.pid==pid)&&(compositionPage<0||s.compositionPageId==compositionPage)&&(language==null||language.isEmpty()||language.equalsIgnoreCase(s.language)))return selectTrack(s.trackId);return false;}
-    synchronized boolean selectTrack(int trackId){Service s=serviceByTrack(trackId);if(s==null)return false;enabled=true;selectedTrack=trackId;preferredPid=s.pid;preferredCompositionPage=s.compositionPageId;preferredLanguage=s.language;offerClear(-1L,720,576,true);return true;}
+    synchronized boolean selectTrack(int trackId){Service s=serviceByTrack(trackId);if(s==null)return false;selectionChangedMs=0;enabled=true;selectedTrack=trackId;preferredPid=s.pid;preferredCompositionPage=s.compositionPageId;preferredLanguage=s.language;offerClear(-1L,720,576,true);return true;}
     synchronized void updateToken(PlaybackSessionContext.Token token,long anchorMs){if(token==null)return;this.token=token;playbackAnchorMs=Math.max(0L,anchorMs);clock.reset();resetFraming(true);resolveSelection();}
-    synchronized void discontinuity(long anchorMs){playbackAnchorMs=Math.max(0L,anchorMs);clock.reset();resetFraming(true);resolveSelection();}
+    synchronized void discontinuity(long anchorMs){playbackAnchorMs=Math.max(0L,anchorMs);latestMediaMs=playbackAnchorMs;clock.reset();resetFraming(true);resolveSelection();}
     synchronized void finish(){offerClear(-1L,720,576,true);}
 
     synchronized void observe(String source,long absolutePosition,byte[] bytes,int offset,int length){
@@ -65,15 +72,22 @@ final class DvbSubtitleSession {
     synchronized Service[] services(){return serviceByKey.values().toArray(new Service[serviceByKey.size()]);}
     synchronized int selectedTrack(){return selectedTrack;}
     synchronized String servicesJson(){StringBuilder b=new StringBuilder("[");int i=0;for(Service s:serviceByKey.values()){if(i++>0)b.append(',');b.append(s.json());}return b.append(']').toString();}
-    synchronized String stateJson(){return "{\"active\":"+enabled+",\"selectedTrack\":"+selectedTrack+",\"preferredPid\":"+preferredPid+",\"preferredCompositionPage\":"+preferredCompositionPage+",\"services\":"+servicesJson()+"}";}
+    synchronized String stateJson(){return "{\"active\":"+enabled+",\"selectedTrack\":"+selectedTrack+",\"selectionChangedMs\":"+selectionChangedMs+",\"preferredPid\":"+preferredPid+",\"preferredCompositionPage\":"+preferredCompositionPage+",\"services\":"+servicesJson()+"}";}
     synchronized String diagnosticsJson(){String stage=emittedCues>0?"decoded-presentation":displaySets>0?"display-set":segments>0?"segments":dvbPesPackets>0?"pes":dvbDescriptors>0?"descriptor-only":"no-descriptor";long bad=malformedUnits;for(Service s:serviceByKey.values())bad+=s.decoder.malformedSegments();return "{\"active\":"+enabled+",\"stage\":\""+stage+"\",\"selectedTrack\":"+selectedTrack+",\"preferredPid\":"+preferredPid+",\"preferredCompositionPage\":"+preferredCompositionPage+",\"preferredLanguage\":\""+HttpUtil.json(preferredLanguage)+"\",\"calls\":"+observeCalls+",\"bytes\":"+observedBytes+",\"tsPackets\":"+transportPackets+",\"pat\":"+patSections+",\"pmt\":"+pmtSections+",\"descriptors\":"+dvbDescriptors+",\"services\":"+serviceByKey.size()+",\"pes\":"+dvbPesPackets+",\"segments\":"+segments+",\"displaySets\":"+displaySets+",\"cues\":"+emittedCues+",\"clearCues\":"+clearCues+",\"framingResets\":"+framingResets+",\"continuityResets\":"+continuityResets+",\"duplicatePackets\":"+duplicatePackets+",\"malformed\":"+bad+",\"queueRejects\":"+queueRejects+",\"serviceInventory\":"+servicesJson()+"}";}
 
     private Service serviceByTrack(int id){for(Service s:serviceByKey.values())if(s.trackId==id)return s;return null;}
-    private void resolveSelection(){if(!enabled){selectedTrack=-1;return;}Service best=null;for(Service s:orderedServices(preferredLanguage)){boolean pidOk=preferredPid<0||s.pid==preferredPid,pageOk=preferredCompositionPage<0||s.compositionPageId==preferredCompositionPage,langOk=preferredLanguage.isEmpty()||languageMatch(s.language,preferredLanguage);if(pidOk&&pageOk&&langOk){best=s;break;}if(best==null&&pidOk&&pageOk)best=s;}
+    private void resolveSelection(){resolveSelection(false);}
+    private void resolveSelection(boolean sourceDriven){if(!enabled){selectedTrack=-1;return;}Service best=null;for(Service s:orderedServices(preferredLanguage)){boolean pidOk=preferredPid<0||s.pid==preferredPid,pageOk=preferredCompositionPage<0||s.compositionPageId==preferredCompositionPage,langOk=preferredLanguage.isEmpty()||languageMatch(s.language,preferredLanguage);if(pidOk&&pageOk&&langOk){best=s;break;}if(best==null&&pidOk&&pageOk)best=s;}
         // A physical PID/page request is authoritative. Never silently fall back to a
         // different DVB service when that requested identity is absent.
         if(best==null&&(preferredPid>=0||preferredCompositionPage>=0)){selectedTrack=-1;return;}
-        if(best==null&&!serviceByKey.isEmpty())best=orderedServices(preferredLanguage).get(0);if(best!=null&&selectedTrack!=best.trackId){selectedTrack=best.trackId;offerClear(-1L,720,576,true);}}
+        if(best==null&&!serviceByKey.isEmpty())best=orderedServices(preferredLanguage).get(0);if(best!=null&&selectedTrack!=best.trackId){selectedTrack=best.trackId;selectionClear(sourceDriven);}}
+    private void selectionClear(boolean sourceDriven){
+        // PMTs are parsed ahead of presentation. Keep their clear and metadata
+        // on the source clock; explicit user selection/Off stays immediate.
+        selectionChangedMs=sourceDriven?Math.max(playbackAnchorMs,latestMediaMs):0;
+        offerClearAt(sourceDriven?selectionChangedMs:playbackAnchorMs,720,576,true);
+    }
     private List<Service> orderedServices(String language){List<Service> out=new ArrayList<Service>(serviceByKey.values());final String want=language==null?"":language.toLowerCase(Locale.ROOT);java.util.Collections.sort(out,(a,b)->{int ae=languageScore(a.language,want),be=languageScore(b.language,want);if(ae!=be)return ae-be;if(a.hearingImpaired!=b.hearingImpaired)return a.hearingImpaired?1:-1;if(a.pid!=b.pid)return Integer.compare(a.pid,b.pid);return Integer.compare(a.compositionPageId,b.compositionPageId);});return out;}
     private static boolean languageMatch(String a,String b){if(a.equalsIgnoreCase(b))return true;return a.length()>=2&&b.length()>=2&&a.substring(0,2).equalsIgnoreCase(b.substring(0,2));}
     private static int languageScore(String actual,String wanted){if(wanted.isEmpty())return actual.startsWith("en")?0:1;if(actual.equals(wanted))return 0;if(languageMatch(actual,wanted))return 1;return 2;}
@@ -81,15 +95,53 @@ final class DvbSubtitleSession {
     private static String serviceKey(int pid,String language,int type,int comp,int anc){return pid+":"+(language==null?"":language.toLowerCase(Locale.ROOT))+":"+type+":"+comp+":"+anc;}
     private void rebuildPidSet(){dvbPids.clear();for(Service s:serviceByKey.values())dvbPids.add(Integer.valueOf(s.pid));}
 
-    private void resetFraming(boolean generation){framingResets++;carry=new byte[0];packetSize=0;for(SectionAssembler a:sections.values())a.reset();for(PesAssembler a:pes.values())a.reset();continuity.clear();firstMediaPts=-1;if(generation){for(Service s:serviceByKey.values())s.decoder.reset();offerClear(-1L,720,576,true);}}
+    private void resetFraming(boolean generation){framingResets++;selectionChangedMs=0;carry=new byte[0];packetSize=0;for(SectionAssembler a:sections.values())a.reset();for(PesAssembler a:pes.values())a.reset();continuity.clear();firstMediaPts=-1;if(cueOwner==SubtitleCue.Owner.LOCAL_FILE){firstMediaPts=0;clock.anchor(0,playbackAnchorMs);}if(generation){for(Service s:serviceByKey.values())s.decoder.reset();offerClear(-1L,720,576,true);}}
     private void parse(byte[] bytes){int pos=0;if(packetSize==0){int[] sync=findSync(bytes,0);if(sync==null){carry=tail(bytes,816);return;}pos=sync[0];packetSize=sync[1];}while(pos+packetSize<=bytes.length){int syncPos=packetSize==192?pos+4:pos;if((bytes[syncPos]&255)!=0x47){packetSize=0;int[] sync=findSync(bytes,pos+1);if(sync==null){carry=tail(bytes,816);return;}pos=sync[0];packetSize=sync[1];continue;}parsePacket(bytes,syncPos);pos+=packetSize;}carry=Arrays.copyOfRange(bytes,pos,bytes.length);}
-    private void parsePacket(byte[] bytes,int start){transportPackets++;if(start+188>bytes.length)return;int b1=bytes[start+1]&255;if((b1&0x80)!=0)return;boolean payloadStart=(b1&0x40)!=0;int pid=((b1&31)<<8)|(bytes[start+2]&255),cc=bytes[start+3]&15,control=(bytes[start+3]>>4)&3;if(control==1||control==3){Integer prior=continuity.get(Integer.valueOf(pid));if(prior!=null){int expected=(prior+1)&15;if(cc==prior&&!payloadStart){duplicatePackets++;return;}if(cc!=expected){continuityResets++;PesAssembler pa=pes.get(Integer.valueOf(pid));if(pa!=null)pa.reset();SectionAssembler sa=sections.get(Integer.valueOf(pid));if(sa!=null)sa.reset();}}continuity.put(Integer.valueOf(pid),Integer.valueOf(cc));}if(control!=1&&control!=3)return;int payload=start+4;if(control==3){if(payload>=start+188)return;int al=bytes[payload]&255;payload+=1+al;}int end=start+188;if(payload>=end)return;if(pid==0||pmtPids.contains(Integer.valueOf(pid))){SectionAssembler a=sections.get(Integer.valueOf(pid));if(a==null){a=new SectionAssembler();sections.put(Integer.valueOf(pid),a);}for(byte[] sec:a.consume(bytes,payload,end,payloadStart))parseSection(pid,sec);}if(videoPids.contains(Integer.valueOf(pid))&&payloadStart){long pts=pesPts(bytes,payload,end);if(pts>=0&&firstMediaPts<0){firstMediaPts=pts;clock.anchor(pts,playbackAnchorMs);}}if(dvbPids.contains(Integer.valueOf(pid))){PesAssembler a=pes.get(Integer.valueOf(pid));if(a==null){a=new PesAssembler(pid);pes.put(Integer.valueOf(pid),a);}a.consume(bytes,payload,end,payloadStart);}}
+    private void parsePacket(byte[] bytes,int start){
+        transportPackets++;if(start+188>bytes.length)return;int b1=bytes[start+1]&255;if((b1&0x80)!=0)return;
+        boolean payloadStart=(b1&0x40)!=0;int pid=((b1&31)<<8)|(bytes[start+2]&255),cc=bytes[start+3]&15,control=(bytes[start+3]>>4)&3;
+        if(control==1||control==3){Integer prior=continuity.get(Integer.valueOf(pid));if(prior!=null){int expected=(prior+1)&15;if(cc==prior&&!payloadStart){duplicatePackets++;return;}if(cc!=expected){continuityResets++;PesAssembler pa=pes.get(Integer.valueOf(pid));if(pa!=null)pa.reset();SectionAssembler sa=sections.get(Integer.valueOf(pid));if(sa!=null)sa.reset();}}continuity.put(Integer.valueOf(pid),Integer.valueOf(cc));}
+        if(control!=1&&control!=3)return;int payload=start+4;if(control==3){if(payload>=start+188)return;int al=bytes[payload]&255;payload+=1+al;}int end=start+188;if(payload>=end)return;
+        if(pid==0||pmtPids.contains(Integer.valueOf(pid))){SectionAssembler a=sections.get(Integer.valueOf(pid));if(a==null){a=new SectionAssembler();sections.put(Integer.valueOf(pid),a);}for(byte[] sec:a.consume(bytes,payload,end,payloadStart))parseSection(pid,sec);}
+        if(videoPids.contains(Integer.valueOf(pid))&&payloadStart){long pts=pesPts(bytes,payload,end);if(pts>=0){if(firstMediaPts<0){firstMediaPts=pts;clock.anchor(pts,playbackAnchorMs);}latestMediaMs=Math.max(latestMediaMs,clock.sourcePtsToRecordingMs(pts));}}
+        if(dvbPids.contains(Integer.valueOf(pid))){PesAssembler a=pes.get(Integer.valueOf(pid));if(a==null){a=new PesAssembler(pid);pes.put(Integer.valueOf(pid),a);}a.consume(bytes,payload,end,payloadStart);}
+    }
     private void parseSection(int pid,byte[] section){if(section.length<8)return;int table=section[0]&255;if(pid==0&&table==0){patSections++;for(int p=8;p+4<=section.length-4;p+=4){int program=((section[p]&255)<<8)|(section[p+1]&255);if(program==0)continue;int pmt=((section[p+2]&31)<<8)|(section[p+3]&255);pmtPids.add(Integer.valueOf(pmt));if(!sections.containsKey(Integer.valueOf(pmt)))sections.put(Integer.valueOf(pmt),new SectionAssembler());}}else if(table==2){pmtSections++;parsePmt(pid,section);}}
-    private void parsePmt(int pmtPid,byte[] section){if(section.length<16)return;int p=12+(((section[10]&15)<<8)|(section[11]&255)),end=section.length-4;boolean changed=false;Set<String> current=new LinkedHashSet<String>();while(p+5<=end){int type=section[p]&255,pid=((section[p+1]&31)<<8)|(section[p+2]&255),info=((section[p+3]&15)<<8)|(section[p+4]&255);if(isVideoType(type))videoPids.add(Integer.valueOf(pid));int d=p+5,dEnd=Math.min(end,d+info);while(d+2<=dEnd){int tag=section[d]&255,len=section[d+1]&255,v=d+2;if(v+len>dEnd)break;if(type==6&&tag==0x59){for(int q=v;q+8<=v+len;q+=8){dvbDescriptors++;String lang=ascii(section,q,3);int st=section[q+3]&255,comp=((section[q+4]&255)<<8)|(section[q+5]&255),anc=((section[q+6]&255)<<8)|(section[q+7]&255);String key=serviceKey(pid,lang,st,comp,anc);current.add(key);if(addService(pid,lang,st,comp,anc))changed=true;}}d=v+len;}p=dEnd;}Set<String> prior=serviceKeysByPmt.put(Integer.valueOf(pmtPid),current);if(prior!=null)for(String key:prior)if(!current.contains(key)){Service old=serviceByKey.remove(key);if(old!=null){if(selectedTrack==old.trackId){selectedTrack=-1;offerClear(-1L,720,576,true);}changed=true;}}if(changed){rebuildPidSet();resolveSelection();}}
+    private void parsePmt(int pmtPid,byte[] section){
+        if(section.length<16)return;
+        int p=12+(((section[10]&15)<<8)|(section[11]&255)),end=section.length-4;
+        boolean changed=false;Set<String> current=new LinkedHashSet<String>();
+        while(p+5<=end){
+            int type=section[p]&255,pid=((section[p+1]&31)<<8)|(section[p+2]&255),info=((section[p+3]&15)<<8)|(section[p+4]&255);
+            if(isVideoType(type))videoPids.add(Integer.valueOf(pid));
+            int d=p+5,dEnd=Math.min(end,d+info);
+            while(d+2<=dEnd){
+                int tag=section[d]&255,len=section[d+1]&255,v=d+2;
+                if(v+len>dEnd)break;
+                if(type==6&&tag==0x59)for(int q=v;q+8<=v+len;q+=8){
+                    dvbDescriptors++;String lang=ascii(section,q,3);int st=section[q+3]&255;
+                    int comp=((section[q+4]&255)<<8)|(section[q+5]&255),anc=((section[q+6]&255)<<8)|(section[q+7]&255);
+                    String key=serviceKey(pid,lang,st,comp,anc);current.add(key);
+                    if(addService(pid,lang,st,comp,anc))changed=true;
+                }
+                d=v+len;
+            }
+            p=dEnd;
+        }
+        Set<String> prior=serviceKeysByPmt.put(Integer.valueOf(pmtPid),current);
+        if(prior!=null)for(String key:prior)if(!current.contains(key)){
+            Service old=serviceByKey.remove(key);
+            if(old!=null){
+                if(selectedTrack==old.trackId){selectedTrack=-1;selectionClear(true);}
+                changed=true;
+            }
+        }
+        if(changed){rebuildPidSet();resolveSelection(true);}
+    }
 
     private void parsePes(int pid,byte[] data,int length){if(length<10||data[0]!=0||data[1]!=0||data[2]!=1)return;dvbPesPackets++;int header=data[8]&255,payload=9+header;if(payload>=length)return;long pts=(data[7]&0x80)!=0?parsePts(data,9,length):-1L;if(firstMediaPts<0&&pts>=0){firstMediaPts=pts;clock.anchor(pts,playbackAnchorMs);}if(payload+2<=length&&(data[payload]&255)==0x20)payload+=2;while(payload+6<=length){if((data[payload]&255)==0xff)break;if((data[payload]&255)!=0x0f){payload++;continue;}int type=data[payload+1]&255,pageId=((data[payload+2]&255)<<8)|(data[payload+3]&255),segLen=((data[payload+4]&255)<<8)|(data[payload+5]&255),body=payload+6;if(body+segLen>length){malformedUnits++;break;}segments++;for(Service s:serviceByKey.values())if(s.pid==pid&&s.decoder.acceptsPage(pageId))s.decoder.segment(type,pageId,data,body,segLen);if(type==0x80){displaySets++;for(Service s:serviceByKey.values())if(s.pid==pid&&s.compositionPageId==pageId&&s.trackId==selectedTrack&&enabled)offerFrame(s,pts);}payload=body+segLen;}}
-    private void offerFrame(Service s,long pts){DvbBitmapDecoder.Frame f=s.decoder.render();long position=pts>=0?clock.sourcePtsToRecordingMs(pts):playbackAnchorMs;if(f.clear()){offerClearAt(position,f.canvasWidth,f.canvasHeight,false);return;}boolean first=true;for(DvbBitmapDecoder.BitmapRect r:f.rects){long duration=f.timeoutSeconds>0?f.timeoutSeconds*1000L:0L;SubtitleCue cue=SubtitleCue.bitmap(token,cueOwner,position,duration,r.canvasWidth,r.canvasHeight,r.x,r.y,r.width,r.height,"rgba-straight",r.rgba,first,false);if(cueQueue.offer(cue)){emittedCues++;if(first)clearCues++;}else queueRejects++;first=false;}}
-    private void offerClear(long pts,int cw,int ch,boolean immediate){offerClearAt(immediate?playbackAnchorMs:(pts>=0?clock.sourcePtsToRecordingMs(pts):playbackAnchorMs),cw,ch,immediate);}
+    private void offerFrame(Service s,long pts){DvbBitmapDecoder.Frame f=s.decoder.render();long position=pts>=0?recordingPosition(pts):playbackAnchorMs;if(f.clear()){offerClearAt(position,f.canvasWidth,f.canvasHeight,false);return;}boolean first=true;for(DvbBitmapDecoder.BitmapRect r:f.rects){long duration=f.timeoutSeconds>0?f.timeoutSeconds*1000L:0L;SubtitleCue cue=SubtitleCue.bitmap(token,cueOwner,position,duration,r.canvasWidth,r.canvasHeight,r.x,r.y,r.width,r.height,"rgba-straight",r.rgba,first,false);if(cueQueue.offer(cue)){emittedCues++;imageCues++;if(first)clearCues++;}else queueRejects++;first=false;}}
+    private void offerClear(long pts,int cw,int ch,boolean immediate){offerClearAt(immediate?playbackAnchorMs:(pts>=0?recordingPosition(pts):playbackAnchorMs),cw,ch,immediate);}
     private void offerClearAt(long position,int cw,int ch,boolean immediate){if(!enabled&&!immediate&&selectedTrack<0)return;SubtitleCue cue=SubtitleCue.bitmap(token,cueOwner,Math.max(0L,position),0,Math.max(1,cw),Math.max(1,ch),0,0,0,0,"rgba-straight",new byte[0],true,false);if(cueQueue.offer(cue)){emittedCues++;clearCues++;}else queueRejects++;}
 
     private final class PesAssembler {final int pid;byte[] bytes=new byte[8192];int length;PesAssembler(int pid){this.pid=pid;}void consume(byte[] source,int start,int end,boolean payloadStart){if(payloadStart){finish();length=0;}int amount=end-start;if(amount<=0||length+amount>MAX_PES_BYTES){if(length+amount>MAX_PES_BYTES)reset();return;}if(length+amount>bytes.length)bytes=Arrays.copyOf(bytes,Math.min(MAX_PES_BYTES,Math.max(length+amount,bytes.length*2)));System.arraycopy(source,start,bytes,length,amount);length+=amount;int declared=declaredPesLength(bytes,length);if(declared>0&&length>=declared)finish();}void finish(){if(length>0)parsePes(pid,bytes,length);length=0;}void reset(){length=0;}}

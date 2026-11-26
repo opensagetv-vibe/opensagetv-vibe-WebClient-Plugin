@@ -1,0 +1,6 @@
+{
+  "evidence": "WEB-043 actual stock232 plugin ffmpeg.real process arguments, captured before its first segment; output session replaced by a literal placeholder",
+  "encoderCommands": [
+    "/opt/sagetv/server/plugins/SageTVFFmpegPlugin/runtime/ffmpeg.real -hide_banner -loglevel warning -y -nostats -progress /tmp/sagetv-webplayer-hls/<test-session>/progress.log -nostdin -thread_queue_size 1024 -fflags +genpts+discardcorrupt -err_detect ignore_err -analyzeduration 2000000 -probesize 4000000 -hwaccel qsv -hwaccel_output_format qsv -i /var/media/OpenSageTV_Vibe_Tests/VibeCaptionTest-1080i-CEA608-90s-2s.ts -map 0:v:0 -map 0:1 -sn -dn -vf vpp_qsv=deinterlace=advanced:rate=frame:w=-1:h=480:format=nv12 -c:v h264_qsv -preset veryfast -b:v 1000k -maxrate 1250k -bufsize 2000k -bf 0 -g 30 -force_key_frames expr:gte(t,n_forced*1) -c:a aac -b:a 192k -ar 48000 -ac 2 -af aresample=async=1000:first_pts=0 -max_muxing_queue_size 2048 -muxdelay 0 -muxpreload 0 -flush_packets 1 -avoid_negative_ts make_zero -f hls -hls_time 3 -hls_init_time 1 -hls_segment_type mpegts -hls_list_size 0 -hls_playlist_type event -hls_flags independent_segments+temp_file -hls_segment_filename /tmp/sagetv-webplayer-hls/<test-session>/seg_%05d.ts /tmp/sagetv-webplayer-hls/<test-session>/stream.m3u8"
+  ]
+}

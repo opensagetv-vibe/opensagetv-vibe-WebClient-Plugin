@@ -26,6 +26,7 @@ public class RecordingsServlet extends HttpServlet {
         long start;
         long duration;
         String format;
+        String relativePath;
     }
 
     @Override
@@ -39,11 +40,13 @@ public class RecordingsServlet extends HttpServlet {
             String q = request.getParameter("q");
             q = q == null ? "" : q.trim().toLowerCase();
             boolean activeOnly = "true".equalsIgnoreCase(request.getParameter("active"));
+            boolean videos = "videos".equalsIgnoreCase(request.getParameter("kind"));
 
             SageApiBridge sage = SageApiBridge.create();
             List<Item> items = new ArrayList<Item>();
             for (Object mf : sage.getMediaFiles()) {
-                if (mf == null || !sage.isTVFile(mf)) continue;
+                if (mf == null) continue;
+                if (videos ? (sage.isTVFile(mf) || !(sage.isVideoFile(mf) || sage.isDVD(mf) || sage.isBluRay(mf))) : !sage.isTVFile(mf)) continue;
                 boolean recording = sage.isFileCurrentlyRecording(mf);
                 if (activeOnly && !recording) continue;
 
@@ -75,16 +78,20 @@ public class RecordingsServlet extends HttpServlet {
                 long latestWatched = airing == null ? 0L : sage.getLatestWatchedTime(airing);
                 item.serverResumeSeconds = latestWatched > fileStart && fileStart > 0 ? (latestWatched - fileStart) / 1000.0 : 0.0;
                 item.format = sage.getMediaFileFormatDescription(mf);
+                // Public import-relative metadata only: never expose the
+                // absolute server segment path or accept a browsing path.
+                item.relativePath = safeRelativePath(sage.getMediaFileRelativePath(mf));
                 items.add(item);
             }
             Collections.sort(items, new Comparator<Item>() {
                 @Override
                 public int compare(Item a, Item b) { return Long.compare(b.start, a.start); }
             });
+            int total = items.size();
             if (items.size() > limit) items = items.subList(0, limit);
 
             StringBuilder out = new StringBuilder(16384);
-            out.append("{\"count\":").append(items.size()).append(",\"recordings\":[");
+            out.append("{\"count\":").append(items.size()).append(",\"total\":").append(total).append(",\"recordings\":[");
             for (int i = 0; i < items.size(); i++) {
                 if (i > 0) out.append(',');
                 Item x = items.get(i);
@@ -97,6 +104,7 @@ public class RecordingsServlet extends HttpServlet {
                    .append("\"channelNumber\":\"").append(HttpUtil.json(x.channelNumber)).append("\",")
                    .append("\"category\":\"").append(HttpUtil.json(x.category)).append("\",")
                    .append("\"year\":\"").append(HttpUtil.json(x.year)).append("\",")
+                   .append("\"relativePath\":\"").append(HttpUtil.json(x.relativePath)).append("\",")
                    .append("\"watched\":").append(x.watched).append(',')
                    .append("\"watchedCompletely\":").append(x.watchedCompletely).append(',')
                    .append("\"serverResumeSeconds\":").append(String.format(java.util.Locale.US, "%.3f", Math.max(0.0, x.serverResumeSeconds))).append(',')
@@ -114,6 +122,16 @@ public class RecordingsServlet extends HttpServlet {
         } catch (RuntimeException e) {
             HttpUtil.jsonError(response, 500, e.getMessage());
         }
+    }
+
+    static String safeRelativePath(String value) {
+        if (value == null || value.length() > 4096) return "";
+        String path = value.replace('\\', '/');
+        if (path.startsWith("/") || path.indexOf(':') >= 0) return "";
+        for (String part : path.split("/")) {
+            if (part.equals("..") || part.equals(".") || part.indexOf('\u0000') >= 0) return "";
+        }
+        return path;
     }
 
     private static String truncate(String s, int max) {

@@ -1,5 +1,13 @@
 # P10 Field acceptance checklist
 
+Current2026-11-19: WP10-004 explicit nonfirst fixture83871 now passes actual
+stock232 WebKit030512/Chromium031017 five rows each, title2/native11978ms/
+chapter1/new pictures/root and independent explicit IFO probe11.995s/three
+title-relative chapters. WEB091 corrects installed-plugin ffprobe lookup;
+normal-manager025903/stock20 unchanged. Compact WP10-004RESULT preserves
+setup failures, exact package and boundaries. Checklist below remains test
+guidance; do not read its old pending language as current absence of this proof.
+
 Use an unchanged SageTV library/database backup before any metadata repair experiment. Normal P10 inspection is read-only and requires no library changes.
 
 - Verify a VIDEO_TS MediaFile and a parent directory containing VIDEO_TS are classified as native DVD.

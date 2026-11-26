@@ -1,0 +1,2 @@
+/* Stock Info opens details; use TV/Play-Pause to expose its ordinary OSD. */
+(()=>{const s=window.__iphoneGate;if(!s?.api)throw Error('Missing owner');s.stockSetup='pending';s.api('command',{command:15}).then(()=>new Promise(r=>setTimeout(r,800))).then(()=>s.api('command',{command:7})).then(()=>s.api('command',{command:59})).then(()=>new Promise(r=>setTimeout(r,300))).then(()=>s.api('command',{command:59})).then(()=>s.stockSetup='ready').catch(()=>s.stockSetup='failed');return{syntheticSetup:[15,7,59,59],settingsChanged:false};})()

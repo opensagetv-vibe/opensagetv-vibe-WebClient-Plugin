@@ -53,7 +53,8 @@ final class TeletextSubtitleSession {
     private int selectedTrack=-1,preferredPage=-1;
     private String preferredLanguage="";
     private boolean enabled;
-    private long playbackAnchorMs,firstMediaPts=-1L;
+    private long playbackAnchorMs,firstMediaPts=-1L,latestMediaMs;
+    synchronized long latestMediaMs(){return latestMediaMs;}
     private long observeCalls,observedBytes,transportPackets,patSections,pmtSections,teletextDescriptors,teletextPesPackets,teletextDataUnits,emittedCues,clearCues,framingResets,continuityResets,duplicatePackets,malformedUnits,queueRejects;
     private final Map<Integer,Integer> continuity=new LinkedHashMap<Integer,Integer>();
 
@@ -104,7 +105,7 @@ final class TeletextSubtitleSession {
         if(token==null)return;this.token=token;this.playbackAnchorMs=Math.max(0L,anchorMs);clock.reset();resetFraming(true);resolveSelection();
     }
 
-    synchronized void discontinuity(long anchorMs){playbackAnchorMs=Math.max(0L,anchorMs);clock.reset();resetFraming(true);resolveSelection();}
+    synchronized void discontinuity(long anchorMs){playbackAnchorMs=Math.max(0L,anchorMs);latestMediaMs=playbackAnchorMs;clock.reset();resetFraming(true);resolveSelection();}
 
     synchronized void observe(String source,long absolutePosition,byte[] bytes,int offset,int length){
         if(bytes==null||length<=0||offset<0||offset>bytes.length-length)return;
@@ -173,7 +174,7 @@ final class TeletextSubtitleSession {
         if(control==1||control==3){Integer prior=continuity.get(Integer.valueOf(pid));if(prior!=null){int expected=(prior+1)&15;if(cc==prior&&!payloadStart){duplicatePackets++;return;}if(cc!=expected){continuityResets++;PesAssembler pa=pes.get(Integer.valueOf(pid));if(pa!=null)pa.reset();SectionAssembler sa=sections.get(Integer.valueOf(pid));if(sa!=null)sa.reset();}}continuity.put(Integer.valueOf(pid),Integer.valueOf(cc));}
         if(control!=1&&control!=3)return;int payload=start+4;if(control==3){if(payload>=start+188)return;int al=bytes[payload]&255;payload+=1+al;}int end=start+188;if(payload>=end)return;
         if(pid==0||pmtPids.contains(Integer.valueOf(pid))){SectionAssembler a=sections.get(Integer.valueOf(pid));if(a==null){a=new SectionAssembler();sections.put(Integer.valueOf(pid),a);}for(byte[] sec:a.consume(bytes,payload,end,payloadStart))parseSection(pid,sec);}
-        if(videoPids.contains(Integer.valueOf(pid))&&payloadStart){long pts=pesPts(bytes,payload,end);if(pts>=0&&firstMediaPts<0){firstMediaPts=pts;clock.anchor(pts,playbackAnchorMs);}}
+        if(videoPids.contains(Integer.valueOf(pid))&&payloadStart){long pts=pesPts(bytes,payload,end);if(pts>=0){if(firstMediaPts<0){firstMediaPts=pts;clock.anchor(pts,playbackAnchorMs);}latestMediaMs=Math.max(latestMediaMs,clock.sourcePtsToRecordingMs(pts));}}
         if(teletextPids.contains(Integer.valueOf(pid))){PesAssembler a=pes.get(Integer.valueOf(pid));if(a==null){a=new PesAssembler(pid);pes.put(Integer.valueOf(pid),a);}a.consume(bytes,payload,end,payloadStart);}
     }
 

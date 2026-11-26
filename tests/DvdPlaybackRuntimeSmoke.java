@@ -24,6 +24,7 @@ public final class DvdPlaybackRuntimeSmoke {
                 "-map","0:v","-map","1:a","-map","2:a","-c:v","mpeg2video","-b:v","1800k","-g","15",
                 "-c:a","ac3","-b:a","192k","-f","dvd",multi.toString()),30);
             testPhysicalAudioAndDrain(ffmpeg,multi);
+            testNoFlushContinuation(multi);
 
             Path still=root.resolve("still.vob");
             run(Arrays.asList(ffmpeg,"-hide_banner","-loglevel","error","-y","-f","lavfi","-i","color=blue:s=720x480:r=30000/1001",
@@ -41,7 +42,7 @@ public final class DvdPlaybackRuntimeSmoke {
             testCadence(ffmpeg,pal);
 
             testClockAndSpuIsolation();
-            System.out.println("DvdPlaybackRuntimeSmoke PASS "+pass+"/5");
+            System.out.println("DvdPlaybackRuntimeSmoke PASS "+pass+"/6");
         } finally { HlsSessionManager.stopAll(); delete(root.toFile()); }
     }
 
@@ -49,6 +50,10 @@ public final class DvdPlaybackRuntimeSmoke {
         DvdNativeSession dvd=new DvdNativeSession();dvd.init(0);
         byte[] sel=new byte[8];writeInt(sel,0,0);writeInt(sel,4,0xbd81);
         eq(0,dvd.setStream(sel),"physical second AC3 selector");
+        // The stock VM may send subpicture metadata after audio but before
+        // the converter starts. Audio must remain the physical second stream.
+        writeInt(sel,0,1);writeInt(sel,4,62);
+        eq(0,dvd.setStream(sel),"independent subtitle off before conversion");
         byte[] bytes=Files.readAllBytes(source);int pos=0;int first=Math.min(32768,bytes.length);
         dvd.push(push(bytes,0,first,0));pos=first;
         HlsSessionManager.Session hls=HlsSessionManager.startDvd(dvd);
@@ -63,8 +68,44 @@ public final class DvdPlaybackRuntimeSmoke {
         truth(z>0.03,"second authored 880Hz track selected, zero crossing rate="+z);
         truth(!HlsSessionManager.updateDvdBrowserProgress(hls,Math.max(0L,(long)(hls.hlsSeconds*1000.0)-900L)),"sub-threshold browser clock alone does not guess cell completion");
         truth(HlsSessionManager.updateDvdBrowserProgress(hls,Math.max(0L,(long)(hls.hlsSeconds*1000.0)-900L),true),"matching browser ended state marks decoder drained despite HLS duration rounding");
+        eq(-1,dvd.push(emptyPoll(0x80)),"stock terminal acknowledgement after actual converted/browser drain");
         eq(-2,dvd.push(emptyPoll(0x100)),"native drain sentinel after browser consumption");
         HlsSessionManager.stop(hls.id);dvd.close();pass++;
+    }
+
+    private static void testNoFlushContinuation(Path source) throws Exception {
+        // This stress case intentionally queues an entire PS after consumer
+        // EOF, unlike stock's <=32KiB/capacity-respecting wire writes. Keep its
+        // explicit large pipe; the default interactive budget is wire-tested.
+        DvdNativeSession dvd=new DvdNativeSession(4*1024*1024);dvd.init(0);
+        HlsSessionManager.Session old=null,next=null;
+        try {
+            byte[] bytes=Files.readAllBytes(source);
+            int first=Math.min(32768,bytes.length);dvd.push(push(bytes,0,first,0));
+            old=HlsSessionManager.startDvd(dvd);
+            int pos=first;while(pos<bytes.length){int n=Math.min(32768,bytes.length-pos);dvd.push(push(bytes,pos,n,0));pos+=n;}
+            dvd.push(emptyPoll(0x100));waitEnded(old,30000);
+            truth(old.playlistReady&&old.exitCode==0,"first real decoder ends cleanly");
+            long previous=dvd.generation();
+            // Stock may queue the next cell before the browser's final report.
+            dvd.push(push(bytes,0,bytes.length,0));
+            truth(dvd.generation()==previous,"next input cannot preempt undrained video");
+            truth(HlsSessionManager.updateDvdBrowserProgress(old,(long)(old.hlsSeconds*1000),true),"matching browser confirms old consumer");
+            dvd.push(emptyPoll(0));
+            truth(dvd.generation()==previous+1,"queued next cell reopens input without native FLUSH");
+            HlsSessionManager.stop(old.id);
+            next=HlsSessionManager.startDvd(dvd);dvd.push(emptyPoll(0x100));waitEnded(next,30000);
+            truth(next.playlistReady&&next.segments>0&&next.exitCode==0,"second real decoder publishes playable next-cell picture");
+            HlsSessionManager.updateDvdBrowserProgress(old,(long)(old.hlsSeconds*1000),true);
+            truth(!dvd.input().drainReady(),"retired browser cannot drain replacement");
+            truth(HlsSessionManager.updateDvdBrowserProgress(next,(long)(next.hlsSeconds*1000),true),"matching next browser confirms continuation");
+            eq(-2,dvd.push(emptyPoll(0x100)),"second complete consumer drains");
+            eq(bytes.length*2L,dvd.input().totalRead(),"two consumers consume every accepted PS byte exactly once");
+            truth(dvd.json().contains("\"continuations\":1")&&dvd.json().contains("\"flushes\":0"),"real continuation is not disguised as a server FLUSH");
+            pass++;
+        } finally {
+            if(old!=null)HlsSessionManager.stop(old.id);if(next!=null)HlsSessionManager.stop(next.id);dvd.close();
+        }
     }
 
     private static void testShortCell(Path source,boolean expectVideo) throws Exception {

@@ -7,16 +7,20 @@ import java.util.function.Function;
 
 /** Immutable, per-browser/per-session policy. Never changes JVM-wide FFmpeg or MIM configuration. */
 final class StreamOptions {
-    final String player, videoMode, encoder, resolution, fps, deinterlace, audioCodec, audioChannels, audioFallback;
+    final String player, videoMode, encoder, resolution, fps, deinterlace, deinterlaceFilter, audioCodec, audioChannels, audioFallback;
     final String audioLanguage, captions, captionLanguage, subtitleLanguage, captionAuthority, subtitleMode;
     final int profileSchemaVersion, videoKbps, keyFrameSeconds, bFrames, audioKbps, audioTrack, audioOffsetMs, captionService, captionPage, captionPid, captionCompositionPage, captionOffsetMs, subtitleTrack, subtitleOffsetMs;
-    final boolean allowFallback, hevcSupported, ac3Supported, subtitleForcedOnly;
+    final boolean allowFallback, hevcSupported, ac3Supported, subtitleForcedOnly, nativeHlsSupported, browserCaptionRendering,companionDvd,runtimeBitrateControl;
     private final Map<String,String> values;
+    final boolean adaptiveQuality;
+    final int adaptiveMinimumKbps;
 
     private StreamOptions(Function<String,String> read) {
         Map<String,String> v = new LinkedHashMap<String,String>();
         profileSchemaVersion=number(read,v,"profileSchemaVersion",8,1,8);
-        player = choice(read,v,"player","auto","auto","mpegts","hls");
+        String selectedPlayer = choice(read,v,"player","auto","auto","mpegts","hls","native");
+        player = Boolean.parseBoolean(get(read,"adaptiveQuality","false"))&&!"native".equals(selectedPlayer)?"hls":selectedPlayer;
+        v.put("player",player);
         String requestedVideoMode = choice(read,v,"videoMode","auto","auto","transcode","copy","mpeg2copy");
         // v3.2.18/early-3.2.19 test builds exposed mpeg2copy separately.  Keep
         // accepting it so saved browser profiles migrate cleanly, but the
@@ -27,7 +31,12 @@ final class StreamOptions {
         resolution = choice(read,v,"resolution","source","source","480","720","1080","2160");
         fps = choice(read,v,"fps","source","source","23.976","24","25","29.97","30","50","59.94","60");
         deinterlace = choice(read,v,"deinterlace","auto","auto","on","off");
+        deinterlaceFilter = choice(read,v,"deinterlaceFilter","auto","auto","yadif","bwdif");
         videoKbps = number(read,v,"videoKbps",8000,250,50000);
+        adaptiveQuality=bool(read,v,"adaptiveQuality",false);
+        adaptiveMinimumKbps=number(read,v,"adaptiveMinimumKbps",250,250,50000);
+        if(adaptiveMinimumKbps>videoKbps)throw new IllegalArgumentException("Minimum bitrate exceeds Maximum bitrate");
+        runtimeBitrateControl=bool(read,v,"runtimeBitrateControl",false);
         keyFrameSeconds = number(read,v,"keyFrameSeconds",1,1,10);
         bFrames = number(read,v,"bFrames",0,0,3);
         audioCodec = choice(read,v,"audioCodec","auto","auto","aac","ac3","copy");
@@ -60,6 +69,10 @@ final class StreamOptions {
         allowFallback = bool(read,v,"allowFallback",true);
         hevcSupported = bool(read,v,"hevcSupported",false);
         ac3Supported = bool(read,v,"ac3Supported",false);
+        nativeHlsSupported = bool(read,v,"nativeHlsSupported",false);
+        browserCaptionRendering = bool(read,v,"browserCaptionRendering",false);
+        companionDvd=bool(read,v,"companionDvd",false);
+        if("native".equals(player)&&!nativeHlsSupported)throw new IllegalArgumentException("Native HLS is not reported by this browser; choose Automatic or HLS instead");
         values=java.util.Collections.unmodifiableMap(v);
     }
     static StreamOptions defaults() { return new StreamOptions(k -> null); }
@@ -75,18 +88,52 @@ final class StreamOptions {
         next.put("player","hls");next.put("videoMode","transcode");if(!"copy".equals(audioCodec))next.put("audioCodec","aac");
         return fromMap(next);
     }
+    /** Only proven Copy decode failures bypass the ordinary Copy-preserving
+     * TS transport fallback. The caller still owns permission/one-shot checks. */
+    StreamOptions compatibilityFallback(boolean ts,boolean videoDecodeFailure) {
+        return ts&&!(videoDecodeFailure&&"copy".equals(videoMode))?hlsFallback():transcodeFallback();
+    }
     /** DVD-Video is MPEG-2 pushed by stock MiniDVDPlayer and browsers do not
      * reliably decode that video codec.  Always convert DVD video to H.264 and
      * audio to AAC, while preserving the user's encoder/quality choices. */
     StreamOptions forDvdTranscode() {
         Map<String,String> next=new LinkedHashMap<String,String>(values);
-        next.put("player","hls");
+        next.put("player",nativeHlsSupported&&("auto".equals(player)||"native".equals(player))?"native":"hls");
         next.put("videoMode","transcode");
         next.put("audioCodec","aac");
+        next.put("captions","off");next.put("captionAuthority","off");
+        next.put("subtitleMode","off");next.put("audioTrack","-1");
         return fromMap(next);
     }
     StreamOptions forNextRecording(){Map<String,String> m=new LinkedHashMap<String,String>(values);m.put("audioTrack","-1");m.put("subtitleTrack","-1");return fromMap(m);}
-    boolean ts() { return !"hls".equals(player); }
+    /** Session-only reduction. All track, caption, GPU and offset choices
+     * stay owned by the active stream; no browser form/default is reapplied. */
+    StreamOptions reducedQuality(int kbps,int height){
+        if(kbps<250||kbps>=videoKbps)throw new IllegalArgumentException("Quality must reduce the active bitrate");
+        if(height!=0&&height!=480&&height!=720&&height!=1080&&height!=2160)throw new IllegalArgumentException("Invalid quality height");
+        Map<String,String> next=new LinkedHashMap<String,String>(values);
+        next.put("videoKbps",Integer.toString(kbps));
+        if(height>0){int existing="source".equals(resolution)?Integer.MAX_VALUE:Integer.parseInt(resolution);next.put("resolution",Integer.toString(Math.min(existing,height)));}
+        return fromMap(next);
+    }
+    /** Optional handoff may recover quality, but never exceed the user's
+     * configured ceiling or reapply unrelated tracks/captions/offsets. Legacy
+     * reducedQuality remains down-only for callers with the older contract. */
+    StreamOptions handoffQuality(int kbps,int height,StreamOptions ceiling){
+        if(ceiling==null||kbps<250||kbps>ceiling.videoKbps||kbps==videoKbps)
+            throw new IllegalArgumentException("Quality must change within the configured ceiling");
+        if(height!=0&&height!=480&&height!=720&&height!=1080&&height!=2160)
+            throw new IllegalArgumentException("Invalid quality height");
+        Map<String,String> next=new LinkedHashMap<String,String>(values);
+        next.put("videoKbps",Integer.toString(kbps));
+        if(height>0){
+            int limit="source".equals(ceiling.resolution)?Integer.MAX_VALUE:Integer.parseInt(ceiling.resolution);
+            if(kbps<videoKbps)limit=Math.min(limit,"source".equals(resolution)?Integer.MAX_VALUE:Integer.parseInt(resolution));
+            next.put("resolution",Integer.toString(Math.min(limit,height)));
+        }
+        return fromMap(next);
+    }
+    boolean ts() { return !"hls".equals(player)&&!"native".equals(player)&&!("auto".equals(player)&&nativeHlsSupported); }
     boolean captionsEnabled() { return "608".equals(captions)||"708".equals(captions); }
     boolean teletextEnabled() { return "teletext".equals(captions); }
     boolean dvbEnabled() { return "dvb".equals(captions); }

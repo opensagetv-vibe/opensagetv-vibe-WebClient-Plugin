@@ -1,0 +1,1 @@
+(()=>{const s=window.__vibeFocusProbe;if(!s?.done)throw Error('Focus probe not finished');if(!s.restored)throw Error('Probe ownership changed; do not overwrite another owner');delete window.__vibeFocusProbe;return s;})()

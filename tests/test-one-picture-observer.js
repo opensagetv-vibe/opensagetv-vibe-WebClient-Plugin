@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('node:assert/strict'),observe=require('./fixtures/one-picture-frame-observer.js');
+let callback;const v={currentSrc:'',currentTime:0,readyState:0,videoWidth:0,requestVideoFrameCallback:f=>callback=f};
+const s=observe(v);
+v.currentSrc='menu';v.readyState=2;v.videoWidth=720;v.currentTime=.033;callback(0,{mediaTime:.033});
+assert.equal(s.frames,1);assert.equal(s.frameTime,.033);
+s.before='menu';s.frames=0;callback(0,{mediaTime:.033});assert.equal(s.frames,0);
+v.currentSrc='feature';v.currentTime=2;callback(0,{mediaTime:2});assert.equal(s.frames,1);
+s.before='feature';s.frames=0;v.currentSrc='root';v.currentTime=0;v.readyState=0;v.videoWidth=0;
+callback(0,{mediaTime:5});assert.equal(s.frames,0);assert.equal(s.active,'root');
+v.readyState=2;v.videoWidth=720;v.currentTime=.033;callback(0,{mediaTime:5});assert.equal(s.frames,0);
+callback(0,{mediaTime:.033});assert.equal(s.frames,1);assert.equal(s.frameTime,.033);
+s.done=true;callback(0,{mediaTime:.033});assert.equal(s.frames,1);
+console.log('PASS one-picture observer: first frame, old source, new epoch, undecoded source, stale callback, actual root and teardown');

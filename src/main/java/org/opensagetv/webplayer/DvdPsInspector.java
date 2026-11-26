@@ -13,6 +13,7 @@ final class DvdPsInspector {
     private int tailLen;
     private long packHeaders,videoPes,audioPes,privatePes,spuPes,pictureStarts,sequenceEnds;
     private long mappedAvPts90k=-1,rawAvPts90k=-1;
+    private int videoWidth,videoHeight;
     private final Set<Integer> audioIds=new LinkedHashSet<Integer>();
 
     synchronized void resetEpoch(){
@@ -20,12 +21,24 @@ final class DvdPsInspector {
         mappedAvPts90k=rawAvPts90k=-1;audioIds.clear();
     }
 
+    synchronized void resetSource(){resetEpoch();videoWidth=videoHeight=0;}
+    synchronized int subtitleCanvasHeight(){return videoHeight==576?576:480;}
+
     synchronized void observe(byte[] source,int offset,int length,DvdPtsClock clock){
         if(source==null||length<=0||offset<0||offset+length>source.length)return;
         int previousTailLen=tailLen;
         int total=previousTailLen+length;
         byte[] data=new byte[total];
         System.arraycopy(tail,0,data,0,previousTailLen);System.arraycopy(source,offset,data,previousTailLen,length);
+        // INIT's argument describes the display aspect, NOT PAL/NTSC. Read
+        // the authored MPEG-2 sequence raster, including headers split across
+        // PUSH packets. Keep this source geometry across decoder/cell epochs.
+        for(int i=Math.max(0,previousTailLen-6);i+6<total;i++){
+            if(data[i]!=0||data[i+1]!=0||data[i+2]!=1||(data[i+3]&255)!=0xb3)continue;
+            int w=((data[i+4]&255)<<4)|((data[i+5]&255)>>>4);
+            int h=((data[i+5]&15)<<8)|(data[i+6]&255);
+            if((w==720||w==704||w==352)&&(h==480||h==576)){videoWidth=w;videoHeight=h;}
+        }
         // Rescan only the last three bytes of the previous tail so start codes
         // split across PUSHBUFFER boundaries are seen once without counting
         // already-accounted PES/picture headers a second time.
@@ -94,6 +107,6 @@ final class DvdPsInspector {
     synchronized long mappedAvPts90k(){return mappedAvPts90k;}
     synchronized String json(){
         StringBuilder ids=new StringBuilder("[");boolean first=true;for(Integer id:audioIds){if(!first)ids.append(',');first=false;ids.append(id);}ids.append(']');
-        return "{\"packs\":"+packHeaders+",\"videoPes\":"+videoPes+",\"audioPes\":"+audioPes+",\"privatePes\":"+privatePes+",\"spuPes\":"+spuPes+",\"pictures\":"+pictureStarts+",\"sequenceEnds\":"+sequenceEnds+",\"rawAvPts90k\":"+rawAvPts90k+",\"mappedAvPts90k\":"+mappedAvPts90k+",\"audioIds\":"+ids+"}";
+        return "{\"packs\":"+packHeaders+",\"videoPes\":"+videoPes+",\"audioPes\":"+audioPes+",\"privatePes\":"+privatePes+",\"spuPes\":"+spuPes+",\"pictures\":"+pictureStarts+",\"sequenceEnds\":"+sequenceEnds+",\"rawAvPts90k\":"+rawAvPts90k+",\"mappedAvPts90k\":"+mappedAvPts90k+",\"videoWidth\":"+videoWidth+",\"videoHeight\":"+videoHeight+",\"audioIds\":"+ids+"}";
     }
 }

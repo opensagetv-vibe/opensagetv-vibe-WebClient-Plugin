@@ -1,0 +1,2 @@
+/* Only after independent API proof that the approved test playback is stopped. */
+(()=>{const videos=[...document.querySelectorAll('video')];if(videos.some(v=>!v.paused))throw Error('Refuse reload while playing');for(const v of videos){v.pause();v.removeAttribute('src');v.load()}setTimeout(()=>location.reload(),200);return{reloadScheduled:true,clearedOnlyPausedTestSources:true}})()

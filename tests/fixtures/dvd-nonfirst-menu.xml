@@ -1,0 +1,6 @@
+<subpictures><stream>
+  <spu start="00:00:00.00" end="00:00:30.00" highlight="highlight.png" select="highlight.png">
+    <button name="main" x0="82" y0="140" x1="638" y1="184" up="extra" down="extra" left="main" right="main"/>
+    <button name="extra" x0="82" y0="220" x1="638" y1="264" up="main" down="main" left="extra" right="extra"/>
+  </spu>
+</stream></subpictures>

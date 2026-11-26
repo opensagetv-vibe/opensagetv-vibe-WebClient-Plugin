@@ -9,6 +9,11 @@ final class AuthorizedMediaResolver {
     static final class Resolution {
         final Object mediaFile; final File requested; final File matched; final String mode;
         Resolution(Object mediaFile,File requested,File matched,String mode){this.mediaFile=mediaFile;this.requested=requested;this.matched=matched;this.mode=mode;}
+        int segment(SageApiBridge sage){
+            List<File> files=new ArrayList<File>();
+            for(int i=0;i<sage.getNumberOfSegments(mediaFile);i++)files.add(sage.getFileForSegment(mediaFile,i));
+            return NativeRecordingSegment.index(matched,files);
+        }
     }
     private AuthorizedMediaResolver() {}
 

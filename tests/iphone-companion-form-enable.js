@@ -1,0 +1,2 @@
+/* Synthetic production-form setup, not a native picker/finger claim. */
+(()=>{const s=window.__iphoneGate,$=id=>document.getElementById(id);if(!s||s.companionForm||localStorage.getItem('sagetvWebStreaming.v1')!==s.streaming)throw Error('Missing/changed checkpoint');s.companionForm={streaming:s.streaming,captions:localStorage.getItem('sagetvWebCaptionAuthority.v1')};$('remoteSettings').click();$('stream_companionDvd').checked=true;$('saveStreaming').click();return{syntheticFormSave:true,temporaryCompanionOptIn:true};})()

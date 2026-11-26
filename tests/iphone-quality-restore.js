@@ -1,0 +1,1 @@
+(()=>{const s=window.__iphoneGate,t=s?.quality,b=document.getElementById('stream_videoKbps');if(!t||JSON.parse(t.raw).videoKbps!==1000||b.value!=='700')throw Error('Expected only owned temporary700kbps');t.lowSource=videoPlane.currentSrc;b.value='1000';b.dispatchEvent(new Event('input',{bubbles:true}));return{restoreOriginalUiProfile:true,targetKbps:1000};})()

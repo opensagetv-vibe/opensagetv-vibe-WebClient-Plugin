@@ -11,6 +11,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class DiagnosticSupportServlet extends HttpServlet {
     @Override protected void doGet(HttpServletRequest req,HttpServletResponse resp)throws IOException{
         String action=param(req,"action","status");
+        if("streamHealth".equals(action)){json(resp,StreamHealthDiagnostics.json(param(req,"hlsSession","")));return;}
+        if("streamJournal".equals(action)){byte[] data=StreamHealthDiagnostics.journal();resp.setContentType("application/x-ndjson");resp.setHeader("Cache-Control","no-store");resp.setHeader("Content-Disposition","attachment; filename=\"stream-health.jsonl\"");resp.setContentLength(data.length);resp.getOutputStream().write(data);return;}
         if(!"status".equals(action)){resp.setHeader("Allow","GET, POST");HttpUtil.jsonError(resp,405,"Use POST for diagnostic mutations");return;}
         json(resp,DiagnosticSupport.statusJson());
     }

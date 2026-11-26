@@ -1,4 +1,65 @@
 :root{color-scheme:dark;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#000;color:#fff;--ui-aspect:1.77777778}
+/* WEB-074: portrait is a TV picture above a modeless browser deck. Keep all
+   native graphics/video/pointer transforms inside the aspect-correct stage. */
+.mc-mobile-dock{position:relative;flex:1 1 0;min-height:0;min-width:0;display:flex;flex-direction:column;background:#101821;padding-bottom:env(safe-area-inset-bottom)}
+.mc-mobile-tabs{display:flex;flex:none;border-bottom:1px solid #53677a}
+.mc-mobile-tabs button{flex:1;min-width:0;min-height:44px;padding:4px;font-size:clamp(12px,3.3vw,16px);border-radius:0;border:0;background:#17222e}
+.mc-mobile-tabs [aria-selected="true"]{background:#00695c;box-shadow:inset 0 -3px #80cbc4}
+.mc-settings-card>label.mc-portrait-spacing{display:grid;grid-template-columns:minmax(0,1fr)6rem;align-items:center}
+.mc-portrait-spacing input{width:100%;min-width:0}.mc-portrait-spacing small{grid-column:1/-1}
+.mc-mobile-page{flex:1;min-height:0;min-width:0;display:flex;flex-direction:column}
+.mc-mobile-search{display:flex;gap:8px;padding:8px;flex:none}.mc-mobile-search input{width:0;min-width:0;flex:1;min-height:44px;font-size:16px}.mc-mobile-search button{min-height:44px}
+.mc-mobile-list-status{flex:none;margin:0;padding:0 8px 6px;font-size:13px;overflow-wrap:anywhere}
+.mc-mobile-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+.mc-mobile-item{display:flex;gap:8px;align-items:center;border-top:1px solid #384d60;padding:10px 8px}
+.mc-mobile-item>div{flex:1;min-width:0;overflow-wrap:anywhere}.mc-mobile-item strong,.mc-mobile-item span,.mc-mobile-item small{display:block}.mc-mobile-item small{color:#bbcad7;margin-top:4px}.mc-mobile-item p{font-size:13px;margin:6px 0 0}.mc-mobile-item button{flex:none;min-height:44px}
+.mc-mobile-browse{display:flex;align-items:center;gap:6px;padding:0 8px 6px;min-width:0;flex:none}
+.mc-mobile-browse select{min-height:44px;max-width:112px;font-size:16px;flex:none}
+.mc-mobile-crumbs{display:flex;min-width:0;overflow-x:auto;gap:4px;white-space:nowrap}
+.mc-mobile-crumbs button{min-height:44px;flex:none}.mc-mobile-crumbs button:disabled{opacity:1;color:#80cbc4}
+.mc-mobile-folder{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;min-height:52px;text-align:left;border-radius:0;border-width:1px 0 0;border-color:#384d60;padding:8px}
+.mc-mobile-folder strong{overflow-wrap:anywhere}.mc-mobile-folder small{flex:none;color:#bbcad7}
+.mc-mobile-guide-range{display:flex;gap:6px;padding:0 8px 6px;flex:none}.mc-mobile-guide-range button{flex:1;min-height:44px}
+.mc-mobile-list.mc-mobile-guide{touch-action:pan-x pan-y;position:relative;min-height:100px;scroll-padding:38px 0 0 104px}
+.mc-mobile-guide-grid{position:relative;min-width:100%;background:#0c131b}
+.mc-mobile-guide-header,.mc-mobile-guide-row{display:flex;width:100%;position:relative}
+.mc-mobile-guide-header{position:sticky;top:0;z-index:3;height:38px;background:#203342}
+.mc-mobile-channel{position:sticky;left:0;z-index:2;width:104px;min-width:104px;box-sizing:border-box;padding:6px;background:#203342;border:1px solid #53677a;overflow:hidden;overflow-wrap:anywhere}
+.mc-mobile-channel img{display:block;width:48px;height:25px;object-fit:contain;float:right}.mc-mobile-channel strong,.mc-mobile-channel small{display:block}
+.mc-mobile-channel small{font-size:11px}.mc-mobile-guide-header>.mc-mobile-channel{z-index:4}
+.mc-mobile-guide-times{position:relative;height:38px;flex:none}.mc-mobile-guide-times span{position:absolute;top:0;bottom:0;width:180px;padding:8px;box-sizing:border-box;border-left:1px solid #53677a;font-size:13px}
+.mc-mobile-guide-row{height:88px}.mc-mobile-guide-track{position:relative;flex:none;border-bottom:1px solid #53677a}
+.mc-mobile-program{position:absolute;top:0;height:87px;min-width:0;box-sizing:border-box;border:1px solid #53677a;border-radius:3px;overflow:hidden;padding:8px;text-align:left;background:#17222e}
+.mc-mobile-program strong,.mc-mobile-program small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mc-mobile-program small{margin-top:6px;color:#bbcad7}
+.mc-mobile-program[aria-pressed="true"]{background:#00695c;border-color:#80cbc4}
+.mc-mobile-guide-details{position:absolute;left:0;right:0;bottom:env(safe-area-inset-bottom);z-index:5;max-height:calc(100% - 44px);overflow:auto;border-top:2px solid #80cbc4;background:#101821;box-shadow:0 -8px 16px #0008}.mc-mobile-guide-details .mc-mobile-item{border:0}
+.mc-mobile-detail-close{position:sticky;top:0;z-index:1;min-height:44px;width:100%;background:#203342}
+.mc-mobile-item>.mc-mobile-item-actions{display:flex;flex:0 0 auto;flex-direction:column;gap:6px;min-width:64px}.mc-mobile-item-actions button{min-height:44px}
+body.mc-portrait-dock .mc-stage{flex:0 0 auto;height:auto;aspect-ratio:var(--mobile-stage-aspect,1.77777778);max-height:none}
+/* Home Screen black-translucent status bars overlay the layout viewport.
+   Reserve their actual inset above BOTH STV and video, not inside either
+   transform. Safari's visible toolbar already owns its inset. */
+body.mc-portrait-dock .mc-app{padding-top:var(--mobile-extra-top,24px)}
+body.mc-portrait-dock.mc-standalone .mc-app{padding-top:calc(var(--mobile-safe-top,env(safe-area-inset-top,0px)) + var(--mobile-extra-top,24px))}
+body.mc-portrait-dock #mobilePage-controls{justify-content:flex-start;overflow:visible}
+body.mc-portrait-dock #remotePanel{position:relative;inset:auto;flex:none;min-height:252px;height:252px;overflow:visible;touch-action:auto}
+body.mc-portrait-dock #remotePanel .mc-remote-card{position:static;inset:auto;display:grid;grid-template-columns:repeat(6,44px);grid-template-rows:repeat(5,44px);gap:4px;justify-content:center;align-content:start;padding:8px;height:auto;min-height:0;overflow:visible;--nav-size:44px;pointer-events:auto;grid-template-areas:"gear help keyboard home info options" "back . up hide pgup exit" "previous left select right last ." "rewind . down . pgdn next" "stop pause play forward . ."}
+body.mc-portrait-dock #remotePanel :is(.vibe-top,.vibe-top-right,.vibe-middle,.vibe-dpad,.vibe-pages,.vibe-bottom,.vibe-keyboard,.vibe-transport,.vibe-utilities,.vibe-phone-navigation,.vibe-phone-info){display:contents;position:static;margin:0;padding:0}
+body.mc-portrait-dock .vibe-icon{grid-column:auto!important;grid-row:auto!important}
+body.mc-portrait-dock #phoneToolsToggle{grid-area:gear!important}body.mc-portrait-dock #remoteHelp{grid-area:help!important}body.mc-portrait-dock #keyboardToggle{grid-area:keyboard!important}
+body.mc-portrait-dock #nav_home{grid-area:home!important}body.mc-portrait-dock #nav_info{grid-area:info!important}body.mc-portrait-dock #nav_options{grid-area:options!important}body.mc-portrait-dock #nav_back{grid-area:back!important}
+body.mc-portrait-dock #nav_up{grid-area:up!important}body.mc-portrait-dock #nav_left{grid-area:left!important}body.mc-portrait-dock #nav_select{grid-area:select!important}body.mc-portrait-dock #nav_right{grid-area:right!important}body.mc-portrait-dock #nav_down{grid-area:down!important}
+body.mc-portrait-dock #nav_pgup{grid-area:pgup!important}body.mc-portrait-dock #nav_pgdn{grid-area:pgdn!important}body.mc-portrait-dock #nav_last{grid-area:last!important}body.mc-portrait-dock #hideRemote{grid-area:hide!important}body.mc-portrait-dock #closeRemote{grid-area:exit!important}
+body.mc-portrait-dock #nav_media_skip_back_2{grid-area:previous!important}body.mc-portrait-dock #nav_media_skip_back{grid-area:rewind!important}body.mc-portrait-dock #nav_media_skip_forward_2{grid-area:next!important}body.mc-portrait-dock #nav_media_skip_forward{grid-area:forward!important}
+body.mc-portrait-dock #nav_media_stop{grid-area:stop!important}body.mc-portrait-dock #nav_media_pause{grid-area:pause!important}body.mc-portrait-dock #nav_media_play{grid-area:play!important}
+body.mc-portrait-dock #phoneTools{position:fixed;z-index:35;left:8px;right:auto;top:auto;bottom:max(12px,env(safe-area-inset-bottom));padding:4px;width:96px;height:184px;background:#101821;border:1px solid #53677a}
+body.mc-portrait-dock #phoneTools .vibe-icon{grid-area:auto!important}
+body.mc-portrait-dock #remotePanel :is(.vibe-drawer,.mc-keyboard){position:absolute;z-index:36;top:0;left:50%;transform:translateX(-50%);max-height:100%}
+.mc-timeline input[type=range]{min-height:44px;touch-action:pan-y}
+.mc-timeline-actions{display:flex;gap:8px;flex-wrap:wrap}.mc-timeline-actions button{min-height:44px}
+.mc-timeline-markers{height:8px;position:relative;overflow:hidden}.mc-timeline-markers span{position:absolute;top:0;height:8px;background:#dbaa45;min-width:2px}
+#timelinePreview{margin:6px 0}#timelinePreview img{display:block;max-width:192px;max-height:108px;object-fit:contain}
+#timelinePhase{overflow-wrap:anywhere}
 *{box-sizing:border-box}[hidden]{display:none!important}
 html,body{margin:0;width:100%;height:100%;background:#000}body{overflow:hidden}
 button,.mc-link,select,input{font:inherit;color:#eaf2fa;background:#17222e;border:1px solid #53677a;border-radius:8px;padding:.48rem .72rem;text-decoration:none}
@@ -15,8 +76,19 @@ button,.mc-link,select{cursor:pointer}button:focus-visible,.mc-link:focus-visibl
 .mc-video{display:block;object-fit:contain;background:#000;width:100%;height:100%;pointer-events:none}
 .mc-dvd-still{position:absolute;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;background:#000}
 .mc-message{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);padding:.7rem 1rem;background:rgba(0,0,0,.78);border:1px solid rgba(255,255,255,.25);border-radius:9px;max-width:85%;text-align:center;pointer-events:none}.mc-message:empty{display:none}
+/* Recovery belongs to the stage, not the compact/hidden toolbar. Keep it
+   reachable in phone, standalone, render-only and native fullscreen layouts. */
+.mc-connection-recovery{position:absolute;z-index:45;left:50%;top:50%;transform:translate(-50%,-50%);width:min(30rem,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;padding:16px;border:1px solid #8cc8ff;border-radius:12px;background:#101821f5;touch-action:pan-y;overflow-wrap:anywhere}
+.mc-connection-recovery>div{display:flex;gap:8px;flex-wrap:wrap}.mc-connection-recovery button{min-height:44px}
+.mc-exit-dialog{width:min(28rem,calc(100% - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid #8cc8ff;border-radius:12px;padding:18px;background:#101821;color:#fff}.mc-exit-dialog::backdrop{background:rgba(0,0,0,.55)}.mc-exit-dialog h2,#clientExited h2{margin:0 0 12px;font-size:1.1rem}.mc-exit-dialog button{min-width:90px;min-height:44px}
+body.mc-connection-lost #osdMessage{display:none}
 .mc-autoplay{position:absolute;z-index:6;left:50%;top:70%;transform:translate(-50%,-50%);font-weight:700}
-.mc-stats{position:absolute;z-index:5;left:.5rem;bottom:.5rem;max-width:95%;max-height:55%;overflow:hidden;margin:0;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:rgba(0,0,0,.74);padding:.5rem;border-radius:5px;pointer-events:none}
+.mc-stats{position:absolute;z-index:5;left:.5rem;bottom:.5rem;max-width:95%;max-height:55%;overflow:auto;margin:0;font:12px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:rgba(0,0,0,.74);padding:.5rem;border-radius:5px;pointer-events:none}
+.mc-stats pre{margin:0;white-space:pre-wrap;font:inherit}
+.mc-gauges{display:grid;width:100%;max-width:22rem;gap:.2rem;margin-bottom:.35rem;white-space:normal;font-size:.75rem}
+.mc-gauge{display:grid;grid-template-columns:minmax(0,1fr) minmax(4rem,7rem);gap:.1rem .4rem;align-items:center;min-width:0}
+.mc-gauge meter{width:100%;height:.4rem;accent-color:#55c48b}
+.mc-gauge small{grid-column:1/-1;color:#b8c5d0}
 .mc-remote-overlay,.mc-settings-overlay{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:max(.6rem,env(safe-area-inset-top)) max(.6rem,env(safe-area-inset-right)) max(.6rem,env(safe-area-inset-bottom)) max(.6rem,env(safe-area-inset-left));background:rgba(0,0,0,.10);touch-action:auto}
 .mc-remote-card,.mc-settings-card{width:min(46rem,96vw);max-height:94vh;max-height:94dvh;overflow:auto;padding:.8rem;background:rgba(12,19,27,.80);border:1px solid rgba(170,205,235,.6);border-radius:14px;box-shadow:0 12px 35px rgba(0,0,0,.4)}
 .mc-panel-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.7rem}.mc-panel-header button{padding:.3rem .7rem}
@@ -41,6 +113,8 @@ body.mc-fullscreen .mc-app,body.mc-render-only .mc-app{height:100vh;height:100dv
 .mc-dvb-captions{position:absolute;left:0;top:0;z-index:2;pointer-events:none;background:transparent}.mc-local-captions{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden;font-family:monospace;font-size:clamp(12px,2.4vw,36px);white-space:pre-wrap;text-shadow:1px 1px 2px #000}
 .mc-local-captions .caption-608{position:absolute;bottom:6%;left:50%;transform:translateX(-50%);max-width:94%;background:rgba(0,0,0,.8);text-align:center;line-height:1.2;padding:.12em .3em}
 .mc-local-captions .caption-708-window{position:absolute;line-height:1.15;max-width:96%;padding:.08em .18em;white-space:pre-wrap}
+.mc-local-captions .caption-cea-grid{width:32ch;text-align:left;white-space:pre;box-sizing:content-box;padding:0;overflow:hidden}
+.mc-local-captions .caption-708-window{box-sizing:content-box;padding:0;text-align:left;white-space:pre;overflow:hidden}
 .mc-settings-card .mc-panel-header{position:sticky;top:-.8rem;z-index:2;background:#0c131b;padding:.6rem 0}
 
 /* A failed render-only/fullscreen session must never hide its recovery tools. */
@@ -51,6 +125,11 @@ body.mc-connection-lost .mc-status{color:#ffc9be}
    uses #A0000000 buttons on a transparent full-screen, non-dimming overlay. */
 .mc-remote-overlay{position:absolute;inset:0;z-index:30;padding:0;background:transparent;display:block;overflow:hidden;touch-action:none}
 .mc-remote-card{--nav-size:clamp(44px,4.2vw,64px);position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:hidden;pointer-events:none}
+/* Watch live participates in the desktop playback flex row; phone layouts
+   move the same bound button beside their gear or into the portrait grid. */
+body.mc-portrait-dock #remoteLive{position:static;grid-column:5!important;grid-row:5!important}
+#remoteCast{display:none}
+body.mc-portrait-dock #remoteCast{display:grid;position:static;grid-column:6!important;grid-row:5!important}
 .vibe-top{position:absolute;top:max(4px,env(safe-area-inset-top));left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));display:flex;justify-content:space-between;align-items:start}
 .vibe-top-right,.vibe-transport{display:flex}
 .vibe-icon{width:var(--nav-size);height:var(--nav-size);min-width:0;min-height:0;display:grid;place-items:center;padding:calc(var(--nav-size)*5/45);margin:0;border:0;border-radius:0;background:#000000a0;color:#fff;pointer-events:auto;touch-action:none}
@@ -62,6 +141,43 @@ body.mc-connection-lost .mc-status{color:#ffc9be}
 .vibe-bottom{position:absolute;left:max(4px,env(safe-area-inset-left));right:max(4px,env(safe-area-inset-right));bottom:max(4px,env(safe-area-inset-bottom));display:flex;align-items:end;justify-content:space-between;gap:4px}
 .vibe-keyboard{width:calc(var(--nav-size)*3)}
 .vibe-utilities{display:grid;grid-template-columns:repeat(6,var(--nav-size));grid-template-rows:repeat(2,var(--nav-size))}
+.vibe-phone-navigation{display:flex;flex:none}
+.vibe-phone-info{position:relative;display:flex;flex:none;width:var(--nav-size);height:var(--nav-size);pointer-events:none}
+/* Rotate the Android utility rows into two four-icon columns: diagnostics
+   above the bottom gear, aspect/Video/Audio/CC immediately to their left.
+   Both columns end above the gear, so CC never scrolls underneath it. */
+.vibe-phone-tools{position:absolute;right:0;bottom:100%;display:grid;grid-template-columns:repeat(2,var(--nav-size));grid-template-rows:repeat(4,var(--nav-size));width:calc(var(--nav-size)*2);pointer-events:auto}
+.vibe-phone-tools>.vibe-icon:nth-child(-n+4){grid-column:2!important}
+.vibe-phone-tools>.vibe-icon:nth-child(n+5){grid-column:1!important}
+.vibe-phone-tools>.vibe-icon:nth-child(4n+1){grid-row:1!important}
+.vibe-phone-tools>.vibe-icon:nth-child(4n+2){grid-row:2!important}
+.vibe-phone-tools>.vibe-icon:nth-child(4n+3){grid-row:3!important}
+.vibe-phone-tools>.vibe-icon:nth-child(4n){grid-row:4!important}
+/* Operator reference: left tool rail, Keyboard/transport/navigation bottom
+   band, arrow pad bottom-right and pages above it. Reserve real safe-area
+   space rather than scaling icons or copying the mockup's pasted graphics. */
+.mc-remote-card.vibe-phone-layout{--nav-size:44px;--phone-left:max(4px,env(safe-area-inset-left));--phone-right:max(4px,env(safe-area-inset-right));--phone-bottom:max(4px,env(safe-area-inset-bottom));--phone-pad-right:max(4px,calc(var(--phone-right) - var(--nav-size)));min-height:368px}
+.vibe-phone-layout .vibe-top{left:var(--phone-left);right:var(--phone-right);justify-content:flex-end}
+.vibe-phone-layout .vibe-middle{inset:0;display:block}
+.vibe-phone-layout .vibe-dpad{position:absolute;right:var(--phone-pad-right);bottom:var(--phone-bottom);grid-template-rows:repeat(3,var(--nav-size))}
+.vibe-phone-layout .vibe-pages{position:absolute;right:calc(var(--phone-pad-right) + var(--nav-size));bottom:calc(var(--phone-bottom) + var(--nav-size)*3 + 8px)}
+.vibe-phone-layout #nav_up{grid-row:1!important}
+.vibe-phone-layout #nav_left,.vibe-phone-layout #nav_select,.vibe-phone-layout #nav_right{grid-row:2!important}
+.vibe-phone-layout #nav_down{grid-row:3!important}
+/* Leave the column below Left empty between Back and the bottom Down arrow. */
+.vibe-phone-layout .vibe-bottom{left:var(--phone-left);right:calc(var(--phone-pad-right) + var(--nav-size)*3);bottom:var(--phone-bottom);display:block}
+.vibe-phone-layout .vibe-keyboard,.vibe-phone-layout .vibe-utilities{display:none}
+.vibe-phone-layout .vibe-transport{flex-wrap:wrap;justify-content:flex-end}
+/* In portrait the bottom band needs multiple rows. Put the pad/pages above
+   that band instead of overlapping controls or reducing44px hit targets. */
+@media(max-width:479px){
+ .vibe-phone-layout{--phone-band-rows:3}
+ /* Reserve a left column even when the bottom band wraps at the screen edge. */
+ .vibe-phone-info{margin-left:var(--nav-size)}
+ .vibe-phone-layout .vibe-dpad{bottom:calc(var(--phone-bottom) + var(--nav-size)*var(--phone-band-rows) + 8px)}
+ .vibe-phone-layout .vibe-pages{bottom:calc(var(--phone-bottom) + var(--nav-size)*(var(--phone-band-rows) + 3) + 16px)}
+}
+@media(max-width:359px){.vibe-phone-layout{--phone-band-rows:4}}
 .vibe-drawer,.mc-remote-card .mc-keyboard{position:absolute;z-index:3;left:50%;top:50%;transform:translate(-50%,-50%);width:min(38rem,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;pointer-events:auto;touch-action:auto;background:#0c131bf5;border:1px solid #53677a;border-radius:9px;padding:1rem}
 .mc-remote-card .mc-keyboard{flex-wrap:wrap;margin:0}.vibe-drawer .mc-panel-header{position:sticky;top:-1rem;background:#0c131b;padding:.3rem 0;z-index:2}
 .vibe-drawer pre{max-height:55vh;overflow:auto}.mc-remote-card .mc-keyboard input{min-width:0}
@@ -69,10 +185,150 @@ body.mc-connection-lost .mc-status{color:#ffc9be}
 
 
 
-.vibe-utilities [aria-pressed="true"] img{filter:brightness(0) saturate(100%) invert(67%) sepia(96%) saturate(5391%) hue-rotate(83deg) brightness(119%) contrast(122%)}
+.vibe-utilities [aria-pressed="true"] img,.vibe-phone-info [aria-pressed="true"] img{filter:brightness(0) saturate(100%) invert(67%) sepia(96%) saturate(5391%) hue-rotate(83deg) brightness(119%) contrast(122%)}
 
 /* Stage height, not window height: the wrapping toolbar also consumes space. */
 .mc-stage{container-type:size}
 @container (max-height:392px){.mc-remote-card{--nav-size:clamp(24px,calc((100cqh - 40px)/8),44px)}}
 .mc-file-subtitle-canvas{position:absolute;left:0;top:0;z-index:4;pointer-events:none;background:transparent}.mc-file-subtitles{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;font-family:Arial,sans-serif;font-size:clamp(15px,2.5vw,38px);text-shadow:0 1px 3px #000,0 0 4px #000}.mc-file-subtitles .file-subtitle-cue{position:absolute;max-width:92%;transform:translate(-50%,-100%);white-space:pre-wrap;text-align:center;background:rgba(0,0,0,.55);padding:.08em .25em;border-radius:.08em}
 .mc-dvd-spu-canvas{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:14;image-rendering:auto}
+
+/* Current Vibe layout: four aligned utility columns, not the old six-column
+   grid with holes. Small screens scroll instead of reducing touch targets. */
+.vibe-utilities{grid-template-columns:repeat(5,var(--nav-size))}
+.vibe-keyboard{width:var(--nav-size)}
+.mc-settings-card{width:min(40rem,96vw);max-height:min(90dvh,calc(var(--visible-height,100vh) - 20px));overscroll-behavior:contain}
+.mc-settings-categories{display:flex;flex-wrap:nowrap;gap:6px;margin-bottom:12px;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;touch-action:pan-x}
+.mc-settings-categories button{flex:none;min-height:44px;font-size:.85rem;white-space:nowrap}
+.mc-settings-categories [aria-current="true"]{background:#00796b;border-color:#80cbc4}
+.mc-settings-categories[hidden]{display:none}
+.mc-settings-section{margin:.6rem 0;border:1px solid #384d60;border-radius:8px;min-width:0;padding:0 .7rem .5rem}
+.mc-settings-section>summary{display:none}
+.mc-settings-section fieldset{min-width:0;border:1px solid #384d60;border-radius:8px;padding:.6rem;margin:.7rem 0}
+.mc-settings-section label{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:.6rem 0;text-align:left;flex-wrap:nowrap;min-width:0}
+.mc-setting-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mc-settings-section select,.mc-settings-section input:not([type=checkbox]){width:56%;max-width:100%;min-width:0;min-height:44px;font-size:16px}
+.mc-settings-section .mc-check{justify-content:flex-start}
+.mc-settings-section .mc-check input{flex:none}
+.mc-settings-section>button{min-height:44px;margin:.3rem}
+.mc-settings-section [hidden]{display:none!important}
+.vibe-phone-tools{grid-template-rows:repeat(5,var(--nav-size))}
+.vibe-phone-tools #videoInfoBtn{grid-column:2!important;grid-row:1!important}
+.vibe-phone-tools #diagnosticsBtn{grid-column:2!important;grid-row:2!important}
+.vibe-phone-tools #testVideoBtn{grid-column:2!important;grid-row:3!important}
+.vibe-phone-tools #remoteStats{grid-column:1!important;grid-row:4!important}
+.vibe-phone-tools #remoteStatsInfo{grid-column:2!important;grid-row:4!important}
+.vibe-phone-tools #aspectToggle{grid-column:1!important;grid-row:1!important}
+.vibe-phone-tools #remoteSettings{grid-column:1!important;grid-row:2!important}
+.vibe-phone-tools #audioSettings{grid-column:1!important;grid-row:3!important}
+.vibe-phone-tools #captionSettings{grid-column:2!important;grid-row:5!important}
+body.mc-portrait-dock #phoneTools{height:228px}
+body.mc-portrait-dock #phoneTools #remoteStats{grid-area:4/1/5/2!important}
+body.mc-portrait-dock #phoneTools #remoteStatsInfo{grid-area:4/2/5/3!important}
+.mc-settings-card fieldset[data-settings-group]{min-width:0;border:1px solid #384d60;border-radius:8px;padding:.6rem .8rem;margin:.7rem 0}
+.mc-settings-card [data-settings-group] label{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:.6rem 0;text-align:left}
+.mc-settings-card [data-settings-group] select,.mc-settings-card [data-settings-group] input:not([type=checkbox]){width:56%;max-width:56%;min-width:0;min-height:44px;font-size:16px}
+.mc-settings-card[data-settings-page] legend{font-weight:600}
+.mc-settings-overlay[data-page]:not([data-page="all"]) .mc-streaming>summary,
+.mc-settings-overlay[data-page]:not([data-page="all"]) #streamingPreferences>p:first-of-type{display:none}
+.mc-app-menu{position:absolute;z-index:10;right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));min-height:44px;background:#000000a0;border-color:#ffffff70}
+.mc-controls-open .mc-app-menu{display:none}
+.mc-standalone .mc-toolbar{display:none}
+.mc-toolbar{padding-top:max(.5rem,env(safe-area-inset-top))}
+.mc-remote-overlay{overflow:auto;overscroll-behavior:contain;touch-action:pan-y}
+.mc-remote-card{min-height:360px}
+.vibe-middle{top:calc(var(--nav-size) + env(safe-area-inset-top) + 4px);bottom:calc(var(--nav-size)*2 + env(safe-area-inset-bottom) + 4px)}
+@media(max-width:760px){
+  body.mc-connection-lost .mc-toolbar{display:none!important}
+  .mc-toolbar{flex-wrap:nowrap;gap:6px;padding:.3rem max(6px,env(safe-area-inset-right)) .3rem max(6px,env(safe-area-inset-left));padding-top:max(.3rem,env(safe-area-inset-top))}
+  .mc-toolbar-actions{flex-wrap:nowrap}.mc-toolbar-actions>#statsToggle,.mc-toolbar-actions>#fullscreenBtn,.mc-toolbar-actions>#reconnectBtn,.mc-toolbar-actions>.mc-link,.mc-toolbar-actions>#bufferStatus{display:none}
+  .mc-title{font-size:.85rem;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis}.mc-status{display:none}.mc-toolbar-actions button{min-height:44px}
+  .vibe-middle{bottom:calc(var(--nav-size)*3 + env(safe-area-inset-bottom) + 12px)}
+  .mc-settings-card{padding:.65rem;width:min(40rem,calc(100vw - 16px))}
+}
+@media(max-height:500px) and (min-width:540px){
+  .mc-remote-card{min-height:calc(44px * 7 + env(safe-area-inset-top) + env(safe-area-inset-bottom) + 8px)}
+  .vibe-bottom{display:flex;gap:4px}.vibe-middle{bottom:calc(var(--nav-size)*2 + env(safe-area-inset-bottom) + 4px)}
+}
+@container (max-height:392px){.mc-remote-card{--nav-size:44px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+.mc-offset-card{width:min(30rem,calc(100vw - 24px));max-height:calc(var(--visible-height,100dvh) - 24px);overflow:auto;padding:16px;border:1px solid #80cbc4;border-radius:12px;background:#101821f5}
+.mc-offset-card output{display:block;text-align:center;font:1.6rem ui-monospace,monospace;padding:12px}
+.mc-offset-card input[type=range]{width:100%;min-height:44px;accent-color:#80cbc4}
+.mc-offset-card button{min-height:44px}
+#browserInputSection details>summary{min-height:44px;cursor:pointer}
+.mc-calibration-card{width:min(54rem,calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)));height:min(44rem,calc(var(--visible-height,100dvh) - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));max-height:100%;display:flex;flex-direction:column;gap:8px;overflow:auto;padding:12px;background:#101821fa;border:1px solid #80cbc4;border-radius:12px}
+/* The video yields space to real44px actions. In landscape a55vh picture plus
+   header/status/slider used to push Play completely below the visible card. */
+.mc-calibration-card video{display:block;width:100%;height:0;min-height:64px;flex:1 1 auto;object-fit:contain;background:#000}
+.mc-calibration-card .mc-panel-header,.mc-calibration-card label,.mc-calibration-card .mc-panel-tools{flex:none;margin:0}
+.mc-calibration-card .mc-note{flex:none;margin:0;max-height:4.5em;overflow:auto;overflow-wrap:anywhere}
+.mc-calibration-card .mc-panel-tools{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.mc-calibration-card .mc-panel-tools button{min-width:0;overflow-wrap:anywhere;font-size:14px}
+.mc-calibration-card label{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.mc-calibration-card input{min-width:120px;flex:1;min-height:44px}.mc-calibration-card button{min-height:44px}
+
+/* Physical iPhone WEB-024: preserve native pickers, but do not make users
+   decipher clipped closed values or hit the old 31-37px settings controls. */
+.mc-setting-choice{display:none}
+@media(max-width:900px){
+  /* Actual iOS native pickers override min-height; explicit height is needed.
+     Keep appearance:auto so the system picker and its native affordance stay. */
+  .mc-settings-card select{height:44px}
+  .mc-settings-card button,.mc-settings-card select,
+  .mc-settings-card input:not([type=checkbox]),.mc-keyboard input,.mc-keyboard button{min-height:44px;font-size:16px}
+  .mc-settings-card{max-height:min(94dvh,calc(var(--visible-height,100dvh) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px));scroll-padding-top:64px}
+  .mc-settings-categories{display:flex;overflow-x:auto;overscroll-behavior-x:contain;gap:6px;padding:2px 2px 8px;scrollbar-width:thin}
+  .mc-settings-categories button{flex:0 0 auto;white-space:nowrap;font-size:15px}
+  .mc-settings-card label{flex-wrap:nowrap}
+}
+@media(max-width:520px){
+  .mc-settings-card .mc-settings-section label:not(.mc-check){display:grid;grid-template-columns:minmax(0,44fr) minmax(0,56fr);align-items:center;gap:8px;text-align:left}
+  .mc-settings-card .mc-setting-label{font-size:13px}
+  .mc-settings-card label:not(.mc-check)>select,
+  .mc-settings-card label:not(.mc-check)>input:not([type=checkbox]){width:100%;max-width:100%;min-width:0;font-size:16px}
+  .mc-settings-card .mc-panel-header{gap:8px}
+  .mc-settings-card .mc-panel-header strong{min-width:0;overflow-wrap:anywhere}
+  .mc-settings-card .mc-panel-header button{flex-shrink:0}
+}
+
+/* WEB-126 operator ICONS_LAYOUT_MOBILE: align transport with the D-pad's
+   middle row. Home ends the row; Back sits directly below it. Existing
+   portrait dock and desktop layout keep their own geometry. */
+@media(max-width:900px) and (orientation:landscape){
+ .vibe-phone-layout .vibe-bottom{bottom:calc(var(--phone-bottom) + var(--nav-size))}
+ .vibe-phone-layout .vibe-transport{display:grid;grid-template-columns:repeat(14,var(--nav-size));grid-template-rows:var(--nav-size);justify-content:end}
+ .vibe-phone-layout .vibe-phone-info,.vibe-phone-layout .vibe-phone-navigation{display:contents}
+ .vibe-phone-layout #phoneToolsToggle{grid-column:1;grid-row:1}
+ .vibe-phone-layout #remoteHelp{grid-column:2;grid-row:1}
+ .vibe-phone-layout #keyboardToggle{grid-column:3;grid-row:1}
+ .vibe-phone-layout #remoteLive{grid-column:4!important;grid-row:1!important}
+ .vibe-phone-layout #nav_media_skip_back_2{grid-column:5!important;grid-row:1!important}
+ .vibe-phone-layout #nav_media_skip_back{grid-column:6!important;grid-row:1!important}
+ .vibe-phone-layout #nav_media_stop{grid-column:7!important;grid-row:1!important}
+ .vibe-phone-layout #nav_media_pause{grid-column:8!important;grid-row:1!important}
+ .vibe-phone-layout #nav_media_play{grid-column:9!important;grid-row:1!important}
+ .vibe-phone-layout #nav_media_skip_forward{grid-column:10!important;grid-row:1!important}
+ .vibe-phone-layout #nav_media_skip_forward_2{grid-column:11!important;grid-row:1!important}
+ .vibe-phone-layout #nav_info{grid-column:12!important;grid-row:1!important}
+ .vibe-phone-layout #nav_options{grid-column:13!important;grid-row:1!important}
+ .vibe-phone-layout #nav_home{grid-column:14!important;grid-row:1!important}
+ .vibe-phone-layout #nav_back{position:absolute;right:0;top:100%}
+ .vibe-phone-layout #phoneTools{left:max(0px,calc(100% - var(--nav-size)*14));right:auto;bottom:100%}
+ /* Keep44px targets on shorter-width phones; wrap only the three utilities
+    above transport instead of shrinking or overlapping the arrow pad. */
+ @media(max-width:779px){
+  .vibe-phone-layout .vibe-transport{grid-template-columns:repeat(11,var(--nav-size));grid-template-rows:repeat(2,var(--nav-size))}
+  .vibe-phone-layout #remoteLive{grid-column:1!important;grid-row:2!important}
+  .vibe-phone-layout #nav_media_skip_back_2{grid-column:2!important;grid-row:2!important}
+  .vibe-phone-layout #nav_media_skip_back{grid-column:3!important;grid-row:2!important}
+  .vibe-phone-layout #nav_media_stop{grid-column:4!important;grid-row:2!important}
+  .vibe-phone-layout #nav_media_pause{grid-column:5!important;grid-row:2!important}
+  .vibe-phone-layout #nav_media_play{grid-column:6!important;grid-row:2!important}
+  .vibe-phone-layout #nav_media_skip_forward{grid-column:7!important;grid-row:2!important}
+  .vibe-phone-layout #nav_media_skip_forward_2{grid-column:8!important;grid-row:2!important}
+  .vibe-phone-layout #nav_info{grid-column:9!important;grid-row:2!important}
+  .vibe-phone-layout #nav_options{grid-column:10!important;grid-row:2!important}
+  .vibe-phone-layout #nav_home{grid-column:11!important;grid-row:2!important}
+  .vibe-phone-layout #phoneTools{left:max(0px,calc(100% - var(--nav-size)*11))}
+ }
+}

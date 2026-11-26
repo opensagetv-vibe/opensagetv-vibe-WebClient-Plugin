@@ -1,0 +1,2 @@
+/* Only after a visually verified native main-menu video preview. TV toggles. */
+(()=>{const s=window.__iphoneGate;if(!s?.api)throw Error('Missing exact test owner');s.done=false;s.api('command',{command:15}).then(()=>new Promise(r=>setTimeout(r,800))).then(()=>s.api('command',{command:24})).then(()=>s.done=true).catch(e=>{s.error=e.message;s.done=true;});return{oneNativeTvToggle:true,followedByInfo:true};})()

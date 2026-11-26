@@ -4,10 +4,21 @@ const S=require('../src/main/webapp/js/miniclient-support.js');
 let n=0;const ok=(v,name)=>{assert(v,name);console.log('PASS '+name);n++;};
 const profile=S.buildProfile(
   {bufferPreset:'auto',showStats:true,autoDiagnosticCapture:false,saveDiagnosticsToServer:true,clientId:'SHOULD-NOT-EXPORT',unrelated:'keep-local'},
-  {player:'mpegts',videoKbps:8000,audioTrack:4,subtitleTrack:7,captionPid:512,captionCompositionPage:42,subtitleLanguage:'eng'},
+  {player:'mpegts',videoKbps:8000,deinterlaceFilter:'bwdif',audioTrack:4,subtitleTrack:7,captionPid:512,captionCompositionPage:42,subtitleLanguage:'eng'},
   {mode:'cc1',cc1Type:'teletext',cc1Language:'eng',cc1Service:1,sessionOnly:'no'}
 );
-ok(profile.kind===S.PROFILE_KIND&&profile.schemaVersion===1,'profile has explicit kind/schema');
+ok(profile.kind===S.PROFILE_KIND&&profile.schemaVersion===2,'profile has explicit kind/schema');
+const legacy=S.previewProfile(Object.assign({},profile,{schemaVersion:1}));
+ok(legacy.schemaVersion===1&&legacy.migrations.length===1&&!legacy.input,'schema1 imports preserve existing input/app preferences');
+const portable=S.previewProfile(S.buildProfile({},{},{},{input:{keys:{dvd:{ArrowLeft:'62',bad:'89'}}},keepAwake:true,password:'not exported'}));
+ok(portable.input.keys.dvd.ArrowLeft==='62'&&!portable.input.keys.dvd.bad&&portable.browserApp.keepAwake===true,'portable mappings/wake policy round-trip with normalization');
+const launcher=S.previewProfile(S.buildProfile({},{},{},{showControls:false,token:'not exported'}));
+ok(launcher.browserApp.showControls===false&&!('token' in launcher.browserApp),'optional hidden Controls preference round-trips without exporting unrelated state');
+ok(S.previewProfile(S.buildProfile({},{},{},{portraitTopPx:48})).browserApp.portraitTopPx===48,'portrait top spacing round-trips as browser-only preference');
+ok(S.previewProfile(S.buildProfile({},{},{},{portraitTopPx:900})).browserApp.portraitTopPx===160,'imported portrait spacing is bounded');
+ok(!('portraitTopPx' in (S.previewProfile(S.buildProfile({},{},{},{portraitTopPx:NaN})).browserApp||{})),'non-finite portrait spacing is not exported');
+const autoHeight=S.previewProfile(S.buildProfile({},{resolution:'auto'},{}));
+ok(autoHeight.streaming.resolution==='auto','automatic device height stays portable instead of persisting a resolved screen limit');
 ok(profile.profileScope==='browser-saved-defaults'&&profile.excludedScopes.includes('administrator-server-settings'),'profile declares scope boundaries');
 ok(!('clientId' in profile.savedDefaults.client)&&!('audioTrack' in profile.savedDefaults.streaming)&&!('subtitleTrack' in profile.savedDefaults.streaming),'identity and per-session track choices are excluded');
 ok(!('captionPid' in profile.savedDefaults.streaming)&&!('captionCompositionPage' in profile.savedDefaults.streaming),'per-session PID/page choices are excluded');
@@ -15,6 +26,7 @@ const imported=JSON.parse(JSON.stringify(profile));imported.extraTop=1;imported.
 const preview=S.previewProfile(imported);
 ok(preview.unknownKeys.includes('extraTop')&&preview.unknownKeys.includes('streaming.futureThing'),'import preview reports unknown keys');
 ok(preview.streaming.player==='mpegts'&&preview.captions.mode==='cc1','import preview retains approved saved defaults');
+ok(preview.streaming.deinterlaceFilter==='bwdif','explicit server deinterlace filter survives profile export/import');
 const many=JSON.parse(JSON.stringify(profile));for(let i=0;i<80;i++)many.savedDefaults.client['future'+i]=i;
 ok(S.previewProfile(many).unknownKeys.length===50,'unknown import keys are bounded');
 let rejected=false;try{S.previewProfile({kind:S.PROFILE_KIND,schemaVersion:99,savedDefaults:{}});}catch(_){rejected=true;}ok(rejected,'future profile schema fails closed');

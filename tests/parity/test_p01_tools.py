@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[2]
 def load(name):
@@ -22,6 +23,23 @@ class P01ToolsTests(unittest.TestCase):
         self.assertFalse((ROOT/'should-not-be-created').exists())
     def test_manifest_accepts_project_relative_path(self):
         self.assertTrue(T.safe_relative('src/main/webapp/js/miniclient.js'))
+    def test_source_manifest_uses_same_lf_crlf_policy_as_generator(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);source=root/'source.json'
+            for raw in (b'{"value":1}\n',b'{"value":1}\r\n'):
+                source.write_bytes(raw)
+                expected=hashlib.sha256(b'{"value":1}\n').hexdigest()
+                (root/'PROJECT_MANIFEST.sha256').write_text(expected+'  source.json\n',encoding='utf-8')
+                self.assertEqual(T.manifest_errors(root),[])
+            source.write_bytes(b'{"value":2}\n')
+            self.assertEqual(T.manifest_errors(root),['hash mismatch: source.json'])
+    def test_pinned_binary_digest_remains_byte_exact(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);source=root/'source.bin';raw=b'\x00\xff\r\n'
+            source.write_bytes(raw);expected=hashlib.sha256(raw).hexdigest()
+            (root/'PROJECT_MANIFEST.sha256').write_text(expected+'  source.bin\n',encoding='utf-8')
+            self.assertEqual(T.manifest_errors(root),[])
+            self.assertEqual(T.digest(source),expected)
     def test_missing_vendor_is_blocked(self):
         p=T.preflight(None,None,None)
         self.assertEqual(p['mse']['status'],'BLOCKED');self.assertFalse(p['mse']['actual_mse_exercised'])
@@ -56,6 +74,37 @@ class P01ToolsTests(unittest.TestCase):
         self.assertEqual(e[0]['start_line'],4);self.assertEqual(e[0]['end_line'],7)
     def test_review_ledger_has_no_dangling_task_ids(self):
         self.assertEqual(T.check_ledger(ROOT),[])
+    def test_removed_task_cannot_be_converted_into_a_pass(self):
+        original=Path.read_text
+        def read(path,*args,**kwargs):
+            value=original(path,*args,**kwargs)
+            if path==ROOT/'TASKS.md':value=value.replace('- [-] **WP05-005','- [x] **WP05-005')
+            return value
+        with patch.object(Path,'read_text',read):
+            self.assertIn('Task waiver/checklist mismatch: WP05-005',T.check_ledger(ROOT))
+    def test_removed_task_requires_explicit_user_declaration(self):
+        original=Path.read_text
+        def read(path,*args,**kwargs):
+            value=original(path,*args,**kwargs)
+            if path==ROOT/'TASKS.md':value=value.replace('REMOVED_USER_REQUEST','UNPROVEN_NOT_REMOVED')
+            return value
+        with patch.object(Path,'read_text',read):
+            self.assertIn('Missing explicit user-removal status: WP05-005',T.check_ledger(ROOT))
+    def test_starred_task_cannot_be_counted_as_a_pass(self):
+        original=Path.read_text
+        def read(path,*args,**kwargs):
+            value=original(path,*args,**kwargs)
+            if path==ROOT/'TASKS.md':value=value.replace('- [*] **WP16-003','- [x] **WP16-003')
+            return value
+        with patch.object(Path,'read_text',read):
+            self.assertIn('Task starred-status/checklist mismatch: WP16-003',T.check_ledger(ROOT))
+    def test_ledger_explicitly_uses_utf8_in_non_utf8_windows_locale(self):
+        original=Path.read_text
+        def strict(path,*args,**kwargs):
+            self.assertEqual(kwargs.get('encoding'),'utf-8','Ledger reads must not depend on locale')
+            return original(path,*args,**kwargs)
+        with patch.object(Path,'read_text',strict):
+            self.assertEqual(T.check_ledger(ROOT),[])
     def test_completed_intake_has_saved_literal_and_test_reconciliation(self):
         d=json.loads((ROOT/'docs/parity/UPSTREAM_FIX_LEDGER.json').read_text())
         self.assertTrue(d['exhaustive_intake_complete'])

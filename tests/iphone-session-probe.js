@@ -1,0 +1,2 @@
+/* Read-only means no closing controls: closeRemote now requests client Exit. */
+(()=>({client:localStorage.getItem('sagetvWebMiniClientId'),media:[...document.querySelectorAll('video')].map(v=>({source:!!(v.currentSrc||v.getAttribute('src')),paused:v.paused,ready:v.readyState})),viewport:{w:innerWidth,h:innerHeight},remoteVisible:!document.getElementById('remotePanel').hidden,exitDialogOpen:!!document.getElementById('exitClientDialog')?.open}))()

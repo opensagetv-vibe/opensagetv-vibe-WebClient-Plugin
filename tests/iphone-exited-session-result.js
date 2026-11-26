@@ -1,0 +1,1 @@
+(()=>({exited:!clientExited.hidden,connection:connectionStatus.textContent,status:clientExitStatus.textContent,observed:window.__exitedObservation,recentActions:performance.getEntriesByType('resource').map(x=>new URL(x.name)).filter(u=>u.pathname.endsWith('/api/miniclient')).slice(-8).map(u=>u.searchParams.get('action'))}))()

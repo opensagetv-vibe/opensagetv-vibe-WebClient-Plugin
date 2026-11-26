@@ -41,10 +41,10 @@ public final class MiniClientDvdWireSmoke {
 
             require(command(mi,mo,0,intBody(0))==1,"INIT reply");
             require(command(mi,mo,17,new byte[0])==0,"pre-data GETMEDIATIME reply");
-            require(command(mi,mo,23,poll(0))==4*1024*1024,"initial capacity reply");
+            require(command(mi,mo,23,poll(0))==DvdNativeSession.DEFAULT_CAPACITY,"initial capacity reply");
 
             byte[] probe=new byte[16*1024];for(int i=0;i<probe.length;i++)probe[i]=(byte)i;
-            require(command(mi,mo,23,push(probe,0))==4*1024*1024,"bandwidth probe must not consume DVD capacity");
+            require(command(mi,mo,23,push(probe,0))==DvdNativeSession.DEFAULT_CAPACITY,"bandwidth probe must not consume DVD capacity");
             require(command(mi,mo,23,poll(0x100))==-2,"initial native drain sentinel");
 
             byte[] malformed=new byte[5];putInt(malformed,0,64);malformed[4]=1;
@@ -69,17 +69,21 @@ public final class MiniClientDvdWireSmoke {
             // The attached decoder may consume some or all bytes before the
             // server reads the free-space reply. The wire contract reports the
             // current reusable capacity, not an atomic post-write queue size.
-            require(afterPush>=4*1024*1024-ps.length && afterPush<=4*1024*1024,
+            require(afterPush>=DvdNativeSession.DEFAULT_CAPACITY-ps.length && afterPush<=DvdNativeSession.DEFAULT_CAPACITY,
                     "real MPEG-PS free-space reply: "+afterPush);
             require(command(mi,mo,22,new byte[0])==1,"post-data FLUSH reply");
             require(command(mi,mo,23,poll(0x100))==-2,"post-FLUSH drain sentinel");
+            require(command(mi,mo,23,poll(0x80))==-1,"empty terminal EOS is exactly one signed four-byte -1 reply");
+            require(command(mi,mo,17,new byte[0])>=0,"terminal reply must not misalign the next native clock response");
             require(command(mi,mo,1,new byte[0])==1,"DEINIT reply");
             media.close();gfx.close();
         }catch(Exception e){throw new RuntimeException(e);}});
 
         MiniClientSession session=new MiniClientSession("dvdwire","127.0.0.1:"+ss.getLocalPort(),"02:00:00:00:00:37",1280,720);
-        session.start(); require(ready.await(5,TimeUnit.SECONDS),"connections not established");
-        server.get(15,TimeUnit.SECONDS);session.close();ss.close();ex.shutdownNow();
+        try {
+            session.start();require(ready.await(5,TimeUnit.SECONDS),"connections not established");
+            server.get(15,TimeUnit.SECONDS);
+        } finally {session.close();ss.close();ex.shutdownNow();}
         System.out.println("MiniClient DVD wire smoke PASS (commands 0/1/17/22/23/29/32-37, exact reply alignment, probes and FLUSH)");
     }
 }

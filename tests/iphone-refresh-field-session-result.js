@@ -1,0 +1,1 @@
+(()=>({productionSessionRebound:window.__iphoneGate?.sessionRebound===true,observerRetired:!window.__iphoneGate?.sessionObserver,settingsUnchanged:localStorage.getItem('sagetvWebMiniClientSettings.v1')===window.__iphoneGate?.settings,streamingUnchanged:localStorage.getItem('sagetvWebStreaming.v1')===window.__iphoneGate?.streaming}))()

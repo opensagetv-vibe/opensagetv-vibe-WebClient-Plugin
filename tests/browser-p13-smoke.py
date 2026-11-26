@@ -7,7 +7,9 @@ ROOT=Path(__file__).resolve().parents[1];WEB=ROOT/'src/main/webapp';count=0
 def passed(s):
  global count;count+=1;print('PASS '+s,flush=True)
 with sync_playwright() as p:
- browser=p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,args=['--no-sandbox'])
+ engine=os.environ.get('SAGETV_BROWSER_ENGINE','chromium')
+ if engine not in ('chromium','webkit'):raise ValueError('Unsupported test engine')
+ browser=p.webkit.launch(headless=True) if engine=='webkit' else p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/local/bin/vibe-chromium'),headless=True,args=['--no-sandbox'])
  page=browser.new_page(viewport={'width':1280,'height':800},service_workers='block');errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
  html=re.sub(r'<script[^>]*>.*?</script>','',(WEB/'miniclient.html').read_text(),flags=re.S);html=re.sub(r'<link[^>]*>','',html)
  page.set_content(html);page.add_style_tag(content=(WEB/'css/miniclient.css').read_text())
@@ -25,7 +27,7 @@ with sync_playwright() as p:
  };
  const v=document.querySelector('#videoPlane');v._paused=true;Object.defineProperties(v,{currentTime:{get:()=>0,set:()=>{}},paused:{get:()=>v._paused},readyState:{get:()=>0},videoWidth:{get:()=>0},videoHeight:{get:()=>0},buffered:{get:()=>({length:0})}});v.play=()=>{v._paused=false;return Promise.resolve()};v.pause=()=>{v._paused=true};v.load=()=>{};
  })();""")
- for fn in ['miniclient-core.js','miniclient-streaming.js','miniclient-caption-authority.js','atsc-captions.js','miniclient-captions.js','miniclient-subtitles.js','miniclient-dvd-spu.js','miniclient-playback.js']:
+ for fn in ['miniclient-core.js','miniclient-input.js','miniclient-streaming.js','miniclient-caption-authority.js','atsc-captions.js','miniclient-captions.js','miniclient-subtitles.js','miniclient-dvd-spu.js','miniclient-playback.js','miniclient-experience.js','miniclient-support.js']:
   page.evaluate((WEB/'js'/fn).read_text())
  page.evaluate("(function(location,localStorage){\n"+(WEB/'js/miniclient.js').read_text()+"\n})({href:'https://fixture.test/miniclient.html',origin:'https://fixture.test',search:''},{getItem:k=>TEST.storage[k]||null,setItem:(k,v)=>TEST.storage[k]=v})")
  page.wait_for_function('TEST.starts.length===1')
@@ -37,21 +39,39 @@ with sync_playwright() as p:
  page.evaluate("""id=>{let e=TEST.gfx(26,2,1,256);e.assignedHandle=91;TEST.emit(id,e);TEST.emit(id,TEST.gfxBytes(32,[91,0,2],new Uint8Array([82,82])));TEST.emit(id,TEST.gfxBytes(32,[91,1,2],new Uint8Array([90,240])));TEST.emit(id,TEST.gfx(31));TEST.emit(id,TEST.gfx(24,0,0,40,20,91,0,0,2,1,0xffffffff));TEST.emit(id,TEST.gfx(30));}""",sid)
  page.wait_for_function("(()=>{const d=document.querySelector('#gfxCanvas').getContext('2d').getImageData(10,10,1,1).data;return d[0]>200&&d[1]<100&&d[2]<100&&d[3]===255})()")
  passed('format-256 Y plus interleaved UV rows render through the production Canvas handle path')
+ for name,y,uv,channel in [('blue',41,[240,110],2),('green',145,[54,34],1)]:
+  page.evaluate("""a=>{const [id,y,uv]=a;TEST.emit(id,TEST.gfxBytes(32,[91,0,2],new Uint8Array([y,y])));TEST.emit(id,TEST.gfxBytes(32,[91,1,2],new Uint8Array(uv)));TEST.emit(id,TEST.gfx(31));TEST.emit(id,TEST.gfx(24,0,0,40,20,91,0,0,2,1,0xffffffff));TEST.emit(id,TEST.gfx(30));}""",[sid,y,uv])
+  page.wait_for_function("c=>{const d=gfxCanvas.getContext('2d').getImageData(10,10,1,1).data;return d[c]>200&&d[(c+1)%3]<100&&d[(c+2)%3]<100&&d[3]===255}",arg=channel)
+  passed('same format-256 handle visibly updates to '+name+' after new Y and UV rows')
+ page.evaluate("""id=>{TEST.emit(id,TEST.gfx(27,91));TEST.emit(id,TEST.gfx(31));TEST.emit(id,TEST.gfx(24,0,0,40,20,91,0,0,2,1,0xffffffff));TEST.emit(id,TEST.gfx(30));}""",sid)
+ page.wait_for_function("gfxCanvas.getContext('2d').getImageData(10,10,1,1).data[3]===0")
+ passed('unloaded unified handle cannot reappear from a stale image cache')
+ page.evaluate("""id=>{TEST.emit(id,TEST.gfx(130,3,0,0,1280,720,100,50,320,180,255,0));}""",sid)
+ page.wait_for_function("videoBounds.dataset.presentation==='preview'")
+ baseline=page.locator('#videoBounds').get_attribute('style')
+ page.evaluate("""id=>{TEST.emit(id,TEST.gfx(130,11,0,0,1280,720,100,50,320,180,255,9007));TEST.emit(id,TEST.gfx(30));}""",sid)
+ page.wait_for_timeout(100)
+ assert page.locator('#videoBounds').get_attribute('style')==baseline
+ assert page.evaluate("videoBounds.dataset.presentation==='preview'&&videoPlane.parentElement.id==='videoBounds'")
+ passed('HD300 handle-mode packet retains ordinary browser video rectangle instead of adopting a texture handle')
  # Browser owns D-pad repeat and cancels on keyup.
  page.evaluate("window.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}))");page.wait_for_timeout(650);page.evaluate("window.dispatchEvent(new KeyboardEvent('keyup',{key:'ArrowDown',bubbles:true}))")
  before=page.evaluate("TEST.requests.filter(r=>r.action==='command'&&r.data.command==='5').length")
  assert before>=2,before;page.wait_for_timeout(450);after=page.evaluate("TEST.requests.filter(r=>r.action==='command'&&r.data.command==='5').length");assert after==before,(before,after)
- passed('physical D-pad repeat is bounded by browser ownership and stops on keyup')
+ passed('synthetic DOM D-pad repeat is bounded by browser ownership and stops on keyup')
  # pagehide retires only the current session; bfcache pageshow reconnects cleanly.
  current='p13-'+str(page.evaluate('TEST.starts.length'))
  page.evaluate("window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}))")
  page.wait_for_function('TEST.beacons.length===1');assert current in page.evaluate('TEST.beacons[0].body');passed('pagehide retires its own native session with a session-scoped beacon')
  page.evaluate("window.dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}))")
  page.wait_for_function('TEST.starts.length===3');assert page.evaluate("TEST.starts[2].unifiedGraphics")=='true';passed('bfcache pageshow opens a fresh generation and preserves explicit unified preference')
+ page.locator('#settingsToggle').click();page.locator('#unifiedGraphics').uncheck();page.wait_for_function('TEST.starts.length===4')
+ assert page.evaluate("TEST.starts[3].unifiedGraphics")=='false'
+ page.locator('#closeSettings').click();passed('explicit OFF reconnect restores historical empty unified capability behavior')
  # Network-first shell contains every MiniClient module used by the page.
  sw=(WEB/'sw.js').read_text()
  for name in ['miniclient-caption-authority.js','miniclient-subtitles.js','miniclient-dvd-spu.js']:
   assert name in sw,name
  passed('service-worker shell includes all current MiniClient modules and no longer restores partial old script sets')
  assert not errors,errors;browser.close()
-print(f'Chromium P13 GFX/input/lifecycle: {count} tests PASS')
+print(f'{engine} P13 GFX/input/lifecycle: {count} tests PASS')

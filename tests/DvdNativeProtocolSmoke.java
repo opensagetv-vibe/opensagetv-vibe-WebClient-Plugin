@@ -38,6 +38,14 @@ public final class DvdNativeProtocolSmoke {
         require(c.mapPesPts(0)==90_000L,"NEWCELL offset not applied to PES PTS");
         c.setServerStc45k(45_000L);
         require(c.currentClock90k()==90_000L && c.currentMillis()==1000L,"STC 45k conversion");
+        c.setServerStc45k(20_000L*45L);
+        c.updatePlayerClockMillis(500L);
+        require(c.subtitlePresentationMillis(1500L)==21_000L,"decoder epoch maps to title SPU clock");
+        require(c.currentMillis()==20_000L,"subtitle projection never advances playback clock");
+        c.beginDiscontinuity();
+        require(c.subtitlePresentationMillis(0L)==20_000L,"retired decoder anchor is not reused");
+        c.setServerStc45k(40_000L*45L);c.updatePlayerClockMillis(0L);
+        require(c.subtitlePresentationMillis(2000L)==42_000L,"new chapter anchor replaces old offset");
         long nearWrap=DvdPtsClock.MODULO-90_000L;
         long wrapped=45_000L;
         long unwrapped=DvdPtsClock.unwrapNear(wrapped,nearWrap);
@@ -106,6 +114,16 @@ public final class DvdNativeProtocolSmoke {
         byte[] spu=new byte[20]; require(s.setSpuControl(metadata(spu))==0,"SPUCTRL reply");
         byte[] stream=new byte[8];putInt(stream,0,0);putInt(stream,4,0xbd80);
         require(s.setStream(stream)==0 && s.streamType()==0 && s.streamPosition()==0xbd80,"DVD STREAM physical selector");
+        putInt(stream,0,1);putInt(stream,4,0x20);
+        require(s.setStream(stream)==0 && s.streamType()==1 && s.streamPosition()==0x20,"subtitle command retains last-wire diagnostics");
+        require(s.requestedAudioWireCode()==0xbd80,"subtitle selection must not discard independent audio selector");
+        putInt(stream,4,62);require(s.setStream(stream)==0,"subtitle off accepted");
+        require(s.requestedAudioWireCode()==0xbd80,"subtitle off must not change audio language");
+        putInt(stream,0,0);putInt(stream,4,0xbd81);require(s.setStream(stream)==0,"second audio selector accepted");
+        putInt(stream,0,1);putInt(stream,4,0x21);require(s.setStream(stream)==0,"other subtitle accepted");
+        require(s.requestedAudioWireCode()==0xbd81,"second audio survives subtitle update");
+        putInt(stream,0,0);putInt(stream,4,0x12345678);require(s.setStream(stream)==-1,"unsupported selector rejected");
+        require(s.requestedAudioWireCode()==0xbd81,"invalid audio selector preserves accepted language");
         require(s.setFormat(i32(2))==0 && s.dvdFormat()==2,"DVD FORMAT");
         require(s.setNewCell(new byte[]{0,0,0,64,1})==-1,"malformed metadata must fail closed");
 
@@ -131,12 +149,66 @@ public final class DvdNativeProtocolSmoke {
 
         long beforeFlush=s.generation();
         require(s.flush()==1,"post-data FLUSH reply");
+        require(s.requestedAudioWireCode()==0xbd81,"audio language survives decoder FLUSH");
         require(s.generation()!=beforeFlush && s.epochPushedBytes()==0,"FLUSH must create a new byte epoch");
         require(s.push(emptyPush(0x100))==-2,"post-data FLUSH must be immediately drain-ready");
         byte[] ps2=Arrays.copyOf(ps,ps.length); // identical byte count must still be a new generation
         require(s.push(push(ps2,0))==128*1024-ps2.length,"equal-sized replacement cell must be accepted in new generation");
         require(s.totalPushedBytes()==ps.length+ps2.length,"lifetime byte count retained across FLUSH");
         ex.shutdownNow();s.close();
+        s.init(1);require(s.requestedAudioWireCode()==-1,"new disc INIT resets independent audio selector");s.close();
+    }
+
+    private static void testContinuationWithoutFlush() throws Exception {
+        for (boolean writeBeforeDrain : new boolean[]{false,true}) {
+            DvdNativeSession s=new DvdNativeSession(128*1024);s.init(0);
+            byte[] first=new byte[2048];first[2]=1;first[3]=(byte)0xba;
+            byte[] next=Arrays.copyOf(first,4096);next[100]=77;
+            s.push(push(first,0));DvdPushBuffer pipe=s.input();long old=s.generation();
+            byte[] output=new byte[first.length];require(pipe.read(output,0,output.length,old)==first.length,"first consumer bytes");
+            s.push(emptyPush(0x100));require(pipe.read(new byte[1],0,1,old)==DvdPushBuffer.READ_EOS,"actual first EOF");
+            s.setNewCell(metadata(i32(-24001)));s.setStc(i32(45000));
+            long logical=s.mediaTimeMs(),offset=s.clock().ptsOffset90k();
+            if(writeBeforeDrain){
+                s.push(push(next,0));require(s.generation()==old,"input EOF alone cannot retire browser media");
+                require(pipe.queuedBytes()==next.length,"next bytes remain bounded while old video drains");
+                require(pipe.beginDrainedContinuation()==null,"unconfirmed decoder drain refuses continuation");
+            }
+            pipe.markDecoderDrained(old);
+            if(writeBeforeDrain)s.push(emptyPush(0x100));else s.push(push(next,0));
+            long current=s.generation();require(current==old+1,"exactly one new consumer generation without FLUSH");
+            require(s.epochPushedBytes()==next.length&&s.totalPushedBytes()==first.length+next.length,"new-epoch and lifetime byte accounting");
+            require(s.mediaTimeMs()==logical&&s.clock().ptsOffset90k()==offset,"server STC/NEWCELL survive consumer rollover");
+            require(s.json().contains("\"continuations\":1")&&s.json().contains("\"flushes\":0"),"diagnostics distinguish internal continuation from native FLUSH");
+            require(pipe.read(new byte[1],0,1,old)==DvdPushBuffer.READ_CANCELLED,"old reader cannot steal queued next-cell data");
+            byte[] received=new byte[next.length];require(pipe.read(received,0,received.length,current)==next.length,"next decoder consumes queued bytes");
+            require(Arrays.equals(next,received),"queued next-cell bytes preserved exactly once");
+            pipe.markDecoderDrained(old);require(!pipe.drainReady(),"late old browser drain cannot finish new decoder");
+            s.push(emptyPush(0x100));require(pipe.read(new byte[1],0,1,current)==DvdPushBuffer.READ_EOS,"new consumer EOS");
+            pipe.markDecoderDrained(current);require(s.push(emptyPush(0x100))==-2,"new matching decoder drain");
+            require(s.push(emptyPush(0x100))==-2&&s.generation()==current,"empty drain polls cannot create fake epochs");
+            s.close();require(pipe.beginDrainedContinuation()==null,"closed pipe never continues");
+        }
+    }
+
+    private static void testTerminalEndSentinel() throws Exception {
+        DvdNativeSession empty=new DvdNativeSession(128*1024);empty.init(0);
+        byte[] stream=new byte[8];putInt(stream,0,0);putInt(stream,4,0xbd80);
+        empty.setStream(stream);
+        require(empty.push(emptyPush(0x80))==-1,"empty terminal DVD EOS must acknowledge completion, not advertise capacity forever");
+        require(empty.pending(),"terminal sentinel does not destroy reusable DVD metadata");empty.close();
+
+        DvdNativeSession dvd=new DvdNativeSession(128*1024);dvd.init(0);
+        byte[] ps=new byte[2048];ps[2]=1;ps[3]=(byte)0xba;
+        dvd.push(push(ps,0));DvdPushBuffer input=dvd.input();long generation=dvd.generation();
+        require(dvd.push(emptyPush(0x80))>=0,"EOS cannot finish before input/decoder/browser drain");
+        byte[] bytes=new byte[ps.length];require(input.read(bytes,0,bytes.length,generation)==ps.length,"all EOS bytes consumed");
+        require(input.read(new byte[1],0,1,generation)==DvdPushBuffer.READ_EOS,"consumer observes actual EOS");
+        require(dvd.push(emptyPush(0x80))>=0,"input EOF alone is not browser completion");
+        input.markDecoderDrained(generation);
+        require(dvd.push(emptyPush(0x80))==-1,"matching complete decoder/browser returns stock terminal sentinel");
+        require(dvd.push(emptyPush(0x100))==-2,"ordinary cell drain remains distinct from terminal EOS");
+        dvd.flush();require(dvd.push(push(ps,0))>=0,"new FLUSH remains usable after terminal acknowledgement");dvd.close();
     }
 
     public static void main(String[] args) throws Exception {
@@ -144,6 +216,8 @@ public final class DvdNativeProtocolSmoke {
         testRoleGate();
         testBoundedPipe();
         testSessionLifecycle();
-        System.out.println("DVD native protocol smoke PASS (role gate, units, bounded input, probe detection, metadata, drain and FLUSH generations)");
+        testContinuationWithoutFlush();
+        testTerminalEndSentinel();
+        System.out.println("DVD native protocol smoke PASS (role gate, units, bounded input, probe detection, metadata, drain/FLUSH and proven no-FLUSH continuation generations)");
     }
 }

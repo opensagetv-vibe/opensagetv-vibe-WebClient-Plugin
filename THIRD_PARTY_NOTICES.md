@@ -47,6 +47,11 @@ Retained hls.js build: https://cdn.jsdelivr.net/npm/hls.js@1.7.3/dist/hls.min.js
 
 ## Vibe Android settings reference
 
+WEB-038 gear: existing source/dev/android-shared/src/main/res/drawable/
+ic_settings_white_24dp.xml path converted to icons/vibe/settings.svg, unchanged
+white path geometry; Apache-2.0 notice retained. Source/output SHA256 recorded
+in third_party/vibe-icons.json and packaged WEB-INF/licenses/vibe-icons.json.
+
 https://github.com/opensagetv-vibe/opensagetv-vibe-android-client (Apache-2.0). Settings grouping and caption-authority separation are the reference; this package does not include Android runtimes/APK or claim identical subtitle engines. Reviewed source identities are in docs/VIBE_STREAMING_PORT.md.
 
 

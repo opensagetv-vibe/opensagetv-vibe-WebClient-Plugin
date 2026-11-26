@@ -10,3 +10,11 @@ On stock SageTV with an unchanged STV and real recordings:
 7. Capture diagnostics including callback event/byte counts and the effective-source label.
 
 Only after these pass should the P05 exit gate be marked complete.
+
+2026-11-19 current scope: WP05-006 audit closes with real original broadcast
+708service1/absent2/return/seek four-row iPhone acceptance, prior real608CC1/
+CC2-empty stock callback/seek/Off, and generated independent608CC1-4/708extended
+vectors. No representative broadcast CC2/CC4 was present; field2 counts alone
+are not CC3 evidence. Styling/delay/character limitations are explicit in
+artifacts/results/WP05-006/RESULT.md. WP05-005 still needs a genuine
+property-present peer; the entire P05 exit is not presumed complete.

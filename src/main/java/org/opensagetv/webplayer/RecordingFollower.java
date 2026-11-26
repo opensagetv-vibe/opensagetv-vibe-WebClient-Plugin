@@ -17,9 +17,16 @@ final class RecordingFollower {
     private static final long POLL_MS=250L;
     private RecordingFollower() {}
 
+    interface Observer { void progress(String stage,long length,long position); }
+
     static void copy(Sources sources, int firstSegment, long absoluteStart, OutputStream out,
                      BooleanSupplier active, LongConsumer bytesRead, Consumer<Boolean> recordingState)
             throws IOException, InterruptedException {
+        copy(sources,firstSegment,absoluteStart,out,active,bytesRead,recordingState,(stage,length,position)->{});
+    }
+    static void copy(Sources sources,int firstSegment,long absoluteStart,OutputStream out,
+                     BooleanSupplier active,LongConsumer bytesRead,Consumer<Boolean> recordingState,Observer observer)
+            throws IOException,InterruptedException {
         long skip = Math.max(0L, absoluteStart);
         byte[] buffer = new byte[256 * 1024];
         int i = firstSegment;
@@ -33,6 +40,7 @@ final class RecordingFollower {
                 break;
             }
             completedSettle=0;
+            observer.progress("opening-source",-1,-1);
             try (SeekableMediaSource src = sources.open(i)) {
                 if (src == null) { i++; continue; }
                 long length = Math.max(0L, src.length());
@@ -48,6 +56,7 @@ final class RecordingFollower {
                     if(currentLength<position)throw new IOException("Media source shrank or was replaced during playback");
                     long available = currentLength - position;
                     if (available <= 0) {
+                        observer.progress("waiting-source",currentLength,position);
                         count = Math.max(0,sources.segmentCount());
                         recording = sources.isRecording(); recordingState.accept(recording);
                         long after=Math.max(0L,src.length());
@@ -64,17 +73,21 @@ final class RecordingFollower {
                         break;
                     }
                     eofSettle=0;
+                    observer.progress("read",currentLength,position);
                     int n = src.read(buffer, 0, (int)Math.min(buffer.length, available));
                     if (n <= 0) {
                         if (sources.isRecording()) { Thread.sleep(POLL_MS); continue; }
                         if(++eofSettle<FINAL_SETTLE_POLLS){Thread.sleep(POLL_MS);continue;}
                         break;
                     }
+                    observer.progress("write",currentLength,position);
                     out.write(buffer, 0, n); out.flush();
                     position += n; bytesRead.accept(n);
+                    observer.progress("fed",currentLength,position);
                 }
             }
             i++;
         }
+        observer.progress("input-complete",-1,-1);
     }
 }

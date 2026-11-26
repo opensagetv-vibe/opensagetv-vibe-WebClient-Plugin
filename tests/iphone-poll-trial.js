@@ -1,0 +1,5 @@
+/* Exact approved test phone only. Temporary in-memory feature fallback test;
+ * no saved settings, Core, transport server or browser feature flags changed.
+ * Its own reconnect retires the old native session, preventing two consumers.
+ */
+(()=>{if((localStorage.getItem('sagetvWebMiniClientId')||'').replace(/[^a-f0-9]/ig,'').toLowerCase()!=='123c8282e1ee')throw Error('Unexpected test identity');if(window.__vibePollTrial||!window.ReadableStream)throw Error('Trial exists or API absent');const s=window.__vibePollTrial={started:Date.now(),restored:false,events:0},original=window.ReadableStream,f=window.fetch;function probe(...a){if(new URL(a[0],location.href).searchParams.get('action')==='events')s.events++;return f.apply(this,a);}s.restore=()=>{window.ReadableStream=original;if(window.fetch===probe)window.fetch=f;s.restored=true;};window.ReadableStream=undefined;window.fetch=probe;setTimeout(s.restore,90000);document.getElementById('reconnectBtn').click();return{trialStarted:true,maximumMs:90000,settingsChanged:false,oneOwnReconnect:true};})()

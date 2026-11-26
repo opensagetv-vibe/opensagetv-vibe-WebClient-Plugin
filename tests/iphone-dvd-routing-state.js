@@ -1,0 +1,2 @@
+/* Normal information readout, no playback/rate/source control. */
+(()=>{videoInfoBtn.click();const j=JSON.parse(videoInfoText.textContent);closeVideoInfo.click();return{layout:j.layout,dvd:j.playback.dvd,generation:j.playback.dvdGeneration,element:j.playback.element,settingsPanelOpen:!settingsPanel.hidden,remoteOpen:!remotePanel.hidden,previewLike:videoBounds.getBoundingClientRect().width<innerWidth*.8}})()

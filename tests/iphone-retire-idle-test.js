@@ -1,0 +1,2 @@
+/* Retire only an authorized idle test page before a plugin-manager update. */
+(()=>{if([...document.querySelectorAll('video')].some(v=>v.currentSrc||v.getAttribute('src')))throw Error('Refuse retirement with media attached');if(!document.getElementById('connectionRecovery'))throw Error('Unexpected page revision');window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false}));return{retirementRequested:true,syntheticLifecycle:true,reloadRequiredAfterManager:true}})()

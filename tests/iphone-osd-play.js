@@ -1,0 +1,1 @@
+(()=>{const s=window.__iphoneGate;if(!s?.api||s.trace&&!s.trace.done)throw Error('Missing owner/probe busy');delete s.trace;s.done=false;s.api('command',{command:7}).then(()=>s.api('command',{command:24})).then(()=>s.done=true).catch(e=>{s.error=e.message;s.done=true;});return{onePlayAndInfo:true};})()

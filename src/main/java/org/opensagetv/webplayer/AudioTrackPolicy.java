@@ -42,6 +42,10 @@ final class AudioTrackPolicy {
     static boolean isSecondary(MediaProbe.Track t) {
         if (t == null) return false;
         if (t.visualImpaired) return true;
+        // Broadcasts can label narration only with the NAR language tag,
+        // without a title or visual-impaired/default disposition. Match that
+        // exact tag, never a substring of an ordinary language or show title.
+        if (t.language != null && "nar".equals(t.language.trim().toLowerCase(Locale.ROOT))) return true;
         String text = ((t.title == null ? "" : t.title) + " " + (t.language == null ? "" : t.language)).toLowerCase(Locale.ROOT);
         return text.contains("commentary") || text.contains("narration") || text.contains("narrative")
                 || text.contains("audio description") || text.contains("descriptive") || text.contains("director");

@@ -8,6 +8,22 @@ Version 3.2.15 adapts browser/FFmpeg-supported portions of the Android audio and
 - Rapid delay/track/quality edits are debounced for 450 ms before Apply-now stream rebuild. Rebuild uses the current absolute position and existing pause intent while keeping the MiniClient GFX connection alive.
 - Effective status separates requested/effective encoder, software/copy decode, filtering, hardware encode/decode and fallback detail. Software decode/filter + hardware encode is not called end-to-end GPU.
 - Video bitrate, keyframe interval (1..10 s), B-frames (0..3), resolution, FPS and deinterlace are encoder-only controls. Video copy ignores bitrate/GOP/B-frame settings.
-- MiniClient native playback rate advertises 0.5..2.0x forward only. Reverse and frame-step remain unsupported and unadvertised.
+- Browser-local Video speed supports0.5/1/1.5/2x, per recording. Actual phone
+  rates, Pause/reset and file-clock agreement pass WEB090. Ordinary stock Pull
+  SetPlaybackRate instead becomes a seek; it is not advertised as qualified
+  native rate support. The media protocol handler's bounded forward contract
+  remains distinct. Reverse/frame-step stay unsupported and unadvertised.
+
+Current2026-11-19 manager022105/main-playback-SW090.1 is qualified for this
+local rate scope; compact `artifacts/results/WEB-090/RESULT.md` records original
+boundary, exact package, both-engine guards and real phone/affected DVD proof.
 
 Field-only boundaries remain real receiver/ARC audibility/latency and unchanged broadcast PMT/channel-layout transitions.
+
+2026-11-19 bounded source-change continuation: WP12-001 now closes its primary/
+fallback/actual output acceptance using the original phone/static language
+cases plus a generated CRC-valid PMT/layout/lateNAR fixture in both host engines.
+Compact AUDIO_TRANSITION.md distinguishes18functional assertions, a Chromium
+cleanup-query timeout and independently confirmed eventual retirement. This is
+not unchanged-broadcast/growing-live inventory refresh or receiver/ARC proof;
+WP11/WP12-007 and the unclassified operational observation remain separate.

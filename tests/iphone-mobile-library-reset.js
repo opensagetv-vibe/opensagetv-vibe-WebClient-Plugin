@@ -1,0 +1,2 @@
+/* Explicit synthetic local navigation setup only, never Play/Record. */
+(()=>{if(document.visibilityState!=='visible'||(localStorage.getItem('sagetvWebMiniClientId')||'').replace(/:/g,'').toLowerCase()!=='123c8282e1ee'||!document.body.classList.contains('mc-portrait-dock')||videoPlane.currentSrc)throw Error('Require idle portrait phone');const tab=document.getElementById('mobileTab-recordings');tab.click();const root=document.querySelector('.mc-mobile-crumbs button');if(root&&!root.disabled)root.click();return{syntheticNavigationSetup:true,playOrRecord:false};})()

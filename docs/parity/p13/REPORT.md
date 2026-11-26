@@ -1,5 +1,13 @@
 # P13 report — GFX, input, lifecycle and optional unified surfaces
 
+Current2026-11-19: WP13-003 available stock-Linux scope is now qualified by
+actual unchanged stock232 WebKit DVB/TT and native DVDPush OFF/ON, repeated
+Y/UV/cache/handle-fallback production DOM Chrome12/WebKit12, Java10 and
+actual ledger OFF/ON/OFF3rows. Default remainsOFF; no runtime change for this
+closure. Compact WP13-003RESULT distinguishes generated handles/host browser
+from physical server/iPhone/vendor texture/acoustic/WAN claims. Earlier
+checkpoint statuses below are historical, not current closure requirements.
+
 Checkpoint: **v3.2.16-P13** (2026-09-25)
 
 P13 adapts the remaining relevant Android MiniClient renderer/input/lifecycle behavior to the browser while keeping unsupported HD-extender contracts negotiated off. The browser is not described as multithreaded merely because work is asynchronous.

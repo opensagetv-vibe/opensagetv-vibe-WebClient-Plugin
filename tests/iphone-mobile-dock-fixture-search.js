@@ -1,0 +1,2 @@
+/* Explicit synthetic list-filter setup, NOT hardware typing/Play proof. */
+(()=>{if(!window.__iphoneGate||!document.body.classList.contains('mc-portrait-dock')||document.getElementById('mobileTab-videos').getAttribute('aria-selected')!=='true')throw Error('Wrong owner/tab');const e=document.querySelector('.mc-mobile-search input');if(!e?.getClientRects().length)throw Error('Search unavailable');e.value='VibeCaptionTest-1080i-CEA608-90s-2s';e.dispatchEvent(new Event('input',{bubbles:true}));return{syntheticFixtureSearch:true,playSent:false}})()

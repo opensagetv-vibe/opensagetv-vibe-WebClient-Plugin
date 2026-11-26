@@ -26,7 +26,8 @@ public class HlsControlServlet extends HttpServlet {
                 int segment = HttpUtil.optionalInt(request.getParameter("segment"), 0, "segment");
                 int audio = HttpUtil.optionalInt(request.getParameter("audio"), 0, "audio");
                 double start = optionalDouble(request.getParameter("start"), 0.0, "start");
-                HlsSessionManager.Session s = HlsSessionManager.start(id, segment, audio, start);
+                StreamOptions options = requestOptions(request);
+                HlsSessionManager.Session s = HlsSessionManager.start(id, segment, audio, start, options);
                 write(response, HlsSessionManager.json(s));
                 return;
             }
@@ -44,6 +45,18 @@ public class HlsControlServlet extends HttpServlet {
         } catch (RuntimeException e) {
             HttpUtil.jsonError(response, 500, e.getMessage());
         }
+    }
+
+    static StreamOptions requestOptions(HttpServletRequest request) {
+        // An explicit schema marker opts into the existing per-session planner.
+        // Old index.html/API callers retain the exact legacy command path.
+        if (request.getParameter("stream_profileSchemaVersion") == null) return null;
+        StreamOptions options = StreamOptions.fromRequest(request::getParameter);
+        // This endpoint promises a playlist. Normalize only delivery, after
+        // validating the original profile; never turn Copy into Transcode or
+        // change audio/fallback choices as a side effect of transport selection.
+        return options.ts() ? StreamOptions.fromRequest(key ->
+            "stream_player".equals(key) ? "hls" : request.getParameter(key)) : options;
     }
 
     private static void write(HttpServletResponse response, String json) throws IOException {

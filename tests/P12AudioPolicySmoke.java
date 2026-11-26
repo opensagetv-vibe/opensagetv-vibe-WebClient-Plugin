@@ -9,8 +9,10 @@ public final class P12AudioPolicySmoke {
     private static int pass;
     public static void main(String[] args) throws Exception {
         primaryLanguageBeatsCommentary();
+        narLanguageWithoutTitleIsSecondary();
         strictFallbackRejectsMissingLanguage();
         signedDelayAndQualityControlsReachCommand();
+        qualityFilterChoicesReachCommand();
         copyIgnoresEncoderQualityControls();
         runtimeTruthSeparatesDecodeFilterEncode();
         mediaRateContractIsTruthful();
@@ -39,6 +41,23 @@ public final class P12AudioPolicySmoke {
         boolean threw=false;try{new StreamPlan(StreamOptions.fromMap(m),fixture());}catch(IllegalArgumentException e){threw=e.getMessage().contains("not available");}
         yes(threw,"strict missing-language policy");pass++;
     }
+    private static void narLanguageWithoutTitleIsSecondary() {
+        // Unchanged Breakfast broadcast: no title/default/visual-impaired hint;
+        // source order is MP2 NAR index1 before AC-3 English index4.
+        MediaProbe.Info info=MediaProbe.parse(
+            "streams.stream.0.index=0\nstreams.stream.0.codec_type=video\nstreams.stream.0.codec_name=h264\n"+
+            "streams.stream.1.index=1\nstreams.stream.1.codec_type=audio\nstreams.stream.1.codec_name=mp2\nstreams.stream.1.tags.language=NAR\n"+
+            "streams.stream.2.index=4\nstreams.stream.2.codec_type=audio\nstreams.stream.2.codec_name=ac3\nstreams.stream.2.tags.language=eng\n");
+        Map<String,String> m=base();
+        eq(4,new StreamPlan(StreamOptions.fromMap(m),info).audio.index,"Auto avoids exact NAR-tagged leading track");
+        m.put("audioTrack","1");
+        eq(1,new StreamPlan(StreamOptions.fromMap(m),info).audio.index,"explicit NAR track remains selectable");
+        m.remove("audioTrack");m.put("audioLanguage","NAR");
+        eq(1,new StreamPlan(StreamOptions.fromMap(m),info).audio.index,"explicit NAR language remains selectable");
+        MediaProbe.Info ordinary=MediaProbe.parse("streams.stream.0.index=2\nstreams.stream.0.codec_type=audio\nstreams.stream.0.codec_name=aac\nstreams.stream.0.tags.language=eng\nstreams.stream.0.tags.title=Narnia main audio\n");
+        yes(!AudioTrackPolicy.isSecondary(ordinary.audio().get(0)),"Narnia title is not a NAR tag");
+        pass++;
+    }
     private static void signedDelayAndQualityControlsReachCommand() throws Exception {
         Map<String,String> m=base();m.put("audioLanguage","eng");m.put("audioOffsetMs","500");m.put("videoKbps","6000");m.put("keyFrameSeconds","2");m.put("bFrames","2");m.put("deinterlace","on");
         StreamPlan p=new StreamPlan(StreamOptions.fromMap(m),fixture());
@@ -47,6 +66,24 @@ public final class P12AudioPolicySmoke {
         contains(c,"adelay=500:all=1","positive delay"); containsPair(c,"-bf","2","B-frames"); containsPair(c,"-g","60","2-second GOP at 29.97"); containsPair(c,"-b:v","6000k","bitrate");
         m.put("audioOffsetMs","-500");p=new StreamPlan(StreamOptions.fromMap(m),fixture());c=StreamCommand.build(probe,new File("in.ts"),false,false,0,new File("."),p);
         contains(c,"atrim=start=0.500","negative delay trim");pass++;
+    }
+    private static void qualityFilterChoicesReachCommand() {
+        Map<String,String> m=base();m.put("videoKbps","4200");m.put("resolution","720");m.put("fps","23.976");m.put("keyFrameSeconds","3");m.put("bFrames","3");m.put("deinterlace","on");
+        TranscoderManager.Probe probe=new TranscoderManager.Probe(true,"/usr/bin/ffmpeg","test","libx264",false,false,"software","test");
+        for(String filter:new String[]{"yadif","bwdif"}){
+            m.put("deinterlaceFilter",filter);
+            List<String> c=StreamCommand.build(probe,new File("in.ts"),false,false,0,new File("."),new StreamPlan(StreamOptions.fromMap(m),fixture()));
+            contains(c,filter+"=mode=send_frame:parity=auto:deint=all","selected deinterlacer");
+            contains(c,"scale=w=-2:h='min(ih,720)'","bounded height");contains(c,"fps=24000/1001","rational FPS");
+            containsPair(c,"-b:v","4200k","quality bitrate");containsPair(c,"-bf","3","quality B frames");containsPair(c,"-g","72","three second GOP at23.976");
+        }
+        m.put("deinterlace","off");m.put("resolution","source");m.put("fps","source");
+        List<String> c=StreamCommand.build(probe,new File("in.ts"),false,false,0,new File("."),new StreamPlan(StreamOptions.fromMap(m),fixture()));
+        for(String arg:c)yes(!arg.contains("yadif=")&&!arg.contains("bwdif=")&&!arg.contains("scale=")&&!arg.contains("fps="),"source/off removes optional filters");
+        for(String[] bad:new String[][]{{"videoKbps","249"},{"videoKbps","50001"},{"keyFrameSeconds","11"},{"bFrames","4"},{"resolution","555"},{"fps","61"},{"deinterlaceFilter","arbitrary"}}){
+            Map<String,String> invalid=new HashMap<String,String>(m);invalid.put(bad[0],bad[1]);boolean threw=false;try{StreamOptions.fromMap(invalid);}catch(IllegalArgumentException expected){threw=true;}yes(threw,"reject unsupported quality field "+bad[0]);
+        }
+        pass++;
     }
     private static void copyIgnoresEncoderQualityControls() throws Exception {
         MediaProbe.Info i=MediaProbe.parse("streams.stream.0.index=0\nstreams.stream.0.codec_type=video\nstreams.stream.0.codec_name=h264\nstreams.stream.0.width=1280\nstreams.stream.0.height=720\nstreams.stream.0.field_order=progressive\nstreams.stream.0.r_frame_rate=30/1\nstreams.stream.1.index=1\nstreams.stream.1.codec_type=audio\nstreams.stream.1.codec_name=aac\nstreams.stream.1.channels=2\n");
@@ -68,9 +105,9 @@ public final class P12AudioPolicySmoke {
     }
     private static void mediaRateContractIsTruthful() throws Exception {
         MiniClientSession s=new MiniClientSession("p12","127.0.0.1:9","02:00:00:00:12:12",640,360);
-        byte[] d=new byte[4];putInt(d,Float.floatToIntBits(1.5f));byte[] r=s.media().handle(30,d);
-        float accepted=Float.intBitsToFloat(MiniClientSession.readInt(r,0));yes(Math.abs(accepted-1.5f)<0.001f,"1.5x accepted");
-        putInt(d,Float.floatToIntBits(-2.0f));r=s.media().handle(30,d);accepted=Float.intBitsToFloat(MiniClientSession.readInt(r,0));yes(Math.abs(accepted-1.0f)<0.001f,"reverse rejected as unsupported");
+        byte[] d=new byte[4];
+        for(float requested:new float[]{.5f,1f,1.5f,2f}){putInt(d,Float.floatToIntBits(requested));byte[] r=s.media().handle(30,d);float accepted=Float.intBitsToFloat(MiniClientSession.readInt(r,0));yes(Math.abs(accepted-requested)<0.001f,"supported forward rate accepted");}
+        for(float requested:new float[]{-2f,0f,.25f,4f,Float.NaN,Float.POSITIVE_INFINITY}){putInt(d,Float.floatToIntBits(requested));byte[] r=s.media().handle(30,d);float accepted=Float.intBitsToFloat(MiniClientSession.readInt(r,0));yes(Math.abs(accepted-1f)<0.001f,"unsupported rate truthfully resets to1x");}
         java.lang.reflect.Method m=MiniClientSession.class.getDeclaredMethod("property",String.class);m.setAccessible(true);
         eqs("NATIVE_FORWARD_0.5_TO_2",String.valueOf(m.invoke(s,"VIDEO_PLAYBACK_RATE")),"rate capability");
         eqs("",String.valueOf(m.invoke(s,"FRAME_STEP")),"frame step remains unadvertised");pass++;

@@ -16,8 +16,9 @@ public final class DiscSourceSmoke {
         testDiscTaxonomy(); passed++;
         testTitleParser(); passed++;
         testInvalidMetadataDetection(); passed++;
+        testPluginProbeResolution(); passed++;
         testCapabilityProbe(args.length>0?args[0]:"ffmpeg"); passed++;
-        System.out.println("DiscSourceSmoke PASS "+passed+"/7");
+        System.out.println("DiscSourceSmoke PASS "+passed+"/8");
     }
 
     private static void testUrlDecoding() throws Exception {
@@ -80,6 +81,29 @@ public final class DiscSourceSmoke {
         check(issues.contains("implausibly-short-file-duration"),"1 ms file duration reported as invalid metadata");
         check(issues.contains("implausibly-short-playback-duration"),"1 ms playback duration reported as invalid metadata");
         check(issues.contains("missing-stream-metadata"),"missing stream metadata detected");
+    }
+
+    private static void testPluginProbeResolution()throws Exception{
+        java.nio.file.Path root=Files.createTempDirectory("web091-disc-probe-");
+        File runtime=root.resolve("plugins/SageTVFFmpegPlugin/runtime").toFile();
+        check(runtime.mkdirs(),"create owned plugin fixture");
+        String name=System.getProperty("os.name","").toLowerCase(java.util.Locale.ROOT).contains("win")?"ffprobe.exe":"ffprobe";
+        File probe=new File(runtime,name),sibling=new File(root.toFile(),name);
+        String previous=System.getProperty("sagetv.webplayer.ffprobe");
+        try{
+            System.clearProperty("sagetv.webplayer.ffprobe");touch(probe);check(probe.setExecutable(true),"fixture executable");
+            java.lang.reflect.Method resolve=DiscTitleProbe.class.getDeclaredMethod("ffprobe",String.class);resolve.setAccessible(true);
+            String transcoder=root.resolve("SageTVTranscoder").toString();
+            eq(probe.getAbsolutePath(),(String)resolve.invoke(null,transcoder),"disc inspection uses installed plugin runtime probe");
+            touch(sibling);check(sibling.setExecutable(true),"sibling fixture executable");
+            eq(probe.getAbsolutePath(),(String)resolve.invoke(null,transcoder),"plugin probe wins over legacy sibling");
+            System.setProperty("sagetv.webplayer.ffprobe",sibling.getAbsolutePath());
+            eq(sibling.getAbsolutePath(),(String)resolve.invoke(null,transcoder),"existing explicit override preserved");
+        }finally{
+            if(previous==null)System.clearProperty("sagetv.webplayer.ffprobe");else System.setProperty("sagetv.webplayer.ffprobe",previous);
+            Files.deleteIfExists(probe.toPath());Files.deleteIfExists(sibling.toPath());
+            Files.deleteIfExists(runtime.toPath());Files.deleteIfExists(runtime.getParentFile().toPath());Files.deleteIfExists(root.resolve("plugins"));Files.deleteIfExists(root);
+        }
     }
 
     private static void testCapabilityProbe(String ffmpeg){

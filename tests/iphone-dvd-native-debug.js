@@ -1,0 +1,1 @@
+(()=>{const s=window.__iphoneGate;if(!s?.api)throw Error('Missing owner');s.dvdNativeDebug={done:false};s.api('status').then(j=>{s.dvdNativeDebug.value=j.connection?.dvd;s.dvdNativeDebug.done=true;}).catch(e=>{s.dvdNativeDebug.error=e.name;s.dvdNativeDebug.done=true;});return{readOnly:true};})()

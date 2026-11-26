@@ -20,6 +20,8 @@ public final class P13GfxLifecycleSmoke {
         ok("UNIFIED".equals(prop(on,"GFX_YUV_IMAGE_CACHE")),"explicit session opt-in advertises UNIFIED");
         ok("".equals(prop(on,"GFX_XFORMS"))&&"".equals(prop(on,"GFX_TEXTURE_BATCH_LIMIT")),"unsupported transform/batch families remain negotiated off");
         ok(on.json().contains("\"unifiedGraphics\":true")&&on.json().contains("\"gfxOpcodeLedger\""),"session diagnostics expose unified state and opcode ledger");
+        ok(on.json().contains("\"captionAuthority\":{\"callbacks\":false")&&on.json().contains("\"subtitleCallbackEvents\":0")&&on.json().contains("\"subtitleCallbackBytes\":0"),"caption callback negotiation/queue/counters are present without subtitle payloads");
+        ok(on.captionDiagnosticsJson().startsWith("{\"captionAuthority\":")&&on.captionDiagnosticsJson().contains("\"subtitleCallbackBytes\":0")&&!on.captionDiagnosticsJson().contains("session"),"existing state response exposes compact payload-free callback metadata without session identity");
         System.out.println("P13 GFX/lifecycle: "+tests+" tests PASS");
     }
 }

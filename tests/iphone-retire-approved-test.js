@@ -1,0 +1,2 @@
+/* Requires independent MCP proof the approved test playback is stopped. */
+(()=>{if((localStorage.getItem('sagetvWebMiniClientId')||'').replace(/[^a-f0-9]/ig,'').toLowerCase()!=='123c8282e1ee')throw Error('Unexpected test identity');window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:false}));return{retiredApprovedTest:true,media:[...document.querySelectorAll('video')].map(v=>({source:!!(v.currentSrc||v.getAttribute('src')),paused:v.paused}))}})()

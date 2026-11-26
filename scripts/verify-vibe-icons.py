@@ -10,7 +10,8 @@ import hashlib, json, xml.etree.ElementTree as ET
 ROOT=Path(__file__).resolve().parents[1];WEB=ROOT/'src/main/webapp'
 man=json.loads((ROOT/'third_party/vibe-icons.json').read_text())
 html=(WEB/'miniclient.html').read_text();worker=(WEB/'sw.js').read_text()
-for asset in man['assets']:
+all_assets=man['assets']+man.get('currentAdditionalAssets',[])
+for asset in all_assets:
     name=asset['output'];data=(WEB/name).read_bytes()
     assert hashlib.sha256(data).hexdigest()==asset['sha256'],name+' SHA-256 mismatch'
     if name.endswith('.png'):
@@ -25,4 +26,5 @@ for asset in man['assets']:
     assert 'src="'+name+'"' in html,name+' missing from overlay'
     assert repr(name) in worker,name+' missing from offline shell'
 assert len(man['assets'])==30 and len({a['output'] for a in man['assets']})==30
-print('PASS 30 Vibe Android assets: recorded shapes/colors, SHA-256, PNG Git blobs, HTML and offline shell references')
+assert len(all_assets)==31
+print('PASS31 Vibe Android assets:30 historical plus current Last; shapes/colors, SHA-256, PNG Git blobs, HTML and offline shell references')

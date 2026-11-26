@@ -41,7 +41,7 @@ public final class ContinuousStreamServlet extends HttpServlet {
                     ContinuousFilePump.copy(s.continuous,start,resp.getOutputStream(),
                         ()->!s.stopRequested&&s.process!=null&&s.process.isAlive(),
                         ()->cancelled.get()||s.stopRequested,
-                        n->{s.deliveredBytes+=n;s.lastAccessAt=System.currentTimeMillis();});
+                        n->{s.deliveredBytes+=n;s.lastAccessAt=System.currentTimeMillis();s.lastBrowserMediaReadNs=System.nanoTime();});
                 }catch(InterruptedException e){Thread.currentThread().interrupt();}
                 catch(IOException e){/* Closing a full lazy-load buffer is normal; keep the producer/file for byte resume. */}
                 finally{try{async.complete();}catch(IllegalStateException ignored){}}

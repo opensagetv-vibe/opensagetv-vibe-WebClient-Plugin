@@ -70,6 +70,7 @@ final class MiniClientSession {
     private final String server;
     private final int port;
     private final String clientId;
+    private final boolean localCaptionServer;
     private volatile int width;
     private volatile int height;
     private volatile boolean alive;
@@ -81,6 +82,7 @@ final class MiniClientSession {
     private final Object eventLock = new Object();
     private final MiniClientCrypto crypto = new MiniClientCrypto();
     private final AtomicBoolean closed = new AtomicBoolean();
+    private final BrowserTransportLease browserLease=new BrowserTransportLease(System.nanoTime());
     private final List<Socket> openingSockets = new ArrayList<Socket>();
     private final CountDownLatch mediaReady = new CountDownLatch(1);
     private volatile boolean reconnectAllowed, firstFrameStarted, reconnecting;
@@ -111,6 +113,7 @@ final class MiniClientSession {
     private volatile int browserVideoHeight = 1080;
     private volatile boolean subtitleCallbacks;
     private final boolean unifiedGraphics;
+    private final BrowserFramePacer browserFrames;
     private final GfxOpcodeLedger gfxOpcodeLedger = new GfxOpcodeLedger();
     private volatile long subtitleCallbackEvents, subtitleCallbackBytes;
 
@@ -119,6 +122,14 @@ final class MiniClientSession {
     }
 
     MiniClientSession(String id, String server, String clientId, int width, int height, boolean unifiedGraphics) {
+        this(id,server,clientId,width,height,unifiedGraphics,false);
+    }
+
+    MiniClientSession(String id, String server, String clientId, int width, int height, boolean unifiedGraphics, boolean frameAcks) {
+        this(id,server,clientId,width,height,unifiedGraphics,frameAcks,null);
+    }
+
+    MiniClientSession(String id, String server, String clientId, int width, int height, boolean unifiedGraphics, boolean frameAcks,MiniClientMediaBridge.NativeSeekFactory seekFactory) {
         this.id = id;
         String host = server == null || server.trim().isEmpty() ? "127.0.0.1" : server.trim();
         int p = DEFAULT_PORT;
@@ -129,16 +140,57 @@ final class MiniClientSession {
         this.server = host;
         this.port = p;
         this.clientId = normalizeClientId(clientId);
+        this.localCaptionServer=StockCaptionState.localServer(host);
         this.width = Math.max(320, Math.min(1920, width));
         this.height = Math.max(240, Math.min(1080, height));
         this.pendingWidth = this.width;
         this.pendingHeight = this.height;
         this.unifiedGraphics = unifiedGraphics;
-        this.mediaBridge = new MiniClientMediaBridge(this);
+        this.browserFrames = new BrowserFramePacer(frameAcks);
+        this.mediaBridge = new MiniClientMediaBridge(this,seekFactory);
     }
 
     String id() { return id; }
+    boolean acknowledgeFrame(long sequence){return browserFrames.acknowledge(sequence);}
+    Integer stockCaptionState(String expected){
+        if(!alive||closed.get()||!mediaBridge.ownsBrowserStream(expected))return null;
+        return StockCaptionState.read(clientId,localCaptionServer);
+    }
+    Boolean stockDvdMenu(String expected){
+        if(!alive||closed.get()||!mediaBridge.ownsBrowserStream(expected))return null;
+        return StockCaptionState.dvdMenu(clientId,localCaptionServer);
+    }
     String server() { return server; }
+    String clientIdentity(){return clientId;}
+    boolean applyStreamingSettings(StreamOptions options,boolean now,String expected,long time)throws Exception {
+        if(!alive||closed.get())return false;
+        if(now&&mediaBridge.nativeDvdSource())return mediaBridge.applyDvdSettings(options,expected);
+        return mediaBridge.applySettings(options,now,expected,time);
+    }
+    boolean reconfigureDvd(StockClientPlayback.Current prepare)throws Exception {
+        return StockClientPlayback.reconfigureDvd(clientId,localCaptionServer,()->alive&&!closed.get()&&prepare.current());
+    }
+    void watchContent(int mediaId,int airingId)throws Exception {
+        if(!alive||closed.get())throw new IllegalStateException("MiniClient disconnected; reconnect first");
+        StockClientPlayback.watch(clientId,localCaptionServer,mediaId,airingId);
+    }
+    void infoContent(int mediaId,int airingId)throws Exception {
+        if(!alive||closed.get())throw new IllegalStateException("MiniClient disconnected; reconnect first");
+        StockClientPlayback.info(clientId,localCaptionServer,mediaId,airingId);
+    }
+    boolean contentReady(int mediaId,int airingId)throws Exception {
+        return alive&&!closed.get()&&StockClientPlayback.ready(clientId,localCaptionServer,mediaId,airingId);
+    }
+    boolean showContent(int mediaId,int airingId)throws Exception {
+        return alive&&!closed.get()&&StockClientPlayback.show(clientId,localCaptionServer,mediaId,airingId,"preview".equals(contentLayout(mediaId,airingId)));
+    }
+    String contentLayout(int mediaId,int airingId)throws Exception {
+        if(!alive||closed.get())return "unknown";
+        return StockClientPlayback.layout(clientId,localCaptionServer,mediaId,airingId,mediaBridge.nativeVideoLayout());
+    }
+    String contentViewEvidence(int mediaId,int airingId)throws Exception {
+        return alive&&!closed.get()?StockClientPlayback.viewEvidence(clientId,localCaptionServer,mediaId,airingId):"{}";
+    }
     int width() { return width; }
     int height() { return height; }
     boolean isAlive() { return alive; }
@@ -361,9 +413,15 @@ final class MiniClientSession {
                 break;
         }
         String payload = Base64.getEncoder().encodeToString(body);
-        enqueue("{\"type\":\"gfx\",\"seq\":" + sequence.incrementAndGet() +
+        int browserSequence=sequence.incrementAndGet();
+        boolean paced=cmd==GFX_FLIPBUFFER&&browserFrames.prepare(browserSequence);
+        enqueue("{\"type\":\"gfx\",\"seq\":" + browserSequence +
                 ",\"cmd\":" + cmd + ",\"assignedHandle\":" + assignedHandle +
-                ",\"payload\":\"" + payload + "\"}");
+                ",\"ackRequired\":"+paced+",\"payload\":\"" + payload + "\"}");
+        // The media socket has its own reader. Do not acknowledge a displayed
+        // frame immediately at Jetty and let SageMC outrun the browser by
+        // thousands of animation frames. Never hold eventLock while waiting.
+        if(paced)browserFrames.await(browserSequence);
         if (hasReturn) writeReply(DRAWING_CMD_TYPE, intBytes(returnValue));
         if (cmd == GFX_FLIPBUFFER) enableUiEventsAfterFirstFrame();
     }
@@ -460,7 +518,8 @@ final class MiniClientSession {
         if ("GFX_DRAWMODE".equals(name)) return "FULLSCREEN";
         if ("VIDEO_ADVANCED_ASPECT".equals(name)) return "Source";
         if ("VIDEO_ADVANCED_ASPECT_LIST".equals(name)) return "Source;Fill;Zoom;4x3;16x9";
-        if ("MEDIA_STATE_URL".equals(name)) return "TRUE";
+        // Public API snapshots are consumed locally. There is no private Core
+        // MEDIA_STATE_URL notification implementation to advertise.
         return "";
     }
 
@@ -498,6 +557,10 @@ final class MiniClientSession {
             return;
         }
         int result = 0;
+        if (MiniClientCapabilityPolicy.unsupportedExtensionSet(name)) {
+            writeReply(SET_PROPERTY_CMD_TYPE, intBytes(1));
+            return;
+        }
         String value = new String(rawValue, StandardCharsets.ISO_8859_1);
         // Authentication is server/STV-owned. This plugin has no auth cache.
         if ("SET_CACHED_AUTH".equals(name)) result = 1;
@@ -590,7 +653,7 @@ final class MiniClientSession {
                     if (cmd == 1) break;
                 }
             } catch (Exception e) {
-                if (alive) { note("media I/O after " + lastMediaCommand + ": " + exceptionText(e)); enqueue(errorJson("Media connection: " + exceptionText(e))); }
+                if (alive) { mediaBridge.recordNativeTransportFailure(e); note("media I/O after " + lastMediaCommand + ": " + exceptionText(e)); enqueue(errorJson("Media connection: " + exceptionText(e))); }
             } finally {
                 closeSocket(current);
                 synchronized (lifecycleLock) { if (mediaSocket == current) mediaSocket = null; }
@@ -605,6 +668,13 @@ final class MiniClientSession {
 
     void sendSageCommand(int command) throws IOException {
         if (command < 2 || command > 108) throw new IllegalArgumentException("Invalid SageTV command");
+        if(command==20&&alive&&!closed.get()&&mediaBridge.nativeDvdSource()){
+            try {
+                if(StockClientPlayback.selectDvdMenu(clientId,localCaptionServer,true,()->alive&&!closed.get()&&mediaBridge.nativeDvdSource())){
+                    note("DVD menu Select queued through public playback control");return;
+                }
+            }catch(Exception unknown){throw new IOException("DVD Select outcome unknown; not replayed",unknown);}
+        }
         writeEventInt(SAGECOMMAND_EVENT_REPLY_TYPE, command);
     }
 
@@ -725,6 +795,7 @@ final class MiniClientSession {
     boolean subtitleCallbacksEnabled(){return subtitleCallbacks;}
     long subtitleCallbackEvents(){return subtitleCallbackEvents;}
     long subtitleCallbackBytes(){return subtitleCallbackBytes;}
+    String captionDiagnosticsJson(){return "{\"captionAuthority\":"+mediaBridge.captionAuthorityJson()+",\"subtitleCallbackEvents\":"+subtitleCallbackEvents+",\"subtitleCallbackBytes\":"+subtitleCallbackBytes+"}";}
 
     void sendMediaPlayerUpdate() throws IOException {
         synchronized (eventLock) {
@@ -761,10 +832,16 @@ final class MiniClientSession {
 
     void supersede() { fail("This client ID was opened by another browser connection. Close the other tab before reconnecting."); }
 
+    long openBrowserStream(){return browserLease.open(System.nanoTime());}
+    void detachBrowserStream(long ticket){browserLease.detach(ticket,System.nanoTime());}
+    void browserActivity(){browserLease.activity(System.nanoTime());}
+    boolean browserTransportExpired(){return browserLease.expired(System.nanoTime(),mediaBridge.lastBrowserMediaReadNs());}
+
     void close() {
         synchronized (lifecycleLock) {
             if (!closed.compareAndSet(false, true)) return;
             alive = false; phase = "closed"; closedAt = System.currentTimeMillis();
+            browserFrames.close();
             // Closing sockets first wakes blocked readers/handshakes even when
             // FFmpeg/player cleanup is waiting for its own lock.
             closeSocket(mediaSocket); closeSocket(gfxSocket);
@@ -808,11 +885,11 @@ final class MiniClientSession {
                 ",\"pendingMediaUpdate\":" + pendingMediaUpdate + ",\"sentUiEvents\":" + sentUiEvents +
                 ",\"lastUiEventType\":" + lastUiEventType + "}";
         }
-        return "{\"session\":\"" + HttpUtil.json(id) + "\",\"alive\":" + alive + ",\"server\":\"" + HttpUtil.json(server + ":" + port) + "\",\"clientId\":\"" + HttpUtil.json(clientId) + "\",\"width\":" + width + ",\"height\":" + height + ",\"queuedEvents\":" + events.size() + ",\"peakQueuedEvents\":" + eventQueuePeak +
+        return "{\"session\":\"" + HttpUtil.json(id) + "\",\"alive\":" + alive + ",\"localContent\":" + (localCaptionServer&&alive&&!closed.get()) + ",\"server\":\"" + HttpUtil.json(server + ":" + port) + "\",\"clientId\":\"" + HttpUtil.json(clientId) + "\",\"width\":" + width + ",\"height\":" + height + ",\"queuedEvents\":" + events.size() + ",\"peakQueuedEvents\":" + eventQueuePeak +
             ",\"threading\":{\"gfxReader\":" + (gfxThread!=null&&gfxThread.isAlive()) + ",\"mediaReader\":" + (mediaThread!=null&&mediaThread.isAlive()) + "},\"error\":\"" + HttpUtil.json(lastError) + "\",\"connection\":{\"phase\":\"" + phase +
             "\",\"firstFrameStarted\":" + firstFrameStarted + ",\"reconnectAllowed\":" + reconnectAllowed + ",\"reconnecting\":" + reconnecting + ",\"gfxPackets\":" + gfxFrames.get() +
             ",\"reconnectAttempts\":" + reconnectAttempts.get() + ",\"reconnectSuccesses\":" + reconnectSuccesses.get() + ",\"lastGfxCommand\":\"" + HttpUtil.json(lastGfxCommand) + "\",\"lastMediaCommand\":\"" + HttpUtil.json(lastMediaCommand) +
-            "\",\"lastTransportError\":\"" + HttpUtil.json(lastTransportError) + "\",\"crypto\":" + cryptoStatus + ",\"startupEvents\":" + startupStatus + ",\"capabilities\":" + MiniClientCapabilityPolicy.json() + ",\"unifiedGraphics\":" + unifiedGraphics + ",\"gfxOpcodeLedger\":" + gfxOpcodeLedger.json() + ",\"dvd\":" + mediaBridge.dvdJson() + ",\"trace\":" + history + "}}";
+            "\",\"lastTransportError\":\"" + HttpUtil.json(lastTransportError) + "\",\"crypto\":" + cryptoStatus + ",\"startupEvents\":" + startupStatus + ",\"browserFrames\":"+browserFrames.json()+",\"capabilities\":" + MiniClientCapabilityPolicy.json() + ",\"unifiedGraphics\":" + unifiedGraphics + ",\"gfxOpcodeLedger\":" + gfxOpcodeLedger.json() + ",\"captionAuthority\":" + mediaBridge.captionAuthorityJson() + ",\"subtitleCallbackEvents\":" + subtitleCallbackEvents + ",\"subtitleCallbackBytes\":" + subtitleCallbackBytes + ",\"dvd\":" + mediaBridge.dvdJson() + ",\"trace\":" + history + "}}";
     }
     private String shortId() { return id.substring(0, Math.min(8, id.length())); }
 

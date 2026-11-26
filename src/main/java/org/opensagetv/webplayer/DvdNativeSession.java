@@ -8,7 +8,10 @@ import java.util.Arrays;
  * generations only; P08 attaches the actual MPEG-PS -> browser A/V consumer.
  */
 final class DvdNativeSession {
-    static final int DEFAULT_CAPACITY = 4 * 1024 * 1024;
+    // This is unread native input, not the browser's decoded reserve. A large
+    // ring plus an unpaced converter lets the stock VM run chapters ahead of
+    // the picture. Stock sends <=32KiB PUSH payloads; retain eight of them.
+    static final int DEFAULT_CAPACITY = 256 * 1024;
     static final int DISABLE_SUBPICTURE = 62;
     private static final long PUSH_WAIT_MS = 1500L;
     private static final int MAX_METADATA_PAYLOAD = 64 * 1024;
@@ -28,7 +31,9 @@ final class DvdNativeSession {
     private long pushMediaCount;
     private long drainPolls;
     private long flushCount;
+    private long continuationCount;
     private long transientEosCount;
+    private long terminalEosAcks;
     private long metadataCount;
     private long totalPushedBytes;
     private long epochPushedBytes;
@@ -39,6 +44,10 @@ final class DvdNativeSession {
     private long lastStc45k = -1L;
     private int streamType = -1;
     private int streamPosition = -1;
+    // DVD_STREAM type 0 (audio) and type 1 (SPU) are independent selectors.
+    // Keep last-wire fields for diagnostics, never infer audio from the last
+    // command: a later subtitle update must not silently choose default audio.
+    private int audioWireCode = -1;
     private int dvdFormat = -1;
 
     DvdNativeSession() { this(DEFAULT_CAPACITY); }
@@ -58,13 +67,16 @@ final class DvdNativeSession {
             videoFormat = formatCode;
             initCount++;
             pushCommands = pushMediaCount = drainPolls = flushCount = transientEosCount = metadataCount = 0L;
+            continuationCount = 0L;
+            terminalEosAcks = 0L;
             totalPushedBytes = epochPushedBytes = 0L;
             postDataFlushReady = false;
             newCell = clut = spuControl = new byte[0];
             lastStc45k = -1L;
             streamType = streamPosition = dvdFormat = -1;
+            audioWireCode = -1;
             clock.resetAll();
-            inspector.resetEpoch();
+            inspector.resetSource();
         }
         // SPU composition reads the DVD clock/format. Never acquire the SPU
         // monitor while holding the DVD-session monitor or subtitle polling
@@ -85,6 +97,7 @@ final class DvdNativeSession {
     synchronized String failure() { return failure; }
     synchronized int capacity() { return capacity; }
     synchronized int videoFormat() { return videoFormat; }
+    synchronized int subtitleCanvasHeight() { return inspector.subtitleCanvasHeight(); }
     synchronized long generation() { return input == null ? 0L : input.generation(); }
     synchronized DvdPushBuffer input() { return input; }
     synchronized long mediaTimeMs() { return clock.currentMillis(); }
@@ -98,7 +111,7 @@ final class DvdNativeSession {
         return true;
     }
 
-    /** Handles the raw body of MEDIACMD_PUSHBUFFER and returns native free space/-2. */
+    /** Handles PUSHBUFFER: capacity, terminal EOS -1 or reusable cell drain -2. */
     int push(byte[] commandBody) throws IOException {
         int buffSize;
         int flags;
@@ -115,7 +128,7 @@ final class DvdNativeSession {
             else if (commandBody.length >= buffSize + 8) dataOffset = 8;
             else { failLocked("truncated DVD PUSH payload"); return 0; }
 
-            boolean looksLikeDvd = (flags & 0x100) != 0 || containsMpegPsPackHeader(commandBody, dataOffset, buffSize);
+            boolean looksLikeDvd = (flags & 0x180) != 0 || containsMpegPsPackHeader(commandBody, dataOffset, buffSize);
             if (!active && looksLikeDvd) ensureActive();
             // SageTV's four 16-KiB startup bandwidth probes are not MPEG-PS and
             // must never create/activate the DVD session.
@@ -123,6 +136,7 @@ final class DvdNativeSession {
             pipe = input;
         }
 
+        continueDrainedSegment();
         if (buffSize > 0) {
             try { pipe.write(commandBody, dataOffset, buffSize, PUSH_WAIT_MS); }
             catch (IOException e) {
@@ -138,12 +152,28 @@ final class DvdNativeSession {
                 pushMediaCount++;
                 postDataFlushReady = false;
             }
-            spu.onGeneration(observedGeneration);
-            spu.observe(commandBody,dataOffset,buffSize);
+            if (!continueDrainedSegment()) {
+                spu.onGeneration(observedGeneration);
+                spu.observe(commandBody,dataOffset,buffSize);
+            }
         }
         if ((flags & 0x80) != 0) {
             pipe.signalSegmentEnd();
             synchronized (this) { transientEosCount++; }
+            // Stock DVD terminal polling expects -1, whereas an EMPTY/cell
+            // drain expects -2. Never finish merely because input saw EOF:
+            // the matching decoder AND browser must have consumed the tail.
+            // A truly empty epoch has no decoder/browser output to await.
+            // Retain the reusable session; a later FLUSH/new cell still owns
+            // its own generation rather than destroying metadata here.
+            if ((flags & 0x100) == 0) {
+                synchronized(this){
+                    if(epochPushedBytes==0L || pipe.drainReady()) {
+                        terminalEosAcks++;
+                        return -1;
+                    }
+                }
+            }
         }
 
         if ((flags & 0x100) != 0) {
@@ -164,6 +194,30 @@ final class DvdNativeSession {
             if (pipe.drainReady()) return -2;
         }
         return pipe.freeBytes();
+    }
+
+    /** Called only by the serialized native media reader, never browser polling. */
+    private boolean continueDrainedSegment() {
+        final byte[] queued;
+        final long nextGeneration;
+        synchronized (this) {
+            if (!pending || failed || input == null) return false;
+            queued = input.beginDrainedContinuation();
+            if (queued == null) return false;
+            nextGeneration = input.generation();
+            epochPushedBytes = queued.length;
+            postDataFlushReady = false;
+            continuationCount++;
+            clock.beginDiscontinuity();
+            inspector.resetEpoch();
+            inspector.observe(queued,0,queued.length,clock);
+        }
+        // Preserve NEWCELL/STC/CLUT/selection metadata. Parsed next-cell SPU
+        // belonged to the ended consumer; replay the still-queued bytes once
+        // under the new token, outside the DVD monitor (SPU inverse lock order).
+        spu.onGeneration(nextGeneration);
+        spu.observe(queued,0,queued.length);
+        return true;
     }
 
     int flush() {
@@ -228,7 +282,12 @@ final class DvdNativeSession {
         int position = MiniClientSession.readInt(body, 4);
         if (type != 0 && type != 1) return -1;
         if(type==0 && position>=0 && !DvdAudioStreamCode.decode(position).supportedByFfmpegPolicy()) return -1;
-        synchronized(this){if (!ensureActive()) return -1;streamType = type;streamPosition = position;metadataCount++;}
+        synchronized(this){
+            if (!ensureActive()) return -1;
+            streamType = type;streamPosition = position;
+            if(type==0)audioWireCode=position;
+            metadataCount++;
+        }
         if(type==1)spu.select(position);
         return 0;
     }
@@ -256,7 +315,7 @@ final class DvdNativeSession {
     synchronized boolean epochHasVideo(){ return inspector.hasVideo(); }
     synchronized boolean epochStillCandidate(){ return inspector.stillCandidate(); }
     synchronized long epochPictureCount(){ return inspector.pictureStarts(); }
-    synchronized int requestedAudioWireCode(){ return streamType==0?streamPosition:-1; }
+    synchronized int requestedAudioWireCode(){ return audioWireCode; }
     synchronized String requestedAudioDescription(){ return requestedAudioWireCode()<0?"auto":DvdAudioStreamCode.decode(requestedAudioWireCode()).description(); }
 
     synchronized String json() {
@@ -267,9 +326,9 @@ final class DvdNativeSession {
                 ",\"free\":"+(p==null?capacity:p.freeBytes())+",\"generation\":"+(p==null?0:p.generation())+
                 ",\"totalPushedBytes\":"+totalPushedBytes+",\"epochPushedBytes\":"+epochPushedBytes+
                 ",\"initCount\":"+initCount+",\"pushCommands\":"+pushCommands+",\"mediaPushes\":"+pushMediaCount+
-                ",\"drainPolls\":"+drainPolls+",\"flushes\":"+flushCount+",\"segmentEos\":"+transientEosCount+
+                ",\"drainPolls\":"+drainPolls+",\"flushes\":"+flushCount+",\"continuations\":"+continuationCount+",\"segmentEos\":"+transientEosCount+",\"terminalEosAcks\":"+terminalEosAcks+
                 ",\"metadataCommands\":"+metadataCount+",\"cellOffset45k\":"+(newCell.length==4?(MiniClientSession.readInt(newCell,0)&0xffffffffL):-1L)+",\"clock90k\":"+clock.currentClock90k()+
-                ",\"ptsOffset90k\":"+clock.ptsOffset90k()+",\"streamType\":"+streamType+
+                ",\"ptsOffset90k\":"+clock.ptsOffset90k()+",\"firstEpochAvPts90k\":"+(clock.firstEpochAvPts90k()==Long.MIN_VALUE?"null":Long.toString(clock.firstEpochAvPts90k()))+",\"streamType\":"+streamType+
                 ",\"streamPosition\":"+streamPosition+",\"format\":"+dvdFormat+
                 ",\"audioSelector\":\""+HttpUtil.json(requestedAudioDescription())+"\",\"ps\":"+inspector.json()+"}";
     }

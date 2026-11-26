@@ -22,9 +22,18 @@ public final class MiniClientProtocolSmoke {
     Future<?> server=ex.submit(new Runnable(){public void run(){try{
       Socket media=acceptHandshake(ss,1);
       Socket gfx=acceptHandshake(ss,0);InputStream gi=gfx.getInputStream();OutputStream go=gfx.getOutputStream();
-      for(String[] expected:new String[][]{{"INPUT_DEVICES","IR,KEYBOARD,TOUCH,TV"},{"PUSH_AV_CONTAINERS","MPEG2-PS"},{"GFX_RESOLUTION","640x360"}}){
+      for(String[] expected:new String[][]{{"INPUT_DEVICES","IR,KEYBOARD,TOUCH,TV"},{"PUSH_AV_CONTAINERS","MPEG2-PS"},{"GFX_RESOLUTION","640x360"},
+          {"DVD_DISC_TRANSPORTS",""},{"DVD_DISC_POLICY",""},{"DVD_DISC_SKIP_MENUS",""},{"DVD_DISC_SKIP_PREVIEWS",""},
+          {"DVD_DISC_NATIVE_FALLBACK",""},{"MEDIA_STATE_URL",""},{"UNKNOWN_EMPTY_PROPERTY",""},{"VIDEO_PLAYBACK_RATE","NATIVE_FORWARD_0.5_TO_2"}}){
         byte[] p=expected[0].getBytes(StandardCharsets.ISO_8859_1);go.write(new byte[]{0,(byte)(p.length>>16),(byte)(p.length>>8),(byte)p.length});go.write(p);go.flush();
         byte[] prop=replyPayload(gi,0);require(new String(prop,StandardCharsets.ISO_8859_1).equals(expected[1]),expected[0]+" property mismatch");
+      }
+      for(String name:new String[]{"DVD_DISC_POLICY","DVD_DISC_FUTURE","MEDIA_STATE_URL","VIDEO_PLAYBACK_RATE"}){
+        byte[] n=name.getBytes(StandardCharsets.ISO_8859_1),v="TRUE".getBytes(StandardCharsets.ISO_8859_1);
+        ByteArrayOutputStream packet=new ByteArrayOutputStream();DataOutputStream data=new DataOutputStream(packet);
+        data.writeShort(n.length);data.writeShort(v.length);data.write(n);data.write(v);data.flush();byte[] body=packet.toByteArray();
+        go.write(new byte[]{1,0,(byte)(body.length>>8),(byte)body.length});go.write(body);go.flush();
+        require(i32(replyPayload(gi,1),0)==1,"Unimplemented extension SET falsely accepted: "+name);
       }
       go.write(new byte[]{16,0,0,4, 1,0,0,4});go.flush();byte[] init=replyPayload(gi,16);require(i32(init,0)==1,"INIT return mismatch");
       // INIT is not server UI readiness. No asynchronous event may follow it.

@@ -20,6 +20,13 @@ final class MiniClientSessionManager {
     // available to the diagnostics endpoint.
     private static final Object[] START_LOCKS = new Object[32];
     static { for (int i=0; i<START_LOCKS.length; i++) START_LOCKS[i] = new Object(); }
+    private static final java.util.concurrent.ScheduledExecutorService REAPER=java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r->{Thread t=new Thread(r,"webplayer-browser-reaper");t.setDaemon(true);return t;});
+    static { REAPER.scheduleWithFixedDelay(()->{
+        for(Map.Entry<String,MiniClientSession> entry:SESSIONS.entrySet())try{
+            MiniClientSession session=entry.getValue();
+            if(session.isAlive()&&session.browserTransportExpired()&&SESSIONS.remove(entry.getKey(),session))session.close();
+        }catch(RuntimeException ignored){}
+    },5,5,java.util.concurrent.TimeUnit.SECONDS); }
     private MiniClientSessionManager() {}
 
     static MiniClientSession start(String server, String clientId, int width, int height) throws IOException {
@@ -29,8 +36,11 @@ final class MiniClientSessionManager {
         return start(server,clientId,width,height,options,false);
     }
     static MiniClientSession start(String server,String clientId,int width,int height,StreamOptions options,boolean unifiedGraphics) throws IOException {
+        return start(server,clientId,width,height,options,unifiedGraphics,false);
+    }
+    static MiniClientSession start(String server,String clientId,int width,int height,StreamOptions options,boolean unifiedGraphics,boolean frameAcks) throws IOException {
         String id = UUID.randomUUID().toString().replace("-", "");
-        MiniClientSession session = new MiniClientSession(id, server, clientId, width, height, unifiedGraphics);
+        MiniClientSession session = new MiniClientSession(id, server, clientId, width, height, unifiedGraphics,frameAcks);
         session.media().configure(options);
         String key = session.identityKey();
         synchronized (START_LOCKS[(key.hashCode() & 0x7fffffff) % START_LOCKS.length]) {
@@ -50,7 +60,7 @@ final class MiniClientSessionManager {
         return id == null ? null : SESSIONS.get(id);
     }
 
-    static void stopAll(){for(String id:SESSIONS.keySet())stop(id);}
+    static void stopAll(){REAPER.shutdownNow();for(String id:SESSIONS.keySet())stop(id);}
 
     static boolean stop(String id) {
         MiniClientSession session = SESSIONS.remove(id);

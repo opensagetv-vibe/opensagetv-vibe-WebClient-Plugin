@@ -1,6 +1,15 @@
 # P04 real-source field acceptance
 
-**State:** `IMPLEMENTED_AWAITING_FIELD`
+**Current2026-11-19:** `QUALIFIED_AVAILABLE_LINUX_PHONE_SCOPE`. WP04-007 is
+ledger-complete: unchanged UK source transport/timing/Off acceptance plus
+generated English/Spanish/PMT/seek/real EOF/reconnect/reopen actual phone8rows.
+WEB100 fixes early PMT clear; WEB101 fixes stale caption at real finite EOF.
+See `artifacts/results/WP04-007/TRANSITIONS.md` and owning task ledger for
+builds, settings, original/generated distinction and preserved unknowns.
+Not all broadcasts, GPU vendors, Windows or physical finger certification.
+
+The original field checklist follows; its original pending state and source
+absence are historical, superseded by the above dated evidence.
 
 Use at least one unchanged recording known to contain DVB bitmap subtitles, preferably a UK/European broadcast source with descriptor `0x59`.
 

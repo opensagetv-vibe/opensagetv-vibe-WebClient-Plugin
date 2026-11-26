@@ -1,0 +1,15 @@
+<dvdauthor>
+  <vmgm><fpc>jump titleset 1 menu;</fpc><menus><video format="ntsc" aspect="16:9"/></menus></vmgm>
+  <titleset>
+    <menus><video format="ntsc" aspect="16:9" resolution="720x480"/>
+      <pgc entry="root"><vob file="menu.vob" pause="inf"/>
+        <button name="main">jump title 2;</button>
+        <button name="extra">jump title 1;</button>
+      </pgc>
+    </menus>
+    <titles><video format="ntsc" aspect="16:9" resolution="720x480"/><audio format="ac3" lang="en"/>
+      <pgc><vob file="extra.vob" chapters="0"/><post>call menu;</post></pgc>
+      <pgc><vob file="main.vob" chapters="0,4,8"/><post>call menu;</post></pgc>
+    </titles>
+  </titleset>
+</dvdauthor>

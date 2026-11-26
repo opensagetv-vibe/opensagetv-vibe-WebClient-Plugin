@@ -1,0 +1,1 @@
+(()=>{if([...document.querySelectorAll('video')].some(v=>!!(v.currentSrc||v.getAttribute('src'))))throw Error('Refuse reload of active media');setTimeout(()=>location.reload(),200);return {reloadScheduled:true}})()

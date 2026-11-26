@@ -1,5 +1,12 @@
 # P06 validation
 
+Dated2026-11-18 update: scoped genuine external WP06-004 acceptance passes
+22actual stock-Linux/browser assertions on113129. See RESULT.md under
+artifacts/results/WP06-004 and dated FIELD_ACCEPTANCE.md.24genuine/context/
+timing/worker checks, old-worker failing-before regression,32DVB/34architecture
+and both browser renderers9each also pass. Historical evidence below remains
+historical, not a claim of physical iPhone/all-forced/all-OS acceptance.
+
 Local/generated validation completed on 2026-09-25.
 
 ## Deterministic Java / FFmpeg evidence

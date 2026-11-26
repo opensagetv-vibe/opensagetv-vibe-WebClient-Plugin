@@ -6,18 +6,17 @@ Apply this policy to every task workflow, including dependency fixes across
 Vibe repositories. Fix and test necessary plugins and update the test-server
 plugin without asking again solely for repository-boundary approval.
 
-Prefer the Android client, then a stock-compatible plugin. Change non-stock
-`.232` Core only for a proven production defect that neither can correct;
-document the API gap and alternatives, keep optional negotiation and safe
-stock/older-client fallback, and run affected compatibility tests. Never patch
-Core merely to simplify testing.
+Prefer browser-client fixes, then the owning stock-compatible plugin.
+Both `.232` and `.175` are stock: never replace Sage.jar, stock FFmpeg or
+bundled Core natives. Missing capabilities use only supported client/plugin/
+container interfaces or remain documented unavailable. Never patch Core.
 
 Stock `.175` installation changes are limited to plugin installation/update.
 Do not modify its stock Sage.jar, stock FFmpeg, Core binaries, or server
 installation/configuration files. Preserve user settings, recordings and
 unrelated clients; reversible supported SageTV playback APIs remain allowed.
 
-Non-stock `.232` restarts are authorized for task updates without asking
+Stock `.232` restarts are authorized for task updates without asking
 again; coordinate them with active test guards and preserve data/settings.
   Always ask the user before restarting stock `.175`, even when it appears idle,
   unless an explicit user-granted bounded restart window is active. Record
@@ -30,6 +29,14 @@ Test only affected gates, preserve unrelated completed matrices, and do not
 stop independent authorized work for a status question or a dependency-only
 permission request. Unrelated work, publication, destructive actions and
 interruption of recordings/other users still require their own authority.
+
+Standing continuation rule: finish the full authorized executable task list.
+After a fix, provider pass or user question, give commentary and proceed to
+the next unblocked implementation/affected end-to-end gate. Before a final
+response, inspect remaining unchecked work; one unavailable physical row is
+not a reason to stop other runnable work. No checkpoint-only final/handoff,
+unattended-work promise or fabricated PASS. Respect explicit pauses and real
+scope, safety, activity and missing-input boundaries.
 
 Read `HANDOFF.md`, `README.md`, `TASKS.md`, `WORKFLOW.md`, and the directly
 relevant parity document before changing code. Historical Markdown under
@@ -44,6 +51,11 @@ Use the sibling `opensagetv-vibe-build-env` through `dev.cmd` or `dev.sh`.
 Physical commissioning on `.232` is explicit and must preserve server data,
 configuration, recordings, and unrelated plugins. Do not publish this plugin
 or a public manifest until the user gives final approval.
+User2026-11-15 gives standing permission to stop the iPhone Web Client test
+playback when required for authorized work. Identify that exact phone session
+and inspect recording/other-client activity first; this is not permission to
+stop recordings, unrelated clients or other-server users. No repeat question
+for the same iPhone test interruption; record the before/after activity.
 
 For new test controls, use the stock-compatible Core MCP plugin and supported
 SageTV APIs before considering a Core change. Generated, simulated, browser,

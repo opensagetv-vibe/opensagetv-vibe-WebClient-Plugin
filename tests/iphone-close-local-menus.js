@@ -1,0 +1,1 @@
+(()=>{const $=id=>document.getElementById(id);if(!$('calibrationPanel').hidden)throw Error('Close calibration explicitly first');for(let i=0;i<4&&!$('settingsPanel').hidden;i++)$('closeSettings').click();if(!$('remotePanel').hidden)$('hideRemote').click();return{settingsClosed:$('settingsPanel').hidden,remoteClosed:$('remotePanel').hidden};})()

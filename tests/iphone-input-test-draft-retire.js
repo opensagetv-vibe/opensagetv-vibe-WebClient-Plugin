@@ -1,0 +1,2 @@
+/* Exact empty-before/one-q owned failed input test; preserve any other draft. */
+(()=>{if((localStorage.getItem('sagetvWebMiniClientId')||'').replace(/:/g,'').toLowerCase()!=='123c8282e1ee'||window.__phoneInput||videoPlane.getAttribute('src')||videoPlane.readyState||!/^[qQ]$/.test(keyboardInput.value))throw Error('Owned one-character test draft not proven');keyboardInput.value='';return{ownedTestCharacterRetired:true,noTextSentToServer:true}})()

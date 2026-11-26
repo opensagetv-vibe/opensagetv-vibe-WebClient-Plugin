@@ -56,7 +56,13 @@ public final class StreamingServletSmoke {
         try {
             Exchange e=new Exchange();e.path="/"+id+"/stream.ts";servlet.doGet(e.req,e.resp);e.await();
             check(e.status==200&&Arrays.equals(payload,e.bytes.toByteArray())&&e.asyncStarted&&e.timeout==0,"async servlet streams complete original bytes, 200/no invented Content-Length");
+            check(s.lastBrowserMediaReadNs!=0,"delivered continuous bytes renew browser media ownership without a state timer");
             check("video/mp2t".equals(e.contentType)&&"no-store, no-transform".equals(e.headers.get("Cache-Control"))&&"no".equals(e.headers.get("X-Accel-Buffering")),"continuous transport has no-cache/no-proxy-buffer headers");
+            s.lastBrowserMediaReadNs=0;HlsSessionManager.get(id);
+            check(s.lastBrowserMediaReadNs==0,"diagnostic HLS lookup does not renew browser ownership");
+            Files.write(new File(dir,"stream.m3u8").toPath(),"#EXTM3U\n".getBytes("UTF-8"));
+            Exchange hls=new Exchange();hls.path="/"+id+"/stream.m3u8";new HlsFileServlet().doGet(hls.req,hls.resp);
+            check(s.lastBrowserMediaReadNs!=0&&hls.bytes.size()>0,"successful HLS media delivery renews browser ownership");
             e=new Exchange();e.path="/"+id+"/stream.ts";e.params.put("bstart","19999");servlet.doGet(e.req,e.resp);e.await();
             check(e.status==200&&Arrays.equals(Arrays.copyOfRange(payload,19999,payload.length),e.bytes.toByteArray())&&"19999".equals(e.headers.get("X-SageTV-Byte-Start")),"lazy-load reconnect resumes exact byte suffix without restarting producer");
             for(String offset:new String[]{"-1","NaN","9223372036854775808"}){e=new Exchange();e.path="/"+id+"/stream.ts";e.params.put("bstart",offset);servlet.doGet(e.req,e.resp);if(e.status!=400||e.asyncStarted)throw new AssertionError(offset);}
@@ -76,7 +82,7 @@ public final class StreamingServletSmoke {
             cueCtx.beginSeek();check(cueCtx.cues().size()==0,"seek generation clears queued subtitle cues");sessions.remove(cueId);Files.deleteIfExists(cueSession.directory.toPath());
             AssetStatusServlet assets=new AssetStatusServlet();e=new Exchange();e.params.put("family","https://untrusted.invalid/");assets.doPost(e.req,e.resp);check(e.status==400,"asset preparation rejects arbitrary families/URLs without network access");
             check(AssetCache.streamingList().size()==2&&AssetCache.streamingList().contains("mpegts-1.8.0/mpegts.min.js"),"streaming prefetch allowlist is limited to two pinned player assets");
-        } finally {servlet.destroy();sessions.remove(id);Files.deleteIfExists(s.continuous.toPath());Files.deleteIfExists(dir.toPath());HlsSessionManager.stopAll();}
+        } finally {servlet.destroy();sessions.remove(id);Files.deleteIfExists(s.continuous.toPath());Files.deleteIfExists(new File(dir,"stream.m3u8").toPath());Files.deleteIfExists(dir.toPath());HlsSessionManager.stopAll();}
         System.out.println("Streaming servlet tests: "+passed+" PASS (mock Servlet API; real async workers/file IO)");
     }
 }

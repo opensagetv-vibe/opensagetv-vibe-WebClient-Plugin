@@ -14,8 +14,8 @@
       this.options=p;this.id=event.hlsSession;this.stv=!!(authority&&authority.mode==='stv');
       if(authority&&authority.mode==='off')return;
       if(!this.id||String(p.captions)==='off')return;
-      if(String(p.captions)==='teletext'){this.teletext=true;this.pollTeletext(this.generation);return;}
-      if(String(p.captions)==='dvb'){this.dvb=true;this.pollDvb(this.generation);return;}
+      if(String(p.captions)==='teletext'){this.teletext=true;this.present(this.generation);this.pollTeletext(this.generation);return;}
+      if(String(p.captions)==='dvb'){this.dvb=true;this.present(this.generation);this.pollDvb(this.generation);return;}
       if(!['608','708'].includes(String(p.captions)))return;
       const serial=this.generation;
       const initialStvState=authority&&authority.stvStateSeen?Number(authority.stvState)||0:null;
@@ -28,7 +28,7 @@
         const now=Math.max(0,this.o.timeMs());let count=0;
         while(this.queue.length&&this.queue[0][0]<=now+3000&&count++<300){const [pts,hex]=this.queue.shift();this.decoder.pushCcData(fromHex(hex),pts);}
         this.decoder.updateTime(Math.max(0,now-(Number(p.captionOffsetMs)||0)));
-        this.timer=setTimeout(tick,100);
+        this.timer=setTimeout(tick,33);
       };
       tick();this.poll(serial);
     }
@@ -39,6 +39,40 @@
       if(this.stvStateSeen&&state===0){this.stvService='';if(typeof this.decoder.setEnabled==='function')this.decoder.setEnabled(false);this.o.render('');return;}
       const service='CC'+Math.max(1,Math.min(4,state||Number(this.options&&this.options.captionService)||1));
       this.stvService=service;if(typeof this.decoder.setService==='function')this.decoder.setService(service);if(typeof this.decoder.setEnabled==='function')this.decoder.setEnabled(true);
+    }
+    enqueue(cues){
+      for(const cue of cues){
+        if(!cue||!Number.isFinite(cue.ptsMs)||cue.ptsMs<0)continue;
+        if(this.teletext&&(cue.kind!=='text'||cue.owner!=='local_broadcast'))continue;
+        if(this.dvb&&(cue.kind!=='bitmap'||cue.owner!=='local_dvb'))continue;
+        if(typeof cue.text==='string'&&cue.text.length>32768)throw new Error('Caption text exceeds limit');
+        if(typeof cue.data==='string'&&cue.data.length>4*1024*1024)throw new Error('Caption bitmap exceeds limit');
+        this.queue.push(cue);this.received++;
+      }
+      this.queue.sort((a,b)=>a.ptsMs-b.ptsMs);
+      if(this.queue.length>512||this.queue.reduce((n,c)=>n+(c.data?c.data.length:0)+(c.text?c.text.length:0),0)>8*1024*1024){this.queue=[];throw new Error('Caption presentation queue exceeds limit');}
+    }
+    present(serial){
+      if(serial!==this.generation||!(this.teletext||this.dvb))return;
+      const now=Math.max(0,(this.o.sourceTimeMs?this.o.sourceTimeMs():this.o.timeMs())-(Number(this.options.captionOffsetMs)||0));
+      try{
+        if(this.bitmapExpiry>0&&now>=this.bitmapExpiry){this.bitmapExpiry=0;this.clears++;if(this.dvb&&this.o.clearBitmap)this.o.clearBitmap();else this.o.render('');}
+        let count=0;
+        while(this.queue.length&&this.queue[0].ptsMs<=now&&count++<256){
+          const cue=this.queue.shift();
+          if(cue.clear||this.teletext&&!cue.text){this.clears++;this.bitmapExpiry=0;if(this.dvb&&this.o.clearBitmap)this.o.clearBitmap();else this.o.render('');}
+          if(this.teletext&&!cue.clear&&cue.text)this.o.render(String(cue.text),'teletext',{type:'teletext',ptsMs:cue.ptsMs});
+          else if(this.dvb&&!cue.clear||this.dvb&&cue.data){
+            const rect=Array.isArray(cue.rect)?cue.rect:[],w=Number(rect[2])|0,h=Number(rect[3])|0;
+            if(w>0&&h>0&&w*h<=1048576&&cue.format==='rgba-straight'&&typeof cue.data==='string'){
+              const rgba=fromBase64(cue.data);if(rgba.length!==w*h*4)throw new Error('Invalid DVB RGBA rectangle length');
+              if(this.o.renderBitmap)this.o.renderBitmap(cue,rgba);
+            }
+          }
+          const duration=Math.max(0,Number(cue.durationMs)||0);if(duration>0)this.bitmapExpiry=cue.ptsMs+duration;
+        }
+      }catch(error){this.lastError=error.message||String(error);if(this.o.error)this.o.error(this.lastError);}
+      this.timer=setTimeout(()=>this.present(serial),33);
     }
     async poll(serial){
       if(serial!==this.generation||!this.decoder)return;
@@ -60,14 +94,12 @@
       let again=350;
       try{
         const delay=Number(this.options&&this.options.captionOffsetMs)||0;
-        const presentation=Math.max(0,Math.floor(this.o.timeMs()-delay));
-        const data=await this.o.subtitleFetch({session:this.id,timeMs:presentation,max:256});
+        const presentation=Math.max(0,Math.floor((this.o.sourceTimeMs?this.o.sourceTimeMs():this.o.timeMs())-delay));
+        const data=await this.o.subtitleFetch({session:this.id,timeMs:presentation+1200,max:256});
         if(serial!==this.generation||!this.teletext)return;
+        if(this.retiredBroadcastService(data.teletext,false)){this.queueInfo=data.queue||this.queueInfo;return;}
         const cues=Array.isArray(data.cues)?data.cues:[];
-        for(const cue of cues){
-          if(!cue||cue.kind!=='text'||cue.owner!=='local_broadcast')continue;
-          this.received++;if(cue.clear||!cue.text){this.clears++;this.o.render('');}else this.o.render(String(cue.text),'teletext',{type:'teletext',ptsMs:Number(cue.ptsMs)||0});
-        }
+        this.enqueue(cues);this.presentDueNow();
         this.queueInfo=data.queue||this.queueInfo;if(data.teletext&&Array.isArray(data.teletext.services))this.services=data.teletext.services;
         if(cues.length>=128)again=50;
       }catch(e){
@@ -79,29 +111,32 @@
       let again=120;
       try{
         const delay=Number(this.options&&this.options.captionOffsetMs)||0;
-        const presentation=Math.max(0,Math.floor(this.o.timeMs()-delay));
-        if(this.bitmapExpiry>0&&presentation>=this.bitmapExpiry){this.bitmapExpiry=0;this.clears++;if(this.o.clearBitmap)this.o.clearBitmap();}
-        const data=await this.o.subtitleFetch({session:this.id,timeMs:presentation,max:256});
+        const presentation=Math.max(0,Math.floor((this.o.sourceTimeMs?this.o.sourceTimeMs():this.o.timeMs())-delay));
+        const data=await this.o.subtitleFetch({session:this.id,timeMs:presentation+1200,max:256});
         if(serial!==this.generation||!this.dvb)return;
+        if(this.retiredBroadcastService(data.dvbBitmap,true)){this.queueInfo=data.queue||this.queueInfo;return;}
         const cues=Array.isArray(data.cues)?data.cues:[];
-        for(const cue of cues){
-          if(!cue||cue.kind!=='bitmap'||cue.owner!=='local_dvb')continue;
-          this.received++;
-          if(cue.clear){this.clears++;this.bitmapExpiry=0;if(this.o.clearBitmap)this.o.clearBitmap();}
-          const rect=Array.isArray(cue.rect)?cue.rect:[],w=Number(rect[2])|0,h=Number(rect[3])|0;
-          if(w>0&&h>0&&cue.format==='rgba-straight'&&typeof cue.data==='string'){
-            const rgba=fromBase64(cue.data);if(rgba.length!==w*h*4)throw new Error('Invalid DVB RGBA rectangle length');
-            if(this.o.renderBitmap)this.o.renderBitmap(cue,rgba);
-            const duration=Math.max(0,Number(cue.durationMs)||0);this.bitmapExpiry=duration>0?(Number(cue.ptsMs)||presentation)+duration:0;
-          }
-        }
+        this.enqueue(cues);this.presentDueNow();
         this.queueInfo=data.queue||this.queueInfo;if(data.dvbBitmap&&Array.isArray(data.dvbBitmap.services))this.services=data.dvbBitmap.services;
         if(cues.length>=128)again=25;else if(!cues.length)again=250;
       }catch(e){
         if(serial===this.generation){this.lastError=e.message||String(e);if(this.o.error)this.o.error('DVB bitmap: '+this.lastError);again=1500;}
       }finally{if(serial===this.generation&&this.dvb)this.pollTimer=setTimeout(()=>this.pollDvb(serial),again);}
     }
-    snapshot(){return {mode:this.dvb?'dvb-bitmap-local':this.teletext?'teletext-local':this.decoder?(this.stv?'stv-controlled-browser-local':'browser-local'):'off',received:this.received,clears:this.clears,cursor:this.cursor,pending:this.queue.length,error:this.lastError,services:this.services,bitmapExpiry:this.bitmapExpiry,queue:this.queueInfo,stvControlled:this.stv,stvStateSeen:this.stvStateSeen,stvState:this.stvState,stvService:this.stvService,decoder:this.decoder?this.decoder.getStats():null};}
+    retiredBroadcastService(state,bitmap){
+      // Older peers omit selection metadata. Empty discovery alone is NOT a
+      // removal; use only an explicit current-source numeric selection/off.
+      if(!state||!Array.isArray(state.services)||!Number.isInteger(state.selectedTrack))return false;
+      if(state.active!==false&&state.selectedTrack>=0)return false;
+      const at=state.selectionChangedMs;
+      const now=Math.max(0,(this.o.sourceTimeMs?this.o.sourceTimeMs():this.o.timeMs())-(Number(this.options&&this.options.captionOffsetMs)||0));
+      if(state.active!==false&&Number.isFinite(at)&&at>0&&now<at)return false;
+      this.services=state.services;this.queue=[];this.bitmapExpiry=0;this.clears++;
+      if(bitmap&&this.o.clearBitmap)this.o.clearBitmap();else this.o.render('');
+      return true;
+    }
+    presentDueNow(){clearTimeout(this.timer);this.timer=null;this.present(this.generation);}
+    snapshot(){return {mode:this.dvb?'dvb-bitmap-local':this.teletext?'teletext-local':this.decoder?(this.stv?'stv-controlled-browser-local':'browser-local'):'off',received:this.received,clears:this.clears,cursor:this.cursor,pending:this.queue.length,presentationTickMs:33,lookAheadMs:1200,error:this.lastError,services:this.services,bitmapExpiry:this.bitmapExpiry,queue:this.queueInfo,stvControlled:this.stv,stvStateSeen:this.stvStateSeen,stvState:this.stvState,stvService:this.stvService,decoder:this.decoder?this.decoder.getStats():null};}
   }
   function fromHex(hex){const out=new Uint8Array(hex.length/2);for(let i=0;i<out.length;i++)out[i]=parseInt(hex.slice(i*2,i*2+2),16);return out;}
   function fromBase64(value){if(typeof Buffer!=='undefined'&&typeof Buffer.from==='function')return new Uint8Array(Buffer.from(value,'base64'));const raw=atob(value),out=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i)&255;return out;}

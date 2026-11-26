@@ -8,3 +8,5 @@
 __pycache__/
 *.pyc
 .deps/
+/config/ssh_known_hosts.local
+/plugins/SageTVWebPlayer/diagnostics/

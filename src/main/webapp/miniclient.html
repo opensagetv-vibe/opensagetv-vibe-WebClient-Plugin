@@ -5,14 +5,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#000000">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="SageTV Vibe">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>SageTV MiniClient · 3.2.30</title>
-  <link rel="stylesheet" href="css/miniclient.css?v=3.2.30">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <title>OpenSageTV Vibe · Web Client 3.3.0</title>
+<link rel="stylesheet" href="css/miniclient.css?v=3.3.0-web133.1">
 </head>
 <body>
 <div id="app" class="mc-app">
   <header id="toolbar" class="mc-toolbar">
-    <div class="mc-title">SageTV MiniClient <span class="mc-subtitle">3.2.30 · Vibe browser port</span></div>
+    <div class="mc-title">SageTV Vibe <span class="mc-subtitle">Web Client 3.3.0</span></div>
     <div class="mc-toolbar-actions">
       <span id="connectionStatus" class="mc-status" role="status">Connecting…</span>
       <span id="bufferStatus" class="mc-status"></span>
@@ -22,7 +26,6 @@
       <button id="fullscreenBtn" type="button">Fullscreen</button>
       <button id="reconnectBtn" type="button">Reconnect</button>
       <button id="connectionDiagnosticsBtn" type="button" hidden>Download diagnostics</button>
-      <a class="mc-link" href="index.html">Web Player</a>
     </div>
   </header>
   <main id="stage" class="mc-stage" tabindex="0" aria-label="SageTV MiniClient. Hold a click or touch to open the remote.">
@@ -37,13 +40,20 @@
     </div>
     <canvas id="gfxCanvas" class="mc-gfx" width="1280" height="720" aria-label="SageTV graphics"></canvas>
     <div id="osdMessage" class="mc-message" role="status">Connecting to SageTV MiniClient…</div>
+    <section id="connectionRecovery" class="mc-connection-recovery" aria-label="Connection recovery" hidden>
+      <strong>Connection interrupted</strong>
+      <p id="recoveryReason" role="status"></p>
+      <div><button id="retryConnectionBtn" type="button">Reconnect to SageTV</button><button id="recoveryDiagnosticsBtn" type="button">Download diagnostics</button></div>
+    </section>
     <button id="autoplayBtn" class="mc-autoplay" type="button" hidden>Play video</button>
-    <pre id="stats" class="mc-stats" hidden></pre>
+    <section id="statsPanel" class="mc-stats" hidden aria-label="Playback statistics"><div id="statsGauges" class="mc-gauges"></div><pre id="stats" hidden></pre></section>
   <div id="remotePanel" class="mc-remote-overlay" role="dialog" aria-modal="true" aria-label="Vibe Android remote overlay" aria-hidden="true" hidden>
     <section class="mc-remote-card" aria-label="Remote controls">
       <div class="vibe-top">
+        <button id="remoteLive" class="vibe-icon" type="button" aria-label="Watch live" title="Watch live — jump to the current live point" disabled><img src="icons/vibe/live.svg" alt="" draggable="false"></button>
+        <button id="remoteCast" class="vibe-icon" type="button" aria-label="Cast video" title="Cast video" disabled><img src="icons/vibe/cast.svg" alt="" draggable="false"></button>
         <button id="nav_home" data-dismiss="true" class="vibe-icon" type="button" aria-label="Home" title="Home" data-command="28" ><img src="icons/vibe/home.png" alt="" draggable="false"></button>
-        <div class="vibe-top-right"><button id="remoteHelp" class="vibe-icon" type="button" aria-label="Help and additional controls" title="Help and additional controls" aria-expanded="false" aria-controls="remoteTools"><img src="icons/vibe/help_outline.svg" alt="" draggable="false"></button><button id="closeRemote" class="vibe-icon" type="button" aria-label="Close remote" title="Close remote" ><img src="icons/vibe/close.png" alt="" draggable="false"></button></div>
+        <div class="vibe-top-right"><button id="remoteHelp" class="vibe-icon" type="button" aria-label="Help and additional controls" title="Help and additional controls" aria-expanded="false" aria-controls="remoteTools"><img src="icons/vibe/help_outline.svg" alt="" draggable="false"></button><button id="closeRemote" class="vibe-icon" type="button" aria-label="Exit client" title="Exit client" ><img src="icons/vibe/close.png" alt="" draggable="false"></button></div>
       </div>
       <div class="vibe-middle">
         <div class="vibe-dpad" role="group" aria-label="Navigation"><button id="nav_options" data-dismiss="true" class="vibe-icon" type="button" aria-label="Options" title="Options" data-command="29" style="grid-column:1;grid-row:1" ><img src="icons/vibe/menu.svg" alt="" draggable="false"></button><button id="nav_info" data-dismiss="true" class="vibe-icon" type="button" aria-label="Info" title="Info" data-command="24" style="grid-column:2;grid-row:1" ><img src="icons/vibe/info_outline.svg" alt="" draggable="false"></button><button id="nav_back" class="vibe-icon" type="button" aria-label="Back" title="Back" data-command="75" style="grid-column:3;grid-row:1" ><img src="icons/vibe/undo.svg" alt="" draggable="false"></button><button id="nav_up" class="vibe-icon" type="button" aria-label="Up" title="Up" data-command="4" data-repeat="true" style="grid-column:2;grid-row:2" ><img src="icons/vibe/arrow_upward.svg" alt="" draggable="false"></button><button id="nav_left" class="vibe-icon" type="button" aria-label="Left" title="Left" data-command="2" data-repeat="true" style="grid-column:1;grid-row:3" ><img src="icons/vibe/arrow_back.svg" alt="" draggable="false"></button><button id="nav_select" class="vibe-icon" type="button" aria-label="OK / Select" title="OK / Select" data-command="20" style="grid-column:2;grid-row:3" ><img src="icons/vibe/fiber_manual_record.svg" alt="" draggable="false"></button><button id="nav_right" class="vibe-icon" type="button" aria-label="Right" title="Right" data-command="3" data-repeat="true" style="grid-column:3;grid-row:3" ><img src="icons/vibe/arrow_forward.svg" alt="" draggable="false"></button><button id="nav_down" class="vibe-icon" type="button" aria-label="Down" title="Down" data-command="5" data-repeat="true" style="grid-column:2;grid-row:4" ><img src="icons/vibe/arrow_downward.svg" alt="" draggable="false"></button></div>
@@ -61,6 +71,11 @@
       <div class="mc-timeline">
         <label for="seekRange">Recording <span id="timelineTime">No video</span></label>
         <input id="seekRange" type="range" min="0" max="1" value="0" step="1" disabled aria-label="Seek across the full recording">
+        <div id="timelineMarkers" class="mc-timeline-markers" aria-hidden="true"></div>
+        <p id="timelineMarkerStatus" class="mc-note"></p>
+        <p id="timelinePhase" class="mc-note" role="status">Position information is unavailable until playback starts.</p>
+        <div class="mc-timeline-actions"><button id="timelineCancel" type="button" hidden>Cancel selection</button><button id="timelineLive" type="button" hidden>Live edge</button></div>
+        <figure id="timelinePreview" hidden><img id="timelinePreviewImage" alt="Preview of the selected recording position"><figcaption id="timelinePreviewLabel"></figcaption></figure>
         <div id="timelineBuffer" class="mc-note">The range uses SageTV's media duration, not the buffered fragment.</div>
       </div>
         <div class="mc-panel-tools"><button id="renderOnlyBtn" type="button">Render-only view</button><button id="allSettings" type="button">All settings</button></div>
@@ -83,26 +98,72 @@
 
   <div id="settingsPanel" class="mc-settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
     <section class="mc-settings-card">
-      <header class="mc-panel-header"><strong id="settingsTitle">MiniClient settings</strong><button id="closeSettings" type="button" aria-label="Close settings">✕</button></header>
+      <header class="mc-panel-header"><strong id="settingsTitle">Settings</strong><button id="closeSettings" type="button" aria-label="Back to previous menu">Back</button></header>
+      <nav id="settingsCategories" class="mc-settings-categories" aria-label="Settings categories">
+        <button type="button" data-settings-page="video">Video</button>
+        <button type="button" data-settings-page="audio">Audio</button>
+        <button type="button" data-settings-page="captions">Subtitles / CC</button>
+        <button type="button" data-settings-page="transcoding">Transcoding</button>
+        <button type="button" data-settings-page="app">App</button>
+        <button type="button" data-settings-page="input">Input</button>
+        <button type="button" data-settings-page="diagnostics">Diagnostics</button>
+      </nav>
+      <fieldset id="browserVideoSection" data-settings-group="video"><legend>Video</legend>
+        <button id="videoTranscoding" type="button">Transcoding…</button>
+        <label>Browser speed (this recording)<select id="browserPlaybackRate" disabled><option value="1">1× — Normal</option><option value="0.5">0.5×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
+        <p id="browserPlaybackRateStatus" class="mc-note" role="status">Start a recording to change browser speed.</p>
+        <p class="mc-note">Browser-local forward playback only; no extra transcoding. Stock STV FF/RW keeps its normal recording behavior. Stop, a different recording or DVD resets to1×. Reverse video playback and frame stepping are unavailable.</p>
+        <p id="dvdSearchHelp" class="mc-note">DVD search: OK accepts; Play or Back cancels.</p>
+      </fieldset>
+      <fieldset id="browserInputSection" data-settings-group="input" hidden><legend>Keyboard and touch mappings</legend>
+        <label class="mc-check"><input id="input_gamepadEnabled" type="checkbox"> Standard gamepad input (browser support required)</label>
+        <p id="gamepadStatus" class="mc-note" role="status"></p>
+        <label>Key context<select id="mappingContext"><option value="default">Menus / default</option><option value="playing">Video playing</option><option value="paused">Video paused</option><option value="dvd">DVD playback</option></select></label>
+        <label>Key<select id="mappingKey"></select></label>
+        <label>Press<select id="mappingPress"></select></label><label>Hold<select id="mappingHold"></select></label>
+        <label>Repeat delay (ms)<input id="input_repeatDelay" type="number" min="150" max="2000" step="10"></label>
+        <label>Repeat interval (ms)<input id="input_repeatInterval" type="number" min="80" max="1000" step="10"></label>
+        <details><summary>Touch gestures</summary><div id="touchMappings"></div></details>
+        <label>Edge size (CSS pixels)<input id="input_edgeSize" type="number" min="0" max="100"></label>
+        <label>Hotspot size (CSS pixels)<input id="input_hotspotSize" type="number" min="0" max="100"></label>
+        <button id="resetInputMappings" type="button">Reset input mappings</button>
+        <p class="mc-note">Saved per browser. Default inherits the standard SageTV key. Context mappings require fullscreen playback; menus keep navigation. Browser/OS-reserved keys and system edge gestures may not reach this page.</p>
+      </fieldset>
 
       <details id="streamingPreferences" class="mc-streaming" open>
         <summary>Streaming and transcoding</summary>
         <p class="mc-note">Vibe Android-style controls, adapted for browser playback. Settings belong to this browser, not to global SageTV or MIM configuration.</p>
-        <fieldset id="streamVideoSection"><legend>Player and video</legend>
-          <label>Player<select id="stream_player"><option value="auto">Automatic — MPEG-TS preferred</option><option value="mpegts">Continuous MPEG-TS (mpegts.js)</option><option value="hls">Compatibility — HLS</option></select></label>
+        <fieldset id="companionDvdSection" data-settings-group="video" hidden><legend>Optional DVD navigator</legend>
+          <label class="mc-check"><input id="stream_companionDvd" type="checkbox"> Use installed Client Extension DVD controls on the next DVD load</label>
+          <p id="dvdCompanionStatus" class="mc-note" role="status">Optional service off/unavailable. Normal stock DVD controls remain available.</p>
+          <div class="mc-panel-tools"><button type="button" data-companion-dvd="beginning" disabled>Start feature</button><button type="button" data-companion-dvd="save_resume" disabled>Save DVD position</button><button type="button" data-companion-dvd="resume" disabled>Resume DVD</button><button type="button" data-companion-dvd="clear_resume" disabled>Clear DVD position</button></div>
+          <p class="mc-note">Requires an explicitly enabled server-plugin hook for this Web UI and its supported browser profile. This never enables server/global settings. Missing/old/off service keeps native playback. Browser transcoding remains owned by the existing Web/FFmpeg path, not a second DVD transform.</p>
+        </fieldset>
+        <fieldset id="streamVideoSection" data-settings-group="transcoding"><legend>Transcoding</legend>
+          <label>Player<select id="stream_player"><option value="auto">Automatic — native HLS where supported</option><option value="mpegts">MPEG-TS / MSE</option><option value="hls">HLS / MSE (native fallback)</option><option value="native">Native HLS (Safari / supported browsers)</option></select></label>
           <label>Video processing<select id="stream_videoMode"><option value="auto">Transcode when needed</option><option value="transcode">Always transcode</option><option value="copy">Copy</option></select></label>
-          <label>Video encoder<select id="stream_encoder"><option value="auto">Automatic — hardware first</option><option value="qsv">Intel Quick Sync (QSV)</option><option value="nvenc">NVIDIA NVENC</option><option value="vaapi">Linux VAAPI</option><option value="amf">AMD AMF</option><option value="videotoolbox">Apple VideoToolbox</option><option value="software">Software H.264 (libx264)</option></select></label>
-          <label>Video bitrate (kbps)<input id="stream_videoKbps" type="number" min="250" max="50000" step="250" list="videoBitrates"></label>
+          <label>Hardware Encoder<select id="stream_encoder"><option value="auto">Auto (Hardware first)</option><option value="qsv">Intel Quick Sync (QSV)</option><option value="nvenc">NVIDIA NVENC</option><option value="vaapi">VAAPI (Linux)</option><option value="amf">AMD AMF (Windows)</option><option value="videotoolbox">Apple VideoToolbox (macOS)</option><option value="software">Software Only (libx264)</option></select></label>
+          <label>Maximum video bitrate (kbps)<input id="stream_videoKbps" type="number" min="250" max="50000" step="250" list="videoBitrates"></label>
+          <label>Minimum video bitrate (kbps, Adjusted only)<input id="adaptiveMinimumKbps" type="number" min="250" max="50000" step="50" list="videoBitrates"></label>
           <label>Keyframe interval (seconds)<input id="stream_keyFrameSeconds" type="number" min="1" max="10" step="1"></label>
           <label>B-frames<select id="stream_bFrames"><option value="0">0 — low latency</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
           <datalist id="videoBitrates"><option value="2000"><option value="4000"><option value="6000"><option value="8000"><option value="12000"><option value="20000"></datalist>
-          <label>Maximum video height<select id="stream_resolution"><option value="source">Use source</option><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option><option value="2160">2160p</option></select></label>
+          <label>Maximum video height<select id="stream_resolution"><option value="auto">Automatic — device resolution</option><option value="source">Use source</option><option value="480">480p</option><option value="720">720p</option><option value="1080">1080p</option><option value="2160">2160p</option></select></label>
           <label>Frame rate<select id="stream_fps"><option value="source">Use source</option><option>23.976</option><option>24</option><option>25</option><option>29.97</option><option>30</option><option>50</option><option>59.94</option><option>60</option></select></label>
           <label>Deinterlace<select id="stream_deinterlace"><option value="auto">Automatic — interlaced frames</option><option value="on">Always</option><option value="off">Off</option></select></label>
+          <label>Deinterlace filter<select id="stream_deinterlaceFilter"><option value="auto">Automatic — GPU preferred</option><option value="yadif">YADIF (Software filter)</option><option value="bwdif">BWDIF (Software filter)</option></select></label>
           <label class="mc-check"><input id="stream_allowFallback" type="checkbox"> Allow hardware → software / MPEG-TS → HLS fallback</label>
+          <label class="mc-check"><input id="adaptiveQuality" type="checkbox"> Fixed (Adjusted) — MIM adjusts bitrate from buffer reports (HLS)</label>
+          <label class="mc-check"><input id="stream_runtimeBitrateControl" type="checkbox"> Prefer in-place bitrate control (next HLS stream; enable Linux QSV control in FFmpeg plugin). Unsupported paths retain bounded handoff.</label>
+          <div><button type="button" id="runRuntimeRateTest">Test server bitrate adaptation</button> <button type="button" id="readRuntimeRateTest">Refresh test result</button><output id="runtimeRateTestResult" aria-live="polite">Synthetic Linux QSV test; stop playback first. Report is saved on the server.</output></div>
+          <label class="mc-check"><input id="scrubPreviews" type="checkbox"> Small scrub previews (optional shared source images)</label>
+          <p class="mc-note">At most16 small decoded-frame previews per recording. No extra transcoding or playback seeks. Unviewed positions and unsupported/protected video have no preview.</p>
+          <p id="qualityRecommendation" class="mc-note" role="status">Buffer adjustment available during supported transcoded playback.</p>
+          <button id="applyQualityRecommendation" type="button" disabled>Apply recommended quality once</button>
+          <p class="mc-note">Off: Fixed uses Maximum bitrate. On: start at Maximum, lower after sustained buffer drain/rebuffering, and recover slowly within Minimum–Maximum. No bandwidth measurement needed, including Safari. Resolution, captions and audio stay unchanged. Copy/DVD are not adapted; producer failures do not trigger quality changes. Bounded replacement allows at most two attempts per recording; supported in-place control keeps one encoder.</p>
           <p class="mc-note">Bitrate is a target, not an exact measured rate. Encoder and video bitrate apply only when video is transcoded. Copy keeps the source video codec and remuxes/resegments it without video encoding. With Copy, Automatic fallback may restart as H.264 if the browser advances playback but produces no video frames. Copy requires Source resolution/FPS and Deinterlace Auto/Off.</p>
         </fieldset>
-        <fieldset id="streamAudioSection"><legend>Audio</legend>
+        <fieldset id="streamAudioSection" data-settings-group="audio"><legend>Audio</legend>
           <label>Track in current recording<select id="stream_audioTrack"><option value="-1">Automatic / preferred language</option></select></label>
           <label>Preferred language<input id="stream_audioLanguage" type="text" maxlength="35" placeholder="en / eng / en-US"></label>
           <label>When preferred audio is missing<select id="stream_audioFallback"><option value="default">Best primary/default track</option><option value="first">First audio track</option><option value="strict">Fail instead of falling back</option></select></label>
@@ -110,9 +171,10 @@
           <label>Audio bitrate (kbps)<select id="stream_audioKbps"><option>64</option><option>96</option><option>128</option><option>160</option><option>192</option><option>256</option><option>320</option><option>384</option><option>448</option><option>512</option><option>640</option></select></label>
           <label>Channels<select id="stream_audioChannels"><option value="source">Use source</option><option value="1">Mono</option><option value="2">Stereo</option><option value="6">5.1 (device support required)</option></select></label>
           <label>Audio delay (ms)<input id="stream_audioOffsetMs" type="number" min="-4000" max="4000" step="25"></label>
+          <div class="mc-panel-tools"><button id="audioOffsetOpen" type="button">Audio sync offset…</button><button id="audioSyncTest" type="button">A/V sync test…</button><button id="audioOutputRestart" type="button">Restart audio / stream</button></div>
           <p class="mc-note">Positive delay plays audio later. Delay range is -4000..+4000 ms in 25 ms steps. Track index is session-only; a new recording returns to language/automatic selection. Commentary/audio-description tracks are deprioritized unless explicitly selected. Browser output has no AudioTrack/HDMI passthrough control; changing track/delay/quality restarts only the media stream at the same reported position.</p>
         </fieldset>
-        <fieldset id="streamCaptionSection"><legend>Broadcast captions (local browser)</legend>
+        <fieldset id="streamCaptionSection" data-settings-group="captions"><legend>Broadcast captions</legend>
           <label>Caption mode<select id="captionAuthorityMode"><option value="off">OFF</option><option value="cc1">CC1</option><option value="cc2">CC2</option><option value="stv">STV / SageTV</option><option value="dvb">DVB bitmap</option></select></label>
           <div id="virtualCaptionSlots" class="mc-caption-slots"><label>CC1 type<select id="cc1Type"><option value="auto">Auto</option><option value="teletext">Teletext</option><option value="cea608">CEA-608</option><option value="cea708">CEA-708</option></select></label><label>CC1 language<input id="cc1Language" maxlength="35" placeholder="Auto / eng"></label><label>CC1 channel/service<input id="cc1Service" type="number" min="1" max="63" value="1"></label><label>CC2 type<select id="cc2Type"><option value="auto">Auto</option><option value="teletext">Teletext</option><option value="cea608">CEA-608</option><option value="cea708">CEA-708</option></select></label><label>CC2 language<input id="cc2Language" maxlength="35" placeholder="Auto / spa"></label><label>CC2 channel/service<input id="cc2Service" type="number" min="1" max="63" value="2"></label></div>
           <p id="captionAuthorityEffective" class="mc-note">Effective caption source: Off</p>
@@ -128,7 +190,7 @@
           <p class="mc-note">CEA is extracted from original compressed video. DVB Teletext is decoded from the original transport stream before video encoding, so QSV/NVENC/VAAPI/software transcoding does not need to preserve Teletext packets. Teletext here is the Level-1 subtitle-page subset, not an interactive Teletext browser. DVB bitmap is decoded independently to an RGBA overlay and stays outside the video encoder. PGS/DVD bitmap and ordinary file subtitles remain later phases.</p>
         </fieldset>
 
-        <fieldset id="streamSubtitleSection"><legend>Ordinary subtitles (file / embedded)</legend>
+        <fieldset id="streamSubtitleSection" data-settings-group="captions"><legend>Subtitles (file / DVD)</legend>
           <label>Subtitles<select id="stream_subtitleMode"><option value="off">Off</option><option value="auto">Auto / preferred language</option><option value="track">Selected track</option></select></label>
           <label>Track<select id="stream_subtitleTrack"><option value="-1">Automatic</option></select></label>
           <label>Preferred language<input id="stream_subtitleLanguage" maxlength="35" placeholder="eng"></label>
@@ -137,7 +199,7 @@
           <p class="mc-note">Independent of Broadcast captions. Text uses sanitized browser text cues. PGS and DVD/VobSub bitmap tracks are adapted through FFmpeg to the local bitmap decoder; VobSub requires palette context from the container or an associated IDX file. ASS/SSA advanced styling is flattened.</p>
         </fieldset>
         <div class="mc-panel-tools"><button id="saveStreaming" type="button">Save for next recording</button><button id="applyStreaming" type="button">Apply now / restart stream</button><button id="refreshTracks" type="button">Refresh tracks</button><button id="resetStreaming" type="button">Load defaults</button><button id="preparePlayerAssets" type="button">Prepare player assets</button></div>
-        <p id="streamingResult" class="mc-note" role="status">Apply now preserves the reported position and pause state. Native GFX and SageMC remain connected.</p>
+        <p id="streamingResult" class="mc-note" role="status">Save: next playback. Apply: restart this stream.</p>
         <pre id="streamingActual" class="mc-stream-actual">No active recording.</pre>
       </details>
 
@@ -145,7 +207,10 @@
         <summary>Diagnostics, profiles and server destination</summary>
         <p class="mc-note">Diagnostic exports are bounded and redact recognized credentials/content fields. A server destination must be configured and enabled by the SageTV administrator; this browser never receives SMB credentials or opens smb:// URLs.</p>
         <label class="mc-check"><input id="autoDiagnosticCapture" type="checkbox"> Automatically capture a report after terminal connection failure (default off)</label>
+        <div id="diagnosticGauges" class="mc-gauges" aria-label="Live playback measurements"></div>
         <label class="mc-check"><input id="saveDiagnosticsToServer" type="checkbox"> Also save diagnostic downloads to the configured server destination</label>
+        <div class="mc-panel-tools"><button id="downloadReport" type="button">Download diagnostic report</button><button id="shareReport" type="button">Share report…</button><button id="sendReportServer" type="button" disabled>Send report to server</button></div>
+        <p id="reportActionStatus" class="mc-note" role="status"></p>
         <div class="mc-panel-tools"><button id="exportProfile" type="button">Export profile</button><button id="importProfile" type="button">Import profile…</button><button id="applyProfile" type="button" disabled>Apply imported profile</button><button id="testDiagnosticDestination" type="button">Test server destination</button><button id="retryDiagnosticSpool" type="button">Retry spooled reports</button><button id="cancelDiagnosticAction" type="button" disabled>Cancel server action</button></div>
         <input id="profileFile" type="file" accept="application/json,.json" hidden>
         <pre id="profilePreview" class="mc-stream-actual">No profile import pending.</pre>
@@ -173,17 +238,48 @@
       <button id="resetSettings" type="button">Reset browser settings</button>
       <p class="mc-note">Saved in this browser. No Sage.jar or Python server changes are required. Diagnostics may include server addresses and media paths; review before sharing.</p>
     </section>
+    <section id="audioOffsetPanel" class="mc-offset-card" role="dialog" aria-labelledby="audioOffsetTitle" hidden>
+      <header class="mc-panel-header"><strong id="audioOffsetTitle">Audio sync offset</strong><button id="audioOffsetBack" type="button">Back / apply</button></header>
+      <output id="audioOffsetValue" for="audioOffsetRange">+0.000 s</output>
+      <input id="audioOffsetRange" type="range" min="-4000" max="4000" step="25" value="0" aria-label="Audio sync offset">
+      <div class="mc-panel-tools"><button id="audioOffsetEarlier" type="button">−0.025 s</button><button id="audioOffsetReset" type="button">Reset</button><button id="audioOffsetLater" type="button">+0.025 s</button></div>
+      <p class="mc-note">Negative: audio earlier. Positive: audio later. Left/right adjusts by0.025 s, Enter resets. Back applies once at the current position. Nonzero offset decodes/re-encodes audio on the server; strict audio Copy must be changed to Auto or AAC. This is not HDMI passthrough clock control.</p>
+    </section>
+    <section id="calibrationPanel" class="mc-calibration-card" role="dialog" aria-labelledby="calibrationTitle" hidden>
+      <header class="mc-panel-header"><strong id="calibrationTitle">A/V sync test</strong><button id="calibrationBack" type="button">Back / apply</button></header>
+      <video id="calibrationVideo" playsinline loop preload="auto"></video>
+      <p id="calibrationStatus" class="mc-note" role="status"></p>
+      <label>Audio offset <output id="calibrationOffsetValue">+0.000 s</output><input id="calibrationOffset" type="range" min="-4000" max="4000" step="25" value="0"></label>
+      <div class="mc-panel-tools"><button id="calibrationPlay" type="button" disabled>Play test / enable sound</button><button id="calibrationApply" type="button">Apply offset to test</button><button id="calibrationReset" type="button">Reset offset</button></div>
+      <p class="mc-note">Ball impact, red line and click should coincide. Yellow edges mark the complete picture. This synthetic MPEG-2/AC-3 source is converted by the FFmpeg Plugin using the normal audio-offset filter. It measures this browser/output route, not Android HDMI passthrough. Existing playback is paused and restored only if it is still the same recording.</p>
+    </section>
   </div>
 </div>
-<script src="js/miniclient-core.js?v=3.2.30"></script>
-<script src="js/miniclient-streaming.js?v=3.2.30"></script>
-<script src="js/atsc-captions.js?v=3.2.30"></script>
-<script src="js/miniclient-caption-authority.js?v=3.2.30"></script>
-<script src="js/miniclient-captions.js?v=3.2.30"></script>
-<script src="js/miniclient-subtitles.js?v=3.2.30"></script>
-<script src="js/miniclient-dvd-spu.js?v=3.2.30"></script>
-<script src="js/miniclient-playback.js?v=3.2.30"></script>
-<script src="js/miniclient-support.js?v=3.2.30"></script>
-<script src="js/miniclient.js?v=3.2.30"></script>
+<dialog id="exitClientDialog" class="mc-exit-dialog" aria-labelledby="exitClientTitle">
+  <h2 id="exitClientTitle">Exit SageTV Vibe?</h2>
+  <p>Stop playback and disconnect this Web Client? Other clients and scheduled recordings are not stopped.</p>
+  <div class="mc-panel-tools"><button id="cancelClientExit" type="button" autofocus>Cancel</button><button id="confirmClientExit" type="button">Exit</button><button id="refreshClientPage" type="button" title="Reload the webpage without clearing saved settings">Force refresh webpage</button></div>
+</dialog>
+<section id="clientExited" class="mc-connection-recovery" role="region" aria-labelledby="clientExitedTitle" hidden>
+  <h2 id="clientExitedTitle">SageTV Vibe disconnected</h2>
+  <p id="clientExitStatus" role="status">Disconnecting from the server…</p>
+  <button id="reconnectAfterExit" type="button">Reconnect to SageTV</button>
+</section>
+<template id="lastChannelIcon"><img src="icons/vibe/last_channel.svg" alt="" draggable="false"></template>
+<script src="js/miniclient-core.js?v=3.3.0-web132.1"></script>
+<script src="js/miniclient-input.js?v=3.3.0-web117.1"></script>
+<script src="js/miniclient-streaming.js?v=3.3.0-web132.1"></script>
+<script src="js/atsc-captions.js?v=3.3.0-web094.1"></script>
+<script src="js/miniclient-caption-authority.js?v=3.3.0"></script>
+<script src="js/miniclient-captions.js?v=3.3.0-web100.1"></script>
+<script src="js/miniclient-subtitles.js?v=3.3.0"></script>
+<script src="js/miniclient-dvd-spu.js?v=3.3.0"></script>
+<script src="js/miniclient-playback.js?v=3.3.0-web132.1"></script>
+<script src="js/miniclient-support.js?v=3.3.0-web132.1"></script>
+<script src="js/miniclient-experience.js?v=3.3.0-web124.1"></script>
+<script src="js/miniclient-mobile.js?v=3.3.0-web079.3"></script>
+<script src="js/miniclient-cast.js?v=3.3.0-web122.1"></script>
+<script src="js/miniclient.js?v=3.3.0-web133.1"></script>
+<script src="js/miniclient-app.js?v=3.3.0-web133.1"></script>
 </body>
 </html>

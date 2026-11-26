@@ -4,13 +4,15 @@ Deterministic server responses validate safe text, overlap, bitmap pixels,
 coexistence and video-geometry alignment. No real SageTV field claim.
 """
 from pathlib import Path
-import os,re
+import os,re,json,base64
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]; WEB=ROOT/'src/main/webapp'; count=0
 def passed(s):
  global count; count+=1; print('PASS '+s,flush=True)
 with sync_playwright() as p:
- browser=p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,args=['--no-sandbox'])
+ engine=os.getenv('SAGETV_BROWSER_ENGINE','chromium')
+ if engine not in ('chromium','webkit'):raise ValueError('Unsupported browser')
+ browser=(p.webkit.launch(headless=True) if engine=='webkit' else p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/local/bin/vibe-chromium'),headless=True,args=['--no-sandbox']))
  page=browser.new_page(viewport={'width':1280,'height':800}); errors=[]; page.on('pageerror',lambda e:errors.append(str(e)))
  html=re.sub(r'<script[^>]*>.*?</script>','',(WEB/'miniclient.html').read_text(),flags=re.S); html=re.sub(r'<link[^>]*>','',html)
  page.set_content(html); page.add_style_tag(content=(WEB/'css/miniclient.css').read_text())
@@ -26,9 +28,9 @@ with sync_playwright() as p:
  {kind:'text',owner:'local_file',ptsMs:0,durationMs:1800,clear:false,text:'<script>window.PARITY_INJECTED=true</script>',linePercent:82,positionPercent:50,align:'center'},
  {kind:'text',owner:'local_file',ptsMs:200,durationMs:1800,clear:false,text:'Unicode café 日本語',linePercent:90,positionPercent:50,align:'center'},
  {kind:'bitmap',owner:'local_file',ptsMs:0,durationMs:900,clear:false,canvas:{width:720,height:576},rect:[100,400,2,1],format:'rgba-straight',data:'/wAA/wD/AIA='}
- ];return j({contractVersion:1,scope:'file',cursor:T.filePolls,cues,ordinary:{active:true,mode:'text',trackIndex:2,codec:'subrip'}})}
+ ];if(T.externalCue){cues=[T.externalCue];T.externalCue=null;}return j({contractVersion:1,scope:'file',cursor:T.filePolls,cues,ordinary:{active:true,mode:'text',trackIndex:2,codec:'subrip'}})}
  if(u.pathname.endsWith('/api/subtitles'))return j({contractVersion:1,cursor:0,cues:[]}); return j({ok:true});};})();""")
- for fn in ['miniclient-core.js','miniclient-streaming.js','miniclient-caption-authority.js','atsc-captions.js','miniclient-captions.js','miniclient-subtitles.js','miniclient-playback.js']:
+ for fn in ['miniclient-core.js','miniclient-input.js','miniclient-streaming.js','miniclient-caption-authority.js','atsc-captions.js','miniclient-captions.js','miniclient-subtitles.js','miniclient-playback.js','miniclient-experience.js']:
   page.evaluate((WEB/'js'/fn).read_text())
  page.evaluate("(function(location,localStorage){\n"+(WEB/'js/miniclient.js').read_text()+"\n})({href:'https://fixture.test/miniclient.html',origin:'https://fixture.test',search:''},{getItem:k=>TEST.storage[k]||null,setItem:(k,v)=>TEST.storage[k]=v})")
  page.wait_for_function("document.querySelector('#connectionStatus').textContent.startsWith('Connected')")
@@ -47,5 +49,23 @@ with sync_playwright() as p:
  assert geom['cw']>0 and abs(geom['cw']-geom['tw'])<1 and abs(geom['ch']-geom['th'])<1 and abs((geom['cw']/geom['ch'])-(720/576))<.01; passed('ordinary text and bitmap overlays follow the displayed video rectangle')
  page.evaluate('TEST.time=1.1'); page.wait_for_function("document.querySelector('#fileSubtitleCanvas').getContext('2d').getImageData(100,400,1,1).data[3]===0",timeout=3000); passed('bitmap duration expiration clears without disturbing text cues')
  page.evaluate('TEST.time=2.2'); page.wait_for_function("document.querySelectorAll('#fileSubtitles .file-subtitle-cue').length===0",timeout=3000); passed('overlapping text cues expire independently at their authored end times')
+ external=os.getenv('SAGETV_VOBSUB_CUE')
+ if external:
+  source=Path(external).resolve();active=(ROOT/'artifacts/active/WP06-004').resolve()
+  if not source.is_relative_to(active) or source.is_symlink():raise ValueError('Owning genuine VobSub cue required')
+  witness=json.loads(source.read_text(encoding='utf-8'));cue=witness['cue'];raw=base64.b64decode(cue['data'],validate=True)
+  assert cue['owner']=='local_file' and cue['format']=='rgba-straight' and len(raw)==cue['rect'][2]*cue['rect'][3]*4
+  page.evaluate('(cue)=>{TEST.time=cue.ptsMs/1000;TEST.externalCue=cue}',cue)
+  page.wait_for_function("(cue)=>{const c=document.querySelector('#fileSubtitleCanvas');if(c.width!==cue.canvas.width||c.height!==cue.canvas.height)return false;const r=cue.rect,p=c.getContext('2d').getImageData(...r).data;let n=0;for(let i=3;i<p.length;i+=4)if(p[i])n++;return n>100}",arg=cue,timeout=5000)
+  actual=page.evaluate("(cue)=>{const r=cue.rect,p=document.querySelector('#fileSubtitleCanvas').getContext('2d').getImageData(...r).data,b=atob(cue.data);let bad=0,visible=0;for(let i=0;i<p.length;i+=4){const a=b.charCodeAt(i+3);if(p[i+3]!==a)bad++;if(a>=128){visible++;for(let j=0;j<3;j++)if(Math.abs(p[i+j]-b.charCodeAt(i+j))>2)bad++;}}return{bad,visible}}",cue)
+  assert actual['bad']==0 and actual['visible']>100,actual
+  passed('genuine external IFO-palette worker RGBA reaches production canvas with authored colors and exact alpha')
+  target=active/('genuine-vobsub-'+engine+'.png')
+  if target.exists():raise ValueError('Use a fresh genuine witness filename')
+  page.screenshot(path=str(target))
+  clear=witness['clear'];assert clear['clear'] and clear['ptsMs']>cue['ptsMs']
+  page.evaluate('(cue)=>{TEST.time=cue.ptsMs/1000;TEST.externalCue=cue}',clear)
+  page.wait_for_function("(r)=>{const p=document.querySelector('#fileSubtitleCanvas').getContext('2d').getImageData(...r).data;return!p.some((v,i)=>i%4===3&&v)}",arg=cue['rect'],timeout=3000)
+  passed('genuine external bitmap clears at original authored clear PTS')
  assert not errors,errors; browser.close()
-print(f'Chromium ordinary P06: {count} tests PASS (mock transport; production DOM/controller)')
+print(f'{engine} ordinary P06: {count} tests PASS (mock transport; production DOM/controller)')

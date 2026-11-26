@@ -13,8 +13,16 @@ final class MediaUrlPath {
         String value=url==null?"":url.trim();
         int hash=value.indexOf('#'); if(hash>=0)value=value.substring(0,hash);
         if(value.startsWith("stv://")){
-            URI u=new URI(value);String raw=u.getRawPath();if(raw==null)raw="";
-            return new File(percentDecode(raw));
+            // Stock Windows sends a filesystem path, not a fully escaped URI:
+            // stv://host/V:\tv\recording.ts. Escape only the wire backslashes
+            // for URI parsing, then restore them once. Authorization remains
+            // the caller's existing MediaFile/import-root resolver.
+            URI u=new URI(value.replace("\\","%5C"));
+            String raw=u.getRawPath();if(raw==null)raw="";
+            String path=percentDecode(raw);
+            if(path.length()>3&&path.charAt(0)=='/'&&Character.isLetter(path.charAt(1))
+                &&path.charAt(2)==':'&&(path.charAt(3)=='/'||path.charAt(3)=='\\'))path=path.substring(1);
+            return new File(path);
         }
         if(value.startsWith("file://")){
             try{return new File(new URI(value));}

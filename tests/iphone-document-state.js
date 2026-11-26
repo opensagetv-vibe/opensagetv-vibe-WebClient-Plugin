@@ -1,0 +1,2 @@
+/* Minimal read-only check after the owned export opens native ZIP preview. */
+(()=>({visible:document.visibilityState,ready:document.readyState,title:document.title,hasVideo:!!document.getElementById('videoPlane'),hasSettings:!!document.getElementById('settingsPanel'),hasExportStatus:!!document.getElementById('reportActionStatus'),hasFieldState:!!window.__iphoneGate,bodyClass:document.body?.className||'',frameCount:window.frames.length}))()

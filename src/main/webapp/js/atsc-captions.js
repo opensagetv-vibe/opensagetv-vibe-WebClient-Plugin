@@ -46,6 +46,7 @@
       this.lastControl = '';
       this.lastControlPts = -1;
       this.lastEmitted = null;
+      this.lastInputPts = null;
     }
 
     reset() {
@@ -55,6 +56,7 @@
       this.lastControl = '';
       this.lastControlPts = -1;
       this.lastEmitted = null;
+      this.lastInputPts = null;
     }
 
     targetText() {
@@ -72,13 +74,24 @@
 
     emit(ptsMs) {
       const text = this.clean(this.displayed);
-      if (text === this.lastEmitted) return;
-      this.lastEmitted = text;
-      this.onCue(ptsMs, text);
+      // Preserve the empty writing row after CR. Trimming it from presentation
+      // makes a roll-up look like a horizontally recentered subtitle instead.
+      const lines = this.displayed.split('\n').map(line => line.slice(0, 32).trimEnd());
+      if (this.mode === 'rollup') {
+        while (lines.length > this.rollRows) lines.shift();
+        while (lines.length < this.rollRows) lines.unshift('');
+      }
+      const meta = {type:'608', mode:this.mode, columns:32, rows:lines.length, lines};
+      const key = JSON.stringify([text, meta]);
+      if (key === this.lastEmitted) return;
+      this.lastEmitted = key;
+      this.onCue(ptsMs, text, meta);
     }
 
     appendChar(ch, ptsMs) {
       let t = this.targetText();
+      // A 608 row has 32 cells. Missing CR must not grow an unbounded marquee.
+      if (ch !== '\n' && t.slice(t.lastIndexOf('\n') + 1).length >= 32) return;
       t += ch;
       this.setTarget(t);
       if (this.mode !== 'popon') this.emit(ptsMs);
@@ -98,9 +111,12 @@
         return true;
       }
       if (b2 >= 0x25 && b2 <= 0x27) { // RU2/RU3/RU4
+        if (this.mode !== 'rollup') this.displayed = '';
         this.mode = 'rollup';
         this.rollRows = b2 - 0x23;
         this.nonDisplayed = '';
+        this.displayed = this.displayed.split('\n').slice(-this.rollRows).join('\n');
+        this.emit(ptsMs);
         return true;
       }
       if (b2 === 0x29) { // RDC / paint-on
@@ -149,6 +165,13 @@
       b1 &= 0x7f;
       b2 &= 0x7f;
       if (!b1 && !b2) return;
+      if (this.lastInputPts !== null && ptsMs - this.lastInputPts >= 16000) {
+        // A new caption after a caption-less break must not resurrect the
+        // expired old text. Preserve source-selected mode/row count.
+        this.displayed = this.nonDisplayed = '';
+        this.lastEmitted = null;this.lastControl = '';
+      }
+      this.lastInputPts = ptsMs;
 
       // Control code (channel bit may turn 0x14 into 0x1c; caller resolves channel).
       if ((b1 === 0x14 || b1 === 0x1c || b1 === 0x15 || b1 === 0x1d) && b2 >= 0x20 && b2 <= 0x2f) {
@@ -156,9 +179,15 @@
         return;
       }
 
-      // Mid-row/PAC formatting. Keep layout simple in this prototype.
+      // Redundant controls are consecutive pairs, not every matching command
+      // within700ms. Text between two CRs makes the second a real new row.
+      this.lastControl = '';
+      this.lastControlPts = -1;
+
+      // PAC in roll-up positions the writing row; it is NOT a carriage return.
+      // Broadcasters often repeat it. Only CR should scroll this window up.
       if ((b1 >= 0x10 && b1 <= 0x1f) && b2 >= 0x40 && b2 <= 0x7f) {
-        if (this.targetText() && !this.targetText().endsWith('\n')) this.appendChar('\n', ptsMs);
+        if (this.mode !== 'rollup' && this.targetText() && !this.targetText().endsWith('\n')) this.appendChar('\n', ptsMs);
         return;
       }
 
@@ -199,6 +228,7 @@
       this.currentWindow = 0;
       this.windows = Array.from({length: 8}, (_, id) => this.makeWindow(id));
       this.lastKey = null;
+      this.lastInputPts = null;
     }
 
     makeWindow(id) {
@@ -217,6 +247,7 @@
       this.currentWindow = 0;
       this.windows = Array.from({length: 8}, (_, id) => this.makeWindow(id));
       this.lastKey = null;
+      this.lastInputPts = null;
     }
 
     selected() { return this.windows[this.currentWindow]; }
@@ -230,13 +261,25 @@
     append(ch) {
       const w = this.selected();
       if (!w.exists) { w.exists = true; w.visible = true; }
-      if (ch === '\n') { w.penRow = Math.min(14, w.penRow + 1); w.penCol = 0; return; }
+      const rowLimit = Math.min(15, Math.max(1, w.rowCount + 1));
+      const colLimit = Math.min(42, Math.max(1, w.colCount + 1));
+      if (ch === '\n') {
+        // A full 708 window rolls its retained rows upward, not below the
+        // visible window where subsequent caption lines would disappear.
+        if (w.penRow >= rowLimit - 1) {
+          for (let r = 1; r < rowLimit; r++) w.rows[r - 1] = w.rows[r].slice();
+          w.rows[rowLimit - 1] = Array(42).fill(' ');
+          w.penRow = rowLimit - 1;
+        } else w.penRow++;
+        w.penCol = 0; return;
+      }
       const chars = Array.from(ch);
       chars.forEach(c => {
-        const row = Math.max(0, Math.min(14, w.penRow));
-        const col = Math.max(0, Math.min(41, w.penCol));
+        if (w.penCol >= colLimit) return;
+        const row = Math.max(0, Math.min(rowLimit - 1, w.penRow));
+        const col = Math.max(0, w.penCol);
         w.rows[row][col] = c;
-        w.penCol = Math.min(41, col + 1);
+        w.penCol = col + 1;
       });
     }
 
@@ -260,6 +303,7 @@
         top: Math.max(0, Math.min(100, (w.anchorV / denomV) * 100)),
         left: Math.max(0, Math.min(100, (w.anchorH / denomH) * 100)),
         anchorId: w.anchorId, rows: w.rowCount + 1, columns: w.colCount + 1,
+        lines: w.rows.slice(0, Math.min(15, w.rowCount + 1)).map(row => row.slice(0, Math.min(42, w.colCount + 1)).join('').trimEnd()),
         italic: !!w.pen.italic, underline: !!w.pen.underline,
         fg: w.pen.fg, bg: w.pen.bg
       };
@@ -288,6 +332,11 @@
     }
 
     decode(bytes, ptsMs) {
+      if (this.lastInputPts !== null && ptsMs - this.lastInputPts >= 16000) {
+        this.windows.forEach(w => this.clearWindow(w));
+        this.lastKey = null;
+      }
+      this.lastInputPts = ptsMs;
       for (let i = 0; i < bytes.length; i++) {
         const b = bytes[i];
         if (b >= 0x20 && b <= 0x7e) this.append(String.fromCharCode(b));
@@ -370,7 +419,7 @@
       this.fieldChannel = {0: 1, 1: 3};
       this.channels = {};
       for (let i = 1; i <= 4; i++) {
-        this.channels[i] = new Cea608Channel((pts, text) => this.addCue(i, pts, text));
+        this.channels[i] = new Cea608Channel((pts, text, meta) => this.addCue(i, pts, text, meta));
       }
       this.stats = {
         packets: 0,
@@ -394,9 +443,14 @@
     }
 
     setService(service) {
-      this.service = service || 'CC1';
+      const next = service || 'CC1';
+      if (next === this.service) { this.updateTime(this.lastTimeMs); return; }
+      this.service = next;
       this.cueCursor = -1;
-      this.currentRendered = '';
+      // Keep the prior rendered value until render emits its real clear.
+      // A newly selected service may have no due cues to replace that text.
+      this.currentRenderedMeta = null;
+      this.render('');
       this.updateTime(this.lastTimeMs);
     }
 
@@ -424,8 +478,10 @@
 
     render(text) {
       if (!this.enabled) text = '';
-      if (text === this.currentRendered) return;
+      const metaKey = JSON.stringify(this.currentRenderedMeta);
+      if (text === this.currentRendered && metaKey === this.renderedMetaKey) return;
       this.currentRendered = text;
+      this.renderedMetaKey = metaKey;
       this.onCaption(text, this.service, this.currentRenderedMeta || {type: '608', service: this.service});
     }
 
@@ -447,7 +503,12 @@
           if (cue.service === this.service && cue.ptsMs <= timeMs + 80) { best = cue; break; }
         }
       }
-      if (best) { this.currentRenderedMeta = best.meta; this.render(best.text); }
+      if (best) {
+        this.currentRenderedMeta = best.meta;
+        // Source-time inactivity, not wall time: paused captions stay visible.
+        // Clear stale CEA when a commercial/source omits an erase command.
+        this.render(timeMs - best.ptsMs >= 16000 ? '' : best.text);
+      }
     }
 
     getStats() {

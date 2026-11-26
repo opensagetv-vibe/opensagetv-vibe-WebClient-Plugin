@@ -14,11 +14,13 @@ public class HealthServlet extends HttpServlet {
         try {
             SageApiBridge.create();
             TranscoderManager.Probe tx = TranscoderManager.probe();
+            boolean ownedStop = OwnedProcessControlBridge.available();
             response.getWriter().write("{\"ok\":true,\"sagex\":true,\"version\":\"" + PluginVersion.VERSION
                 + "\",\"libmediaVersion\":\"" + PluginVersion.LIBMEDIA_VERSION
                 + "\",\"decoderAssetsCached\":" + AssetCache.cachedCount()
                 + ",\"decoderAssetsExpected\":" + AssetCache.prefetchList().size()
-                + ",\"transcoderAvailable\":" + tx.available + "}");
+                + ",\"ownedProcessStopProtocolRequired\":1,\"ownedProcessStopAvailable\":" + ownedStop
+                + ",\"transcoderAvailable\":" + (tx.available && ownedStop) + "}");
         } catch (RuntimeException e) {
             response.setStatus(503);
             response.getWriter().write("{\"ok\":false,\"sagex\":false,\"version\":\"" + PluginVersion.VERSION

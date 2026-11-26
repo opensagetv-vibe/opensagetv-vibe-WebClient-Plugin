@@ -1,0 +1,2 @@
+/* Visible production result only; server retirement is independently verified. */
+(()=>({exited:!clientExited.hidden,status:document.getElementById('clientExitStatus')?.textContent,paused:videoPlane.paused,assignedSource:!!videoPlane.getAttribute('src'),settingsUnchanged:localStorage.getItem('sagetvWebMiniClientSettings.v1')===__iphoneGate.settings,streamingUnchanged:localStorage.getItem('sagetvWebStreaming.v1')===__iphoneGate.streaming}))()

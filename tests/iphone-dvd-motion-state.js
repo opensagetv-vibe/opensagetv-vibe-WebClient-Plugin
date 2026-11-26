@@ -1,0 +1,2 @@
+/* Read existing production diagnostics and actual buffer; no media controls. */
+(()=>{videoInfoBtn.click();const j=JSON.parse(videoInfoText.textContent);closeVideoInfo.click();const v=videoPlane;return{view:window.__iphoneGate?.motionFullscreen,playback:j.playback,video:j.video,media:{time:v.currentTime,paused:v.paused,ready:v.readyState,rate:v.playbackRate,ranges:Array.from({length:v.buffered.length},(_,i)=>[v.buffered.start(i),v.buffered.end(i)]),quality:v.getVideoPlaybackQuality?.()}}})()

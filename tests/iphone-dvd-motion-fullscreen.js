@@ -1,0 +1,2 @@
+/* One existing public view transition after verified ALADDIN preview; no Watch. */
+(()=>{const s=__iphoneGate;if(!s?.api||s.motionFullscreen)throw Error('Missing owner/duplicate view intent');s.motionFullscreen={pending:true};s.api('showContent',{mediaId:2504}).then(r=>s.motionFullscreen.result=r).catch(e=>s.motionFullscreen.error=e.message).finally(()=>s.motionFullscreen.pending=false);return{onePublicShowContent:true};})()

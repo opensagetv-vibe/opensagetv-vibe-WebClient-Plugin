@@ -1,5 +1,13 @@
 # P13 validation
 
+2026-11-19 current scoped completion: Java10; production Chrome12/WebKit12
+(red→blue→green/samehandle,unload,mode11fallback,OFFreturn); actual stock232
+hostWebKit original TT/DVB OFF/ON14rows, DVDPush OFF/ON10rows, diagnostic
+OFF/ON/OFF3rows, unknown0/timeouts0/queue0. Compact owning RESULT records
+exact revisions and generated-versus-actual boundaries. No unrelated full
+matrix rerun or physical iPhone/vendor-video-plane claim. Historical counts
+and pending-field notes below describe the older3.2.16 checkpoint only.
+
 Checkpoint: **v3.2.16-P13**
 
 ## P13-specific gates

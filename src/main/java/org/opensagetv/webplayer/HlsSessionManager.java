@@ -42,9 +42,21 @@ final class HlsSessionManager {
     private static final int DVD_SOFTWARE_EOS_FLUSH_TIMEOUT_MS = Math.max(5000, Integer.getInteger("sagetv.webplayer.dvdSoftwareEosFlushTimeoutMs", 15000));
     private static final int DVD_REPLAY_MAX_BYTES = Math.max(1024 * 1024, Integer.getInteger("sagetv.webplayer.dvdStartupReplayBytes", 16 * 1024 * 1024));
     private static final java.util.concurrent.ScheduledExecutorService REAPER=java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r->{Thread t=new Thread(r,"webplayer-stream-reaper");t.setDaemon(true);return t;});
+    private static final java.util.concurrent.ScheduledExecutorService HEALTH=java.util.concurrent.Executors.newSingleThreadScheduledExecutor(r->{Thread t=new Thread(r,"webplayer-stream-health");t.setDaemon(true);return t;});
+    static { HEALTH.scheduleWithFixedDelay(()->{
+        try{for(Session s:SESSIONS.values())StreamHealthDiagnostics.poll(s);StreamHealthDiagnostics.flush();}
+        catch(RuntimeException ignored){/* diagnostics never terminate playback or the next sample */}
+    },1,2,TimeUnit.SECONDS); }
+    // Admission only. All process creation/termination stays in this owner;
+    // clients cannot allocate an unbounded ladder while a switch is pending.
+    private static final java.util.concurrent.atomic.AtomicReference<Object> QUALITY_SLOT=new java.util.concurrent.atomic.AtomicReference<Object>();
+    static boolean claimQualitySlot(Object lease){return QUALITY_SLOT.compareAndSet(null,lease);}
+    static void releaseQualitySlot(Object lease){QUALITY_SLOT.compareAndSet(lease,null);}
+    static java.util.concurrent.ScheduledFuture<?> qualityDeadline(Runnable expired){return REAPER.schedule(expired,45,TimeUnit.SECONDS);}
     static {REAPER.scheduleWithFixedDelay(()->{
         long now=System.currentTimeMillis(),idle=Math.max(30000L,Long.getLong("sagetv.webplayer.streamIdleMs",120000L));
-        for(Session s:SESSIONS.values())if(!s.cleanupQueued&&now-s.lastAccessAt>idle)stop(s.id);
+        for(Session s:SESSIONS.values())if(!s.cleanupQueued&&now-s.lastAccessAt>idle)
+            try{stop(s.id);}catch(RuntimeException incomplete){/* do not cancel retirement of other owners */}
     },30,30,TimeUnit.SECONDS);}
 
     static final class Session {
@@ -54,7 +66,9 @@ final class HlsSessionManager {
         final int audioIndex;
         final double startSeconds;
         volatile long durationMs;
+        volatile boolean processStopIncomplete;
         volatile boolean activeRecording;
+        boolean nativeSegment;
         final File directory;
         final File playlist;
         final File continuous;
@@ -75,6 +89,7 @@ final class HlsSessionManager {
         volatile SageApiBridge sourceSage;
         volatile Object sourceMediaFile;
         volatile long sourceAbsoluteStart;
+        volatile long broadcastTimeMs;
         volatile String seekStrategy="recording-start";
         volatile long seekRequestedMs;
         volatile long seekAnchorMs;
@@ -90,16 +105,36 @@ final class HlsSessionManager {
         volatile boolean dvdReadyNotified;
         volatile boolean dvdNoPlayableMedia;
         volatile long dvdBrowserTimeMs;
+        volatile boolean dvdReadAheadPaused;
+        volatile long dvdReadAheadWaits;
         final ByteArrayOutputStream dvdStartupReplay = new ByteArrayOutputStream();
         volatile boolean dvdReplayTruncated;
         volatile long dvdReplayBytes;
         volatile String dvdFallbackReason = "";
         volatile long lastAccessAt = System.currentTimeMillis();
+        volatile long lastBrowserMediaReadNs;
         volatile long deliveredBytes;
+        volatile long healthSampleAt,healthInputAt,healthBrowserAt,healthBrowserTimeMs;
+        volatile long healthSourceLength=-1,healthSourcePosition=-1,healthBufferAheadMs=-1;
+        volatile String healthInputStage="preparing";
+        volatile String healthBrowserRevision="unknown",healthNativeError="none",healthInputError="none";
+        volatile long healthNativeErrorAt,healthInputErrorAt;
+        volatile int healthReadyState=-1,healthNetworkState=-1;
+        volatile boolean healthPaused,healthEnded,healthSeeking;
+        volatile boolean healthBrowserRepair;
+        volatile boolean healthIntentPaused;
+        volatile boolean producerPreparing;
+        volatile long healthRequests,healthRequestFailures,healthLastRequestMs;
+        volatile long healthEncoderTimeMs,healthEncoderAt,healthFreeBytes=-1;
+        volatile int healthAttempt,healthRecoveryAttempts;
+        volatile int healthLastHttpStatus;
+        final java.util.concurrent.atomic.AtomicInteger healthRequestsActive=new java.util.concurrent.atomic.AtomicInteger();
         final long maxBytes = Math.max(64L*1024L*1024L, Long.getLong("sagetv.webplayer.streamMaxBytes",8L*1024L*1024L*1024L));
         final long createdAt = System.currentTimeMillis();
 
         volatile Process process;
+        volatile RuntimeRateControlBridge runtimeRate;
+        String runtimeRateJson(){return runtimeRate==null?"{\"revision\":0,\"available\":false}":runtimeRate.snapshot(healthEncoderTimeMs);}
         volatile Thread feederThread;
         volatile Thread stderrThread;
         volatile Thread monitorThread;
@@ -129,6 +164,8 @@ final class HlsSessionManager {
         volatile int exitCode = Integer.MIN_VALUE;
         volatile long lastUpdatedAt = createdAt;
         volatile long launchedAt;
+        volatile long sourceProbeMs;
+        volatile boolean sourceProbeCacheHit;
         volatile long firstSegmentAt;
         volatile double hlsFillRate;
         volatile long lastSegmentAt;
@@ -186,6 +223,18 @@ final class HlsSessionManager {
     }
 
     static Session start(int mediaId,int firstSegment,int audioIndex,double startSeconds,StreamOptions options,PlaybackSessionContext playbackContext,PlaybackSessionContext.Token playbackToken) throws IOException {
+        return start(mediaId,firstSegment,audioIndex,startSeconds,options,playbackContext,playbackToken,null);
+    }
+
+    static Session start(int mediaId,int firstSegment,int audioIndex,double startSeconds,StreamOptions options,PlaybackSessionContext playbackContext,PlaybackSessionContext.Token playbackToken,java.util.function.Consumer<Session> registered) throws IOException {
+        return start(mediaId,firstSegment,audioIndex,startSeconds,options,playbackContext,playbackToken,registered,false);
+    }
+
+    static Session startNativeSegment(int mediaId,int firstSegment,double startSeconds,StreamOptions options,PlaybackSessionContext context,PlaybackSessionContext.Token token,java.util.function.Consumer<Session> registered)throws IOException {
+        return start(mediaId,firstSegment,0,startSeconds,options,context,token,registered,true);
+    }
+
+    private static Session start(int mediaId,int firstSegment,int audioIndex,double startSeconds,StreamOptions options,PlaybackSessionContext playbackContext,PlaybackSessionContext.Token playbackToken,java.util.function.Consumer<Session> registered,boolean nativeSegment) throws IOException {
         if(!Double.isFinite(startSeconds)||startSeconds<0)throw new IllegalArgumentException("Invalid start position");
         cleanupStale();
         if(SESSIONS.values().stream().filter(v -> v.running).count() >= Math.max(1,Integer.getInteger("sagetv.webplayer.maxStreams",8)))
@@ -195,21 +244,32 @@ final class HlsSessionManager {
         if (mediaFile == null) throw new IOException("SageTV MediaFile not found: " + mediaId);
         int count = sage.getNumberOfSegments(mediaFile);
         if (count <= 0) throw new IOException("SageTV MediaFile has no segments");
-        if (firstSegment < 0 || firstSegment >= count) firstSegment = 0;
+        if (firstSegment < 0 || firstSegment >= count) {
+            if(nativeSegment)throw new IOException("Requested native recording segment no longer exists");
+            firstSegment = 0;
+        }
         Object airing = sage.getMediaFileAiring(mediaFile);
-        long durationMs = sage.getPlaybackDuration(mediaFile);
-        boolean recording = sage.isFileCurrentlyRecording(mediaFile);
+        long durationMs = nativeSegment?sage.getSegmentDuration(mediaFile,firstSegment):sage.getPlaybackDuration(mediaFile);
+        boolean recording = NativeRecordingSegment.growing(nativeSegment,firstSegment,count,sage.isFileCurrentlyRecording(mediaFile));
+        if(nativeSegment&&recording)durationMs=0L; // never freeze/clamp a growing segment
 
         String id = UUID.randomUUID().toString().replace("-", "");
         File dir = new File(root(), id);
         if (!dir.mkdirs()) throw new IOException("Could not create HLS session folder " + dir);
         Session session = new Session(id, mediaId, firstSegment, Math.max(0, audioIndex), startSeconds,
                 durationMs, recording, dir, options,playbackContext,playbackToken);
+        session.nativeSegment=nativeSegment;
         SESSIONS.put(id, session);
         try {
+            // Register BEFORE launch/probing so STOP/expiry can mark a warming
+            // candidate cancelled. launch() checks stopRequested before spawn.
+            if(registered!=null)registered.accept(session);
+            session.producerPreparing=true;
             launch(session, sage, mediaFile, 0);
             return session;
         } catch (IOException | RuntimeException e) {
+            session.producerPreparing=false;
+            session.error="Producer launch failed";StreamHealthDiagnostics.sample(session,true);
             stopProcess(session); SESSIONS.remove(id, session); deleteTree(dir); throw e;
         }
     }
@@ -232,12 +292,13 @@ final class HlsSessionManager {
         session.dvdSource=source;session.dvdGeneration=source.generation();session.dvdAudioWireCode=source.requestedAudioWireCode();
         SESSIONS.put(id,session);
         try { launchDvd(session,0); return session; }
-        catch(IOException|RuntimeException e){stopProcess(session);SESSIONS.remove(id,session);deleteTree(dir);throw e;}
+        catch(IOException|RuntimeException e){session.error="DVD producer launch failed";StreamHealthDiagnostics.sample(session,true);stopProcess(session);SESSIONS.remove(id,session);deleteTree(dir);throw e;}
     }
 
     private static void launchDvd(final Session session, int fallbackStage) throws IOException {
         synchronized(session){
             if(session.stopRequested)throw new IOException("DVD HLS session was stopped");
+            requireOwnedProcessControl(session);
             stopProcessOnly(session);clearHlsFiles(session.directory);
             session.error="";session.stderrTail="";session.playlistReady=false;session.segments=0;session.hlsSeconds=0;session.bytesProduced=0;session.endList=false;session.exitCode=Integer.MIN_VALUE;
             session.dvdInputEos=false;session.dvdConverterEnded=false;session.dvdNoPlayableMedia=false;session.dvdReadyNotified=false;
@@ -249,10 +310,12 @@ final class HlsSessionManager {
             session.fallbackStage=fallbackStage;session.softwareFallback=fallbackStage>=2;session.hardwareDecodeFallback=fallbackStage==1;
             session.encoder=probe.videoEncoder;session.accelerator=probe.accelerator;session.decodeAccelerator=probe.decodeAccelerator;session.encoderDetail=probe.detail;session.hardware=probe.hardware;session.hardwareDecode=probe.hardwareDecode;session.hardwareFilters=probe.hardwareFilters;
             session.inputMode="dvd-mpegps-push";session.inputDetail="MiniDVDPlayer generation "+session.dvdGeneration+" -> FFmpeg H.264/AAC HLS; audio="+source.requestedAudioDescription();
-            List<String> command=TranscoderManager.buildDvdHlsCommand(probe,session.dvdAudioWireCode,session.directory);
+            StreamPlan dvdPlan=TranscoderManager.dvdCommandPlan(session.options);
+            session.hardwareFilters=StreamCommand.usesGpuFilters(probe,dvdPlan);
+            List<String> command=TranscoderManager.buildDvdHlsCommand(probe,session.dvdAudioWireCode,session.directory,session.options);
             ProcessBuilder pb=new ProcessBuilder(command);pb.directory(session.directory);
             if(session.stopRequested)throw new IOException("DVD HLS session was stopped");
-            session.process=pb.start();session.launchedAt=System.currentTimeMillis();session.firstSegmentAt=0;session.hlsFillRate=0;session.lastSegmentAt=0;session.recentFillRate=0;session.rateSampleAt=0;session.rateSampleSeconds=0;session.metricsAt=0;session.running=true;session.lastUpdatedAt=System.currentTimeMillis();
+            session.process=OwnedProcessControlBridge.start(pb);healthLaunch(session);session.launchedAt=System.currentTimeMillis();session.firstSegmentAt=0;session.hlsFillRate=0;session.lastSegmentAt=0;session.recentFillRate=0;session.rateSampleAt=0;session.rateSampleSeconds=0;session.metricsAt=0;session.running=true;session.lastUpdatedAt=System.currentTimeMillis();
             startStderrReader(session);startDvdFeeder(session,fallbackStage);startDvdMonitor(session,fallbackStage,session.options==null||session.options.allowFallback);
         }
     }
@@ -285,13 +348,33 @@ final class HlsSessionManager {
                     out.write(replay);out.flush();session.bytesInput+=replay.length;
                 }
                 while(!session.stopRequested&&session.process==process&&process.isAlive()){
+                    // Keep one encoder, but do not decode a whole title while
+                    // the viewer is still in its first chapter. The two-second
+                    // margin above the existing12s browser reserve permits
+                    // refill without a producer/browser circular wait. No DVD
+                    // monitor is held; FLUSH/Stop cancel this wait immediately.
+                    while(!session.stopRequested&&session.process==process&&process.isAlive()&&input.generation()==generation){
+                        refreshMetrics(session,session.playlistReady);
+                        if(!session.playlistReady||!dvdReadAheadLimitReached(session.hlsSeconds,session.dvdBrowserTimeMs))break;
+                        session.dvdReadAheadPaused=true;session.dvdReadAheadWaits++;
+                        session.healthInputStage="dvd-read-ahead-paused";
+                        Thread.sleep(20L);
+                    }
+                    session.dvdReadAheadPaused=false;
+                    if(session.stopRequested||session.process!=process||!process.isAlive()||input.generation()!=generation)break;
+                    session.healthInputStage="read";
                     int n=input.read(b,0,b.length,generation);
                     if(n==DvdPushBuffer.READ_CANCELLED)break;
                     if(n==DvdPushBuffer.READ_EOS){session.dvdInputEos=true;break;}
-                    if(n>0){appendDvdReplay(session,b,n);out.write(b,0,n);out.flush();session.bytesInput+=n;}
+                    if(n>0){appendDvdReplay(session,b,n);session.healthInputStage="write";out.write(b,0,n);out.flush();session.bytesInput+=n;session.healthInputAt=System.currentTimeMillis();session.healthInputStage="fed";}
                 }
             }catch(Exception e){if(!session.stopRequested&&session.process==process)session.error="DVD MPEG-PS feeder failed: "+compact(e.getMessage());}
+            finally{session.dvdReadAheadPaused=false;}
         }},"webplayer-dvd-feed-"+shortId(session.id));t.setDaemon(true);session.feederThread=t;t.start();
+    }
+
+    static boolean dvdReadAheadLimitReached(double producedSeconds,long presentedMs){
+        return Double.isFinite(producedSeconds)&&producedSeconds>14.0+Math.max(0L,presentedMs)/1000.0;
     }
 
     private static void startDvdMonitor(final Session session, final int fallbackStage, final boolean allowFallback){
@@ -356,8 +439,7 @@ final class HlsSessionManager {
                     // Stop it here so status flags cannot claim that a failed
                     // converter is still alive and accepting DVD input.
                     if(p!=null&&p.isAlive()){
-                        p.destroy();
-                        if(!p.waitFor(2L,TimeUnit.SECONDS)&&p.isAlive())p.destroyForcibly();
+                        synchronized(session){if(session.process==p)stopProcessOnly(session);}
                     }
                     session.dvdNoPlayableMedia=true;session.dvdConverterEnded=true;session.running=false;
                     if(session.error.length()==0)session.error=reason;
@@ -399,18 +481,35 @@ final class HlsSessionManager {
         return s;
     }
 
-    static void stopAll() { REAPER.shutdownNow();for(String id:SESSIONS.keySet())stop(id); }
+    static void stopAll() { REAPER.shutdownNow();HEALTH.shutdownNow();for(String id:SESSIONS.keySet())try{stop(id);}catch(RuntimeException incomplete){/* retained owner/error remains visible */}StreamHealthDiagnostics.flush(); }
+
+    /** Quality adaptation may use only one encoder. Published segments stay
+     * readable for the normal handoff, but no replacement may start until the
+     * previous process has exited. A failed stop is an error, not permission
+     * to allocate a second encoder. This does not change ordinary seek policy. */
+    static void quiesceForQuality(Session session) throws IOException {
+        Process previous=session.process;
+        try { stopProcess(session); }
+        catch(IllegalStateException incomplete){throw new IOException("Previous quality producer stop is incomplete",incomplete);}
+        if(previous!=null&&previous.isAlive())
+            throw new IOException("Previous quality producer has not stopped");
+    }
 
     static boolean stop(String id) {
         Session session = get(id);
         if (session == null) return false;
-        synchronized(session){if(session.cleanupQueued)return true;session.cleanupQueued=true;}
-        stopProcess(session);
+        StreamHealthDiagnostics.sample(session,true); // preserve the failure BEFORE lifecycle teardown
+        synchronized(session){
+            if(session.cleanupQueued)return true;
+            stopProcess(session);
+            session.cleanupQueued=true;
+        }
+        StreamHealthDiagnostics.sample(session,true);
         // Delay deletion so an HLS client with one in-flight segment request can finish cleanly.
         Thread cleanup = new Thread(new Runnable() {
             @Override public void run() {
                 try { Thread.sleep(30000L); } catch (InterruptedException ignored) {}
-                if (!session.running) {
+                if (!session.running && !session.processStopIncomplete) {
                     deleteTree(session.directory);
                     SESSIONS.remove(session.id, session);
                 }
@@ -435,6 +534,11 @@ final class HlsSessionManager {
         if (!f.getPath().startsWith(base.getPath() + File.separator)) throw new IOException("Invalid HLS path");
         return f;
     }
+
+    static void browserMediaRead(String id){Session s=SESSIONS.get(id);if(s!=null)s.lastBrowserMediaReadNs=System.nanoTime();}
+
+    static Session beginDelivery(String id){Session s=SESSIONS.get(id);if(s!=null){synchronized(s.healthRequestsActive){s.healthRequests++;s.healthRequestsActive.incrementAndGet();}}return s;}
+    static void endDelivery(Session s,long started,int status,long bytes){if(s==null)return;synchronized(s.healthRequestsActive){s.healthRequestsActive.decrementAndGet();s.healthLastRequestMs=Math.max(0,System.nanoTime()-started)/1000000;s.healthLastHttpStatus=status;if(status>=400)s.healthRequestFailures++;s.deliveredBytes+=Math.max(0,bytes);}}
 
     static File waitForFile(String id, String filename, long timeoutMs) throws IOException {
         long end = System.currentTimeMillis() + Math.max(0L, timeoutMs);
@@ -473,11 +577,14 @@ final class HlsSessionManager {
             .append("\"deliveredBytes\":").append(s.deliveredBytes).append(',')
             .append("\"maxOutputBytes\":").append(s.maxBytes).append(',')
             .append("\"running\":").append(s.running).append(',')
+            .append("\"producerPreparing\":").append(s.producerPreparing&&!s.playlistReady).append(',')
+            .append("\"processStopIncomplete\":").append(s.processStopIncomplete).append(',')
             .append("\"playlistReady\":").append(s.playlistReady).append(',')
             .append("\"segments\":").append(s.segments).append(',')
             .append("\"hlsSeconds\":").append(String.format(Locale.US, "%.3f", s.hlsSeconds)).append(',')
             .append("\"bytesProduced\":").append(s.bytesProduced).append(',')
             .append("\"bytesInput\":").append(s.bytesInput).append(',')
+            .append("\"streamHealth\":").append(StreamHealthDiagnostics.snapshot(s,System.currentTimeMillis())).append(',')
             .append("\"encoder\":\"").append(HttpUtil.json(s.encoder)).append("\",")
             .append("\"accelerator\":\"").append(HttpUtil.json(s.accelerator)).append("\",")
             .append("\"hardware\":").append(s.hardware).append(',')
@@ -488,6 +595,8 @@ final class HlsSessionManager {
             .append("\"fallbackStage\":").append(s.fallbackStage).append(',')
             .append("\"softwareFallback\":").append(s.softwareFallback).append(',')
             .append("\"inputMode\":\"").append(HttpUtil.json(s.inputMode)).append("\",")
+            .append("\"sourceProbeMs\":").append(s.sourceProbeMs).append(',')
+            .append("\"sourceProbeCacheHit\":").append(s.sourceProbeCacheHit).append(',')
             .append("\"inputDetail\":\"").append(HttpUtil.json(s.inputDetail)).append("\",")
             .append("\"startSeconds\":").append(String.format(Locale.US, "%.3f", s.startSeconds)).append(',')
             .append("\"seekStrategy\":\"").append(HttpUtil.json(s.seekStrategy)).append("\",")
@@ -499,8 +608,12 @@ final class HlsSessionManager {
             .append("\"seekPacketSize\":").append(s.seekPacketSize).append(',')
             .append("\"durationMs\":").append(s.durationMs).append(',')
             .append("\"activeRecording\":").append(s.activeRecording).append(',')
+            .append("\"nativeSegment\":").append(s.nativeSegment).append(',')
+            .append("\"sourceSegment\":").append(s.firstSegment).append(',')
             .append("\"dvd\":").append(s.dvdSource!=null).append(',')
             .append("\"dvdGeneration\":").append(s.dvdGeneration).append(',')
+            .append("\"dvdReadAheadPaused\":").append(s.dvdReadAheadPaused).append(',')
+            .append("\"dvdReadAheadWaits\":").append(s.dvdReadAheadWaits).append(',')
             .append("\"dvdAudioWireCode\":").append(s.dvdAudioWireCode).append(',')
             .append("\"dvdInputEos\":").append(s.dvdInputEos).append(',')
             .append("\"dvdConverterEnded\":").append(s.dvdConverterEnded).append(',')
@@ -528,6 +641,7 @@ final class HlsSessionManager {
     private static void launch(final Session session, final SageApiBridge sage, final Object mediaFile, final int fallbackStage) throws IOException {
         synchronized (session) {
         if (session.stopRequested) throw new IOException("HLS session was stopped");
+        requireOwnedProcessControl(session);
         stopProcessOnly(session);
         clearHlsFiles(session.directory);
         session.error = "";
@@ -551,10 +665,13 @@ final class HlsSessionManager {
         session.seekAnchorMs=plan.seekAnchorMs;session.seekResidualMs=plan.postInputSeekMs;
         session.seekAnchorErrorMs=Math.abs(session.seekRequestedMs-session.seekAnchorMs);session.seekIndexSamples=plan.seekSamples;session.seekPacketSize=plan.seekPacketSize;
         if(session.options!=null && session.streamPlan==null) {
+            long probeStarted=System.nanoTime();
             session.sourceInfo = probeSource(session,sage,mediaFile);
+            session.sourceProbeMs=TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-probeStarted);
+            session.sourceProbeCacheHit=session.sourceInfo.probeCacheHit;
             session.streamPlan = new StreamPlan(session.options,session.sourceInfo);
         }
-        if(session.options!=null && ("teletext".equals(session.options.captions)||"stv".equals(session.options.captionAuthority)) && session.playbackContext!=null && session.playbackToken!=null){
+        if(session.options!=null && "teletext".equals(session.options.captions) && session.playbackContext!=null && session.playbackToken!=null){
             session.teletext=new TeletextSubtitleSession(session.playbackContext,session.playbackToken,Math.round(session.startSeconds*1000.0));
             session.teletext.seed(session.sourceInfo);
             session.teletext.configure(true,session.options.captionPage,session.options.captionLanguage);
@@ -579,11 +696,11 @@ final class HlsSessionManager {
         session.encoderDetail = probe.detail;
         session.hardware = probe.hardware;
         session.hardwareDecode = probe.hardwareDecode;
-        session.hardwareFilters = probe.hardwareFilters;
+        session.hardwareFilters = session.streamPlan==null?probe.hardwareFilters:StreamCommand.usesGpuFilters(probe,session.streamPlan);
         if(session.streamPlan!=null && session.streamPlan.subtitle!=null && session.playbackContext!=null && session.playbackToken!=null){
             try{
                 if(plan.pipeInput||plan.concatInput)session.subtitleBranchError="ordinary subtitle extraction requires a directly authorized local source in this build";
-                else session.ordinarySubtitles=OrdinarySubtitleSession.start(session.playbackContext,session.playbackToken,session.streamPlan.subtitle,plan.inputFile,probe.executable,Math.round(session.startSeconds*1000.0),session.options.subtitleOffsetMs);
+                else session.ordinarySubtitles=OrdinarySubtitleSession.start(session.playbackContext,session.playbackToken,session.streamPlan.subtitle,plan.inputFile,probe.executable,Math.round(session.startSeconds*1000.0),session.options.subtitleOffsetMs,session.options.subtitleForcedOnly);
             }catch(Exception e){session.subtitleBranchError=e.getMessage()==null?e.getClass().getSimpleName():e.getMessage();}
         }
 
@@ -604,7 +721,10 @@ final class HlsSessionManager {
         if(session.options==null || !session.options.captionsEnabled())
             pb.redirectOutput(ProcessBuilder.Redirect.to(new File(System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win") ? "NUL" : "/dev/null")));
         if (session.stopRequested) throw new IOException("HLS session was stopped");
-        session.process = pb.start();
+        session.process = OwnedProcessControlBridge.start(pb);
+        session.runtimeRate=command.contains("-sagetvruntimebitrate")?
+            RuntimeRateControlBridge.create(session.process,session.options.videoKbps,session.options.videoKbps):null;
+        healthLaunch(session);
         session.launchedAt = System.currentTimeMillis();
         session.firstSegmentAt = 0L; session.hlsFillRate = 0.0;
         session.lastSegmentAt=0L;session.recentFillRate=0.0;session.rateSampleAt=0L;session.rateSampleSeconds=0.0;session.metricsAt=0L;
@@ -617,7 +737,7 @@ final class HlsSessionManager {
             session.captionTap.start(session.process.getInputStream());
         }
         if (plan.pipeInput) startFeeder(session, sage, mediaFile, plan.startAbsoluteByte);
-        else {
+        else if(session.runtimeRate==null) {
             try { if (session.process.getOutputStream() != null) session.process.getOutputStream().close(); } catch (Exception ignored) {}
         }
         // Never overwrite an already exposed continuous byte stream during fallback.
@@ -633,6 +753,29 @@ final class HlsSessionManager {
         decoder.configure(true,pid,compositionPage,language);
         session.dvb=decoder;
         session.dvbPump=DvbSourcePump.start(session,sage,mediaFile,decoder,absoluteStart);
+    }
+
+    /** Select an already-owned broadcast decoder without replacing the A/V job.
+     * Reject unsupported selections before clearing a valid previous caption. */
+    static boolean selectBroadcast(Session session,String kind,int pid,int page,String language){
+        if(session==null||session.playbackContext==null||session.playbackToken==null)return false;
+        synchronized(session){
+            if(session.stopRequested||!("off".equals(kind)||"608".equals(kind)||"708".equals(kind)||"teletext".equals(kind)||"dvb".equals(kind)))return false;
+            if(("teletext".equals(kind)||"dvb".equals(kind))&&(session.sourceSage==null||session.sourceMediaFile==null))return false;
+            if(session.teletextPump!=null)session.teletextPump.stop();session.teletextPump=null;session.teletext=null;
+            if(session.dvbPump!=null)session.dvbPump.stop();session.dvbPump=null;session.dvb=null;
+            session.playbackToken=session.playbackContext.beginCaptionSelection(); // File/DVD and A/V epochs unchanged.
+            long target=Math.max(Math.round(session.startSeconds*1000.0),session.broadcastTimeMs);
+            if("teletext".equals(kind)){
+                session.teletext=new TeletextSubtitleSession(session.playbackContext,session.playbackToken,target);
+                session.teletext.seed(session.sourceInfo);
+                session.teletext.configure(true,page>=100&&page<=899?page:888,language);
+                session.teletextPump=TeletextSourcePump.start(session,session.sourceSage,session.sourceMediaFile,session.teletext,session.sourceAbsoluteStart);
+            }else if("dvb".equals(kind)){
+                startDvbDecoder(session,session.sourceSage,session.sourceMediaFile,session.sourceAbsoluteStart,pid,page,language);
+            }
+            return true;
+        }
     }
 
     /** Apply ordinary-video media command 36/type 1 without requiring DVB to be pre-enabled in the profile. */
@@ -659,7 +802,12 @@ final class HlsSessionManager {
         if(ff==null)throw new IOException("FFmpeg executable not found");
         String ffmpeg=ff.getAbsolutePath();
         File source=sage.getFileForSegment(mf,s.firstSegment);
-        if(source!=null&&source.isFile()&&source.canRead())return MediaProbe.read(source,ffmpeg);
+        if(source!=null&&source.isFile()&&source.canRead()){
+            // A cached inventory is safe only for completed, still-identical
+            // local media. Recheck public recording state at the read boundary.
+            return !s.activeRecording&&!sage.isFileCurrentlyRecording(mf)?
+                    MediaProbe.readCompleted(source,ffmpeg):MediaProbe.read(source,ffmpeg);
+        }
         // A bounded sample avoids asking ffprobe to connect to arbitrary browser URLs.
         File sample=new File(s.directory,"probe-input.ts");
         try {
@@ -696,7 +844,7 @@ final class HlsSessionManager {
     }
 
     private static InputPlan createInputPlan(Session session, SageApiBridge sage, Object mediaFile) throws IOException {
-        int count = sage.getNumberOfSegments(mediaFile);
+        int count = NativeRecordingSegment.sourceCount(session.nativeSegment,session.firstSegment,sage.getNumberOfSegments(mediaFile));
         List<File> files = new ArrayList<File>();
         boolean allDirect = true;
         for (int i = session.firstSegment; i < count; i++) {
@@ -722,17 +870,25 @@ final class HlsSessionManager {
         }
 
         long requestedMs=Math.round(session.startSeconds*1000.0);
-        MpegTsSeekIndex.Result seek=MpegTsSeekIndex.resolve(new MpegTsSeekIndex.Sources(){
-            public int segmentCount(){return sage.getNumberOfSegments(mediaFile)-session.firstSegment;}
+        MpegTsSeekIndex.Sources indexedSources=new MpegTsSeekIndex.Sources(){
+            public int segmentCount(){return NativeRecordingSegment.sourceCount(session.nativeSegment,session.firstSegment,sage.getNumberOfSegments(mediaFile))-session.firstSegment;}
             public SeekableMediaSource open(int index)throws IOException{
                 File f=sage.getFileForSegment(mediaFile,session.firstSegment+index);
                 return f==null?null:MediaSourceFactory.open(sage,f);
             }
-        },requestedMs);
+        };
+        MpegTsSeekIndex.Result seek=MpegTsSeekIndex.resolve(indexedSources,requestedMs);
+        long livePreroll=NativeRecordingSegment.livePrerollMs(session.nativeSegment,session.activeRecording,
+            requestedMs,session.nativeSegment?sage.getSegmentDuration(mediaFile,session.firstSegment):0,seek);
+        boolean joiningLive=false;
+        if(livePreroll>=0){
+            MpegTsSeekIndex.Result candidate=MpegTsSeekIndex.resolve(indexedSources,livePreroll);
+            if(candidate.validated){seek=candidate;joiningLive=true;}
+        }
         long offset=seek.validated?seek.absoluteByte:0;
         long anchor=seek.validated?seek.anchorMs:0;
-        long residual=seek.validated?seek.residualMs:requestedMs;
-        String strategy=seek.validated?"mpegts-pts-index":"pipe-start+ffmpeg-timestamp";
+        long residual=joiningLive?0:seek.validated?seek.residualMs:requestedMs;
+        String strategy=joiningLive?"mpegts-pts-index+live-tail-preroll":seek.validated?"mpegts-pts-index":"pipe-start+ffmpeg-timestamp";
         String detail="SageTV MediaServer/direct source -> FFmpeg stdin; " + files.size() + " segment(s); " +
                 (seek.validated?(seek.reason+", anchor="+seek.anchorMs+"ms, residual="+seek.residualMs+"ms"):
                         ("no validated byte seek ("+seek.reason+"); feed from byte zero"));
@@ -755,34 +911,44 @@ final class HlsSessionManager {
                 if (process == null) return;
                 try (OutputStream out = process.getOutputStream()) {
                     RecordingFollower.copy(new RecordingFollower.Sources() {
-                        public int segmentCount() { return sage.getNumberOfSegments(mediaFile); }
-                        public boolean isRecording() { return sage.isFileCurrentlyRecording(mediaFile); }
+                        public int segmentCount() { return NativeRecordingSegment.sourceCount(session.nativeSegment,session.firstSegment,sage.getNumberOfSegments(mediaFile)); }
+                        public boolean isRecording() { return NativeRecordingSegment.growing(session.nativeSegment,session.firstSegment,sage.getNumberOfSegments(mediaFile),sage.isFileCurrentlyRecording(mediaFile)); }
                         public SeekableMediaSource open(int index) throws IOException {
                             File f = sage.getFileForSegment(mediaFile, index);
                             return f == null ? null : MediaSourceFactory.open(sage, f);
                         }
                     }, session.firstSegment, absoluteStart, out,
                         () -> !session.stopRequested && session.process == process && process.isAlive(),
-                        n -> { if (session.process == process) session.bytesInput += n; },
+                        n -> { if (session.process == process) {session.bytesInput += n;session.healthInputAt=System.currentTimeMillis();} },
                         recording -> {
                             if (session.process == process) {
                                 boolean justFinished = session.activeRecording && !recording;
                                 session.activeRecording = recording;
                                 if (justFinished) {
-                                    long completedDuration = sage.getPlaybackDuration(mediaFile);
+                                    long completedDuration = session.nativeSegment?sage.getSegmentDuration(mediaFile,session.firstSegment):sage.getPlaybackDuration(mediaFile);
                                     if (completedDuration > 0) session.durationMs = completedDuration;
                                 }
                             }
-                        });
+                        },(stage,length,position)->{if(session.process==process){session.healthInputStage=stage;if(length>=0)session.healthSourceLength=length;if(position>=0)session.healthSourcePosition=position;}});
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 } catch (Exception e) {
-                    if (!session.stopRequested && session.process == process)
+                    if (!session.stopRequested && session.process == process){
+                        session.healthInputError=StreamHealthDiagnostics.transportFailure(e);
+                        session.healthInputErrorAt=System.currentTimeMillis();
                         session.error = "SageTV input feeder failed: " + compact(e.getMessage());
+                    }
+                } finally {
+                    if(session.process==process)StreamHealthDiagnostics.sample(session,true);
                 }
             }
         }, "webplayer-hls-feed-" + shortId(session.id));
         t.setDaemon(true); session.feederThread = t; t.start();
+    }
+
+    private static void healthLaunch(Session s){
+        s.healthAttempt++;s.healthInputStage="preparing";s.healthInputAt=0;s.healthEncoderAt=0;s.healthEncoderTimeMs=0;
+        s.healthSourceLength=-1;s.healthSourcePosition=-1;
     }
 
     private static void startStderrReader(final Session session) {
@@ -795,6 +961,7 @@ final class HlsSessionManager {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getErrorStream(), StandardCharsets.UTF_8))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
+                        if(session.process==sourceProcess&&session.runtimeRate!=null)session.runtimeRate.observe(line);
                         tail.append(line).append('\n');
                         if (tail.length() > 12000) tail.delete(0, tail.length() - 10000);
                         if (session.process == sourceProcess) session.stderrTail = tail.toString();
@@ -824,7 +991,7 @@ final class HlsSessionManager {
                         if(checkResourceLimits(session)) return;
                         Process p = session.process;
                         if (p == null) break;
-                        if (session.playlistReady) break;
+                        if (session.playlistReady) {session.producerPreparing=false;break;}
                         if (!p.isAlive()) {
                             session.exitCode = p.exitValue();
                             break;
@@ -868,6 +1035,7 @@ final class HlsSessionManager {
                     if (!session.stopRequested && session.process == monitored) session.error = compact(e.getMessage());
                 } finally {
                     if (session.process == monitored) {
+                        session.producerPreparing=false;
                         if (monitored == null || !monitored.isAlive()) session.running = false;
                         session.lastUpdatedAt = System.currentTimeMillis();
                     }
@@ -887,7 +1055,9 @@ final class HlsSessionManager {
         // lock (launch/stop can wait for a process). No thread holds both locks.
         synchronized(s.playlist) {
             long now=System.currentTimeMillis();
-            if(!force && now-s.metricsAt<200L)return;
+            // WEB-046: a short startup-only snapshot cadence avoids hiding a
+            // newly atomic segment behind the steady-state polling interval.
+            if(!force && now-s.metricsAt<(s.playlistReady?200L:100L))return;
             if(s.isTs()) { refreshTsMetrics(s,now); return; }
             // Read one atomic manifest snapshot. Its published entries, not a
             // filesystem directory listing, are the only playable segments.
@@ -897,12 +1067,15 @@ final class HlsSessionManager {
             int count=0;long bytes=0L;
             for(String line:text.split("\\r?\\n")) {
                 line=line.trim();
-                if(line.matches("seg_[0-9]{5,}\\.ts")) { count++;bytes+=new File(s.directory,line).length(); }
+                if(line.matches("seg_[0-9]{5,}\\.ts")) {
+                    long length=new File(s.directory,line).length();
+                    if(length>0){count++;bytes+=length;}
+                }
             }
             double produced=parsePlaylistSeconds(text);
             if(produced>s.hlsSeconds+0.01)s.lastSegmentAt=now;
             s.segments=count;s.bytesProduced=bytes+text.length();
-            s.playlistReady=count>0;s.hlsSeconds=produced;s.endList=text.contains("#EXT-X-ENDLIST");
+            s.playlistReady=count>0&&produced>0;s.hlsSeconds=produced;s.endList=text.contains("#EXT-X-ENDLIST");
             if(s.playlistReady&&s.firstSegmentAt==0)s.firstSegmentAt=now;
             if(s.rateSampleAt==0){s.rateSampleAt=s.launchedAt>0?s.launchedAt:now;s.rateSampleSeconds=0;}
             if(now-s.rateSampleAt>=2000L) {
@@ -997,7 +1170,7 @@ final class HlsSessionManager {
             for (File d : dirs) {
                 if (!d.isDirectory()) continue;
                 Session active = SESSIONS.get(d.getName());
-                if (active != null && active.running) continue;
+                if (active != null && (active.running || active.processStopIncomplete)) continue;
                 if (now - d.lastModified() > STALE_MS) { deleteTree(d); SESSIONS.remove(d.getName()); }
             }
         } catch (Exception ignored) {}
@@ -1010,21 +1183,20 @@ final class HlsSessionManager {
 
     private static void stopProcessOnly(Session s) {
         Process p = s.process;
-        s.process = null;
-        Thread feeder = s.feederThread; s.feederThread = null;
+        Thread feeder = s.feederThread;
         if (feeder != null) feeder.interrupt();
         if (p != null) {
-            if (p.isAlive()) {
-                p.destroy();
-                try {
-                    if (!p.waitFor(2L, TimeUnit.SECONDS) && p.isAlive()) {
-                        p.destroyForcibly(); p.waitFor(2L, TimeUnit.SECONDS);
-                    }
-                } catch (InterruptedException e) { Thread.currentThread().interrupt(); p.destroyForcibly(); }
+            if (!OwnedProcessControlBridge.stop(p, 2000L)) {
+                s.processStopIncomplete = true;
+                s.error="Owned encoder stop incomplete; process retained and replacement refused";
+                throw new IllegalStateException(s.error);
             }
+            s.process = null;
             try { p.getOutputStream().close(); } catch (Exception ignored) {}
             try { p.getInputStream().close(); } catch (Exception ignored) {}
         }
+        s.processStopIncomplete = false;
+        s.feederThread = null;
         A53CaptionTap tap=s.captionTap;s.captionTap=null;
         if(tap!=null)try{tap.close();}catch(IOException ignored){}
         SubtitleSourceBranch branch=s.subtitleBranch;s.subtitleBranch=null;if(branch!=null)branch.stop();
@@ -1033,6 +1205,16 @@ final class HlsSessionManager {
         DvbSourcePump dvbPump=s.dvbPump;s.dvbPump=null;if(dvbPump!=null)dvbPump.stop();
         OrdinarySubtitleSession ordinary=s.ordinarySubtitles;s.ordinarySubtitles=null;if(ordinary!=null)ordinary.stop();
         s.dvb=null;
+    }
+
+    private static void requireOwnedProcessControl(Session owner) throws IOException {
+        if(!OwnedProcessControlBridge.available())throw new IOException(
+            "Bounded plugin-owned encoder stop unavailable: update the FFmpeg Plugin (protocol1); Java8 Windows also requires its verified native job launcher");
+        // An uncertain stop is not permission for another source to allocate
+        // a replacement. Keep the original Process/registry entry for repair;
+        // existing unrelated playback is not stopped by this admission fence.
+        for(Session prior:SESSIONS.values())if(prior!=owner&&prior.processStopIncomplete)
+            throw new IOException("Previous encoder teardown is incomplete; no replacement started");
     }
 
     private static void deleteTree(File file) {

@@ -1,0 +1,2 @@
+/* One ordinary TV after HDMI review proves native Main Menu with our DVD. */
+(()=>{const s=window.__dvdLibrary082;if(!s||s.pending||s.tvSent||s.error||!s.read?.content?.ready||!s.read.source)throw Error('No proven owned preview/duplicate');s.tvSent=true;s.pending=true;__iphoneGate.api('command',{command:15}).then(r=>{if(!r.ok)throw Error('TV refused');s.tvAccepted=true}).catch(e=>s.error=e.name).finally(()=>s.pending=false);return{oneOrdinaryTV:true,notProductionFullscreenProof:true,noWatchReplay:true}})()

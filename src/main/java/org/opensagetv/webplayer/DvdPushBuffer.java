@@ -71,10 +71,9 @@ final class DvdPushBuffer {
         size += length;
         totalWritten += length;
         epochWritten += length;
-        // New bytes after a previously observed EOF belong to the same epoch
-        // only if the server failed to FLUSH. Do not keep a stale drained mark.
-        readerObservedEos = false;
-        decoderDrainedGeneration = Long.MIN_VALUE;
+        // An exited consumer cannot be revived by a later write. Keep its
+        // actual EOF/drain observations until a new consumer generation starts;
+        // stock DVD can push the following cell without a native FLUSH.
         notifyAll();
     }
 
@@ -123,6 +122,28 @@ final class DvdPushBuffer {
             decoderDrainedGeneration = decoderGeneration;
             notifyAll();
         }
+    }
+
+    /**
+     * New bytes queued AFTER this consumer observed EOF need another decoder.
+     * Wait for actual browser/decoder drain too. Preserve every queued byte,
+     * cancel old readers and return one bounded replay for the SPU parser.
+     */
+    synchronized byte[] beginDrainedContinuation() {
+        if (closed || !segmentEos || !readerObservedEos ||
+                decoderDrainedGeneration != generation || size == 0) return null;
+        byte[] queued = new byte[size];
+        int first = Math.min(size, ring.length - readPos);
+        System.arraycopy(ring, readPos, queued, 0, first);
+        if (first < size) System.arraycopy(ring, 0, queued, first, size - first);
+        generation++;
+        segmentEos = false;
+        readerObservedEos = false;
+        decoderDrainedGeneration = Long.MIN_VALUE;
+        epochWritten = size;
+        epochRead = 0L;
+        notifyAll();
+        return queued;
     }
 
     synchronized boolean drainReady() {

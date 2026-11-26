@@ -11,7 +11,7 @@ from contextlib import contextmanager
 import argparse, base64, json, mimetypes, os, re, subprocess, tempfile, zipfile
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-OUT=ROOT/'build/test-results';OUT.mkdir(parents=True,exist_ok=True)
+OUT=Path(os.environ.get('SAGETV_ARTIFACT_DIR',ROOT/'build/test-results'));OUT.mkdir(parents=True,exist_ok=True)
 count=0
 
 def passed(name):
@@ -62,7 +62,7 @@ INIT=r"""(()=>{
  };
 })();"""
 
-def load(browser,web,settings=None,size=(1600,1000)):
+def load(browser,web,settings=None,size=(1600,1000),main_transform=None):
     c=browser.new_context(viewport={'width':size[0],'height':size[1]},service_workers='block')
     p=c.new_page();errs=[];p.on('pageerror',lambda e:errs.append(str(e)));p.set_default_timeout(8000)
     html=(web/'miniclient.html').read_text()
@@ -71,13 +71,20 @@ def load(browser,web,settings=None,size=(1600,1000)):
         name=match.group(1);raw=(web/name).read_bytes();mime=mimetypes.guess_type(name)[0] or 'application/octet-stream'
         return 'src="data:'+mime+';base64,'+base64.b64encode(raw).decode()+'"'
     html=re.sub(r'src="(icons/[^"]+)"',asset,html)
+    # The mobile tool drawer creates its gear image at runtime. Resolve that
+    # real bundled asset too; set_content/about:blank has no relative URL base.
+    p.route('https://fixture.test/icons/**',lambda route:route.fulfill(
+        path=str(web/'icons'/route.request.url.split('/icons/',1)[1])))
+    html=html.replace('<head>','<head><base href="https://fixture.test/">',1)
     p.set_content(html);p.add_style_tag(content=(web/'css/miniclient.css').read_text());p.evaluate(INIT)
     if settings is not None:p.evaluate('s=>TEST.storage.setItem("sagetvWebMiniClientSettings.v1",JSON.stringify(s))',settings)
     if (OUT/'display-fixture.mp4').exists():
         p.evaluate('s=>{const a=Uint8Array.from(atob(s),c=>c.charCodeAt(0));TEST.fixtureURL=URL.createObjectURL(new Blob([a],{type:"video/mp4"}));}',base64.b64encode((OUT/'display-fixture.mp4').read_bytes()).decode())
-    for filename in ['miniclient-core.js','miniclient-streaming.js','miniclient-caption-authority.js','atsc-captions.js','miniclient-captions.js','miniclient-subtitles.js','miniclient-dvd-spu.js','miniclient-playback.js','miniclient-support.js']:
+    for filename in ['miniclient-core.js','miniclient-input.js','miniclient-streaming.js','miniclient-caption-authority.js','atsc-captions.js','miniclient-captions.js','miniclient-subtitles.js','miniclient-dvd-spu.js','miniclient-playback.js','miniclient-experience.js','miniclient-support.js','miniclient-mobile.js']:
         p.evaluate((web/'js'/filename).read_text())
+    if (web/'js/miniclient-cast.js').is_file():p.evaluate((web/'js/miniclient-cast.js').read_text())
     main=(web/'js/miniclient.js').read_text()
+    if main_transform is not None:main=main_transform(main)
     p.evaluate('(function(location,localStorage){\n'+main+'\n})({href:"https://fixture.test/miniclient.html",origin:"https://fixture.test",search:""},TEST.storage)')
     p.wait_for_function("window.TEST && window.TEST.stream && document.querySelector('#connectionStatus').textContent.startsWith('Connected')")
     p.wait_for_timeout(230)
@@ -98,9 +105,11 @@ def test_current(browser,origin):
     passed('automatic UI fills browser content below toolbar without added borders')
     open_remote(p)
     p.wait_for_function("[...document.querySelectorAll('.vibe-icon img')].every(i=>i.complete && i.naturalWidth>0)")
-    icons=p.locator('.vibe-icon img');assert icons.count()==30
+    icons=p.locator('.vibe-icon img');assert icons.count()==35,icons.count()
     assert p.evaluate("[...document.querySelectorAll('.vibe-icon')].every(b=>!!b.getAttribute('aria-label') && !!b.title)")
-    passed('all 30 bundled Android icon bytes decode with accessible labels')
+    assert p.locator('#remoteLive img').count()==1
+    assert p.locator('#remoteCast img').count()==1
+    passed('all 35 bundled icon bytes decode with accessible labels, including separate statistics information')
     b=bounds(p,'stage');home=bounds(p,'nav_home');help_=bounds(p,'remoteHelp');close=bounds(p,'closeRemote');up=bounds(p,'nav_up');down=bounds(p,'nav_down');left=bounds(p,'nav_left');ok=bounds(p,'nav_select');right=bounds(p,'nav_right');keyboard=bounds(p,'keyboardToggle');play=bounds(p,'nav_media_play')
     assert home['x']<b['width']*.1 and close['x']>b['width']*.9 and help_['x']<close['x']
     assert up['y']<ok['y']<down['y'] and left['x']<ok['x']<right['x']
@@ -109,7 +118,7 @@ def test_current(browser,origin):
     assert p.locator('#remoteTools').is_hidden()
     passed('transparent edge overlay has original Home/help, D-pad, transport and tool groups')
     photo(p,'vibe-overlay-desktop-3.2.12.png')
-    p.locator('#closeRemote').click();video_start(p);before=bounds(p,'videoBounds');assert same(before,bounds(p,'stage'))
+    p.locator('#hideRemote').click();video_start(p);before=bounds(p,'videoBounds');assert same(before,bounds(p,'stage'))
     p.evaluate('TEST.paint(false)');p.wait_for_timeout(120);assert same(before,bounds(p,'videoBounds'))
     passed('native inset black CLEAR_RECT no longer changes fullscreen video bounds')
     assert p.evaluate("document.querySelector('#gfxCanvas').getContext('2d').getImageData(10,100,1,1).data[3]")==0
@@ -130,22 +139,28 @@ def test_current(browser,origin):
     p.locator('#aspectToggle').click();assert p.locator('#videoPlane').evaluate('(v)=>v.style.objectFit')=='fill'
     p.locator('#aspectToggle').click();assert p.locator('#videoPlane').evaluate('(v)=>v.style.objectFit')=='cover'
     passed('aspect icon cycles Fill, Fit and Stretch without transcoder restart')
-    p.locator('#audioSettings').click();assert p.locator('#settingsPanel').is_visible();assert p.locator('#stream_audioCodec').evaluate('(v)=>document.activeElement===v');p.locator('#closeSettings').click()
-    open_remote(p);p.locator('#captionSettings').click();assert p.locator('#captionAuthorityMode').evaluate('(v)=>document.activeElement===v');p.locator('#closeSettings').click()
-    open_remote(p);p.locator('#remoteSettings').click();assert p.locator('#stream_videoMode').evaluate('(v)=>document.activeElement===v');p.locator('#closeSettings').click()
+    # Opening a native select from the opening gesture edits it on iOS. The
+    # current UI deliberately focuses neutral Back while displaying the section.
+    for button,control in [('audioSettings','stream_audioTrack'),('captionSettings','captionAuthorityMode'),('remoteSettings','browserPlaybackRate')]:
+        open_remote(p);p.locator('#'+button).click()
+        assert p.locator('#settingsPanel').is_visible() and p.locator('#'+control).is_visible()
+        assert p.locator('#closeSettings').evaluate('(v)=>document.activeElement===v')
+        p.locator('#closeSettings').click()
     passed('video, audio and caption icons open the working browser settings sections')
     open_remote(p);p.locator('#videoInfoBtn').click();assert 'Browser playback and plugin status' in p.locator('#videoInfoText').text_content();p.keyboard.press('Escape');assert p.locator('#videoInfoPanel').is_hidden() and p.locator('#remotePanel').is_visible()
     p.locator('#testVideoBtn').click();p.wait_for_function("document.querySelector('#videoInfoText').textContent.includes('mutation-safety')",timeout=5000);assert 'short duration' in p.locator('#videoInfoText').text_content()
-    p.locator('#closeVideoInfo').click();p.locator('#remoteStats').click();assert p.locator('#stats').is_visible() and p.locator('#remotePanel').is_hidden()
+    p.locator('#closeVideoInfo').click();p.locator('#remoteStats').click();assert p.locator('#statsGauges').is_visible() and p.locator('#remotePanel').is_visible()
+    p.locator('#remoteStatsInfo').click();assert p.locator('#stats').is_visible()
     p.locator('#statsToggle').click();passed('info, scoped playback check, stats and nested Escape are functional')
     open_remote(p)
-    before_reports=len(requests(p,['report']));p.locator('#diagnosticsBtn').click();p.wait_for_function('(n)=>TEST.requests.filter(r=>r[0]==="report").length>n',arg=before_reports)
-    payload=requests(p,['report'])[-1][1];report=json.loads(payload['browserJson']);assert report['version']=='3.2.30' and report['videoLayout']['presentation']['kind']=='fullscreen'
+    before_reports=len(requests(p,['report']));p.locator('#diagnosticsBtn').click();p.locator('#downloadReport').click();p.wait_for_function('(n)=>TEST.requests.filter(r=>r[0]==="report").length>n',arg=before_reports)
+    payload=requests(p,['report'])[-1][1];report=json.loads(payload['browserJson']);assert report['version']=='3.3.0' and report['videoLayout']['presentation']['kind']=='fullscreen'
     assert 'clientId' not in report and payload['saveToServer']=='false'
     passed('diagnostic ZIP request contains redacted browser snapshot, placement and P14 version')
+    p.locator('#closeSettings').click()
     p.locator('#remoteHelp').click();assert p.locator('#seekRange').is_visible();p.locator('#remoteTools [data-command="18"]').click()
     p.locator('#closeRemoteTools').click();p.locator('#keyboardToggle').click();p.locator('#keyboardInput').fill('Vibe café');p.locator('#keyboardSend').click();p.wait_for_timeout(60)
-    assert requests(p,['text'])[-1][1]['text']=='Vibe café';p.keyboard.press('Escape');p.locator('#closeRemote').click()
+    assert requests(p,['text'])[-1][1]['text']=='Vibe café';p.keyboard.press('Escape');p.locator('#hideRemote').click()
     passed('keypad/timeline extras remain under Help and keyboard sends literal text')
     # Near-full source and explicit menu preview are intentionally different.
     w,h=p.evaluate('[TEST.width,TEST.height]');small=[100,100,350,200]
@@ -155,7 +170,7 @@ def test_current(browser,origin):
     emit(p,{'type':'menuHint','value':'menuName:Guide, popupName:'});assert same(preview,bounds(p,'videoBounds'))
     passed('small native/color-key previews still match native coordinates through menu changes')
     emit(p,{'type':'videoBounds','dst':[0,0,w,h]});assert same(bounds(p,'videoBounds'),bounds(p,'stage'))
-    p.locator('#settingsToggle').click();p.locator('#videoViewport').select_option('native');p.locator('#closeSettings').click()
+    p.locator('#settingsToggle').click();p.locator('#settings-tab-playback').click();p.locator('#videoViewport').select_option('native');p.locator('#closeSettings').click()
     emit(p,{'type':'videoBounds','dst':[80,40,w-160,h-80]});assert bounds(p,'videoBounds')['width']<bounds(p,'stage')['width']-100
     p.locator('#settingsToggle').click();p.locator('#videoViewport').select_option('browser');p.locator('#closeSettings').click();assert same(bounds(p,'videoBounds'),bounds(p,'stage'))
     passed('native placement override is available and browser placement restores edge-to-edge')
@@ -167,16 +182,21 @@ def test_current(browser,origin):
     for size in [(1920,1080),(390,844),(700,390),(320,568),(2141,1503)]:
         p.set_viewport_size({'width':size[0],'height':size[1]});p.wait_for_timeout(330);open_remote(p)
         assert same(bounds(p,'stage'),bounds(p,'gfxCanvas')) and same(bounds(p,'stage'),bounds(p,'videoBounds'))
-        rects=p.locator('.vibe-icon').evaluate_all('(bs)=>bs.map(b=>({id:b.id,x:b.getBoundingClientRect().x,y:b.getBoundingClientRect().y,w:b.offsetWidth,h:b.offsetHeight}))')
+        rects=p.locator('.vibe-icon:visible').evaluate_all('(bs)=>bs.map(b=>({id:b.id,x:b.getBoundingClientRect().x,y:b.getBoundingClientRect().y,w:b.offsetWidth,h:b.offsetHeight}))')
+        remote=p.locator('#remotePanel').evaluate('e=>({top:e.getBoundingClientRect().top,height:e.scrollHeight})')
         for a in rects:
-            assert a['x']>=-1 and a['y']>=0 and a['x']+a['w']<=size[0]+1 and a['y']+a['h']<=size[1]+1,(size,a)
+            assert a['x']>=-1 and a['y']>=0 and a['x']+a['w']<=size[0]+1 and a['y']+a['h']<=max(size[1],remote['top']+remote['height'])+1,(size,a)
         for i,a in enumerate(rects):
             for b in rects[i+1:]:
                 overlap=min(a['x']+a['w'],b['x']+b['w'])-max(a['x'],b['x'])>1 and min(a['y']+a['h'],b['y']+b['h'])-max(a['y'],b['y'])>1
                 assert not overlap,(size,a['id'],b['id'])
         if size==(390,844):photo(p,'vibe-overlay-mobile-3.2.12.png')
-        p.locator('#closeRemote').click()
-    passed('desktop, phone, short-landscape and capped-native layouts stay in bounds without icon overlap')
+        # Short browser windows intentionally retain 44px targets and a
+        # scrollable overlay, rather than shrinking controls below touch size.
+        p.locator('#nav_down').scroll_into_view_if_needed()
+        down=bounds(p,'nav_down');assert down['y']>=0 and down['y']+down['height']<=size[1]+1,(size,down)
+        p.locator('#hideRemote').click()
+    passed('desktop, phone, short-landscape and capped-native controls remain reachable without icon overlap')
     open_remote(p);p.locator('#remoteHelp').click();p.locator('#renderOnlyBtn').click();p.wait_for_timeout(350)
     assert same(bounds(p,'stage'),bounds(p,'videoBounds')) and abs(bounds(p,'stage')['height']-1503)<1
     p.keyboard.press('Escape');p.wait_for_timeout(350);assert same(bounds(p,'stage'),bounds(p,'videoBounds'))
@@ -186,7 +206,7 @@ def test_current(browser,origin):
     # Old default migration must run once and then preserve explicit Fit.
     c,p,errs=load(browser,origin,{'videoFit':'source','uiResolution':'window'})
     saved=p.evaluate("JSON.parse(TEST.storage.getItem('sagetvWebMiniClientSettings.v1'))");assert saved['videoFit']=='cover' and saved['displayPolicyVersion']==2
-    p.locator('#settingsToggle').click();p.locator('#videoFit').select_option('source');p.locator('#closeSettings').click()
+    p.locator('#settingsToggle').click();p.locator('#settings-tab-playback').click();p.locator('#videoFit').select_option('source');p.locator('#closeSettings').click()
     # New init script would reapply old settings each navigation, so inspect a new page
     # whose config includes the marked migrated profile instead.
     marked=p.evaluate("JSON.parse(TEST.storage.getItem('sagetvWebMiniClientSettings.v1'))");c.close()
@@ -200,11 +220,11 @@ def test_current(browser,origin):
     if (OUT/'display-fixture.mp4').exists():
         c,p,errs=load(browser,origin,size=(1200,900));p.evaluate('TEST.realMedia=true');video_start(p)
         p.wait_for_function("document.querySelector('#videoPlane').videoWidth===640 && document.querySelector('#videoPlane').readyState>=2")
-        p.evaluate("document.querySelector('#videoPlane').currentTime=1");open_remote(p);p.locator('#nav_media_play').click();p.wait_for_timeout(180);open_remote(p);p.locator('#nav_media_pause').click();p.locator('#closeRemote').click()
+        p.evaluate("document.querySelector('#videoPlane').currentTime=1");open_remote(p);p.locator('#nav_media_play').click();p.wait_for_timeout(180);open_remote(p);p.locator('#nav_media_pause').click();p.locator('#hideRemote').click()
         p.wait_for_timeout(150);p.evaluate('TEST.paint(false)');p.wait_for_timeout(150)
-        photo(p,'video-fill-3.2.12.png');open_remote(p);photo(p,'vibe-overlay-video-3.2.12.png');p.locator('#closeRemote').click()
+        photo(p,'video-fill-3.2.12.png');open_remote(p);photo(p,'vibe-overlay-video-3.2.12.png');p.locator('#hideRemote').click()
         bb=bounds(p,'videoBounds');p.evaluate('TEST.paint(true)');p.wait_for_timeout(100);assert same(bb,bounds(p,'videoBounds'));p.evaluate('TEST.paint(false)')
-        p.locator('#settingsToggle').click();p.locator('#videoFit').select_option('source');p.locator('#closeSettings').click();p.wait_for_timeout(120);photo(p,'video-fit-3.2.12.png')
+        p.locator('#settingsToggle').click();p.locator('#settings-tab-playback').click();p.locator('#videoFit').select_option('source');p.locator('#closeSettings').click();p.wait_for_timeout(120);photo(p,'video-fit-3.2.12.png')
         p.locator('#settingsToggle').click();p.locator('#videoFit').select_option('fill');p.locator('#closeSettings').click();p.wait_for_timeout(120);photo(p,'video-stretch-3.2.12.png')
         assert not errs,errs;c.close();passed('real H.264 fixture decodes with Fill/Fit/Stretch and stable OSD geometry')
     else:print('SKIP real-media layout fixture: FFmpeg not available',flush=True)

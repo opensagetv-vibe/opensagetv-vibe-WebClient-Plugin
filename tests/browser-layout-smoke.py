@@ -58,7 +58,7 @@ with sync_playwright() as p:
         return new Response('{"ok":true}');
       };
     })();""")
-    for name in ['miniclient-core.js','miniclient-streaming.js','atsc-captions.js','miniclient-captions.js','miniclient-playback.js']:
+    for name in ['miniclient-core.js','miniclient-input.js','miniclient-streaming.js','atsc-captions.js','miniclient-captions.js','miniclient-playback.js','miniclient-experience.js']:
         page.evaluate((WEB/'js'/name).read_text())
     page.evaluate("(function(location,localStorage){\n"+(WEB/'js/miniclient.js').read_text()+"\n})({href:'https://fixture.test/miniclient.html',origin:'https://fixture.test',search:''},{getItem:()=>null,setItem:()=>{}})")
     def settled():

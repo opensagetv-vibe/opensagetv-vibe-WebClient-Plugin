@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create or verify the tracked-source SHA-256 manifest."""
+"""Create or verify source SHA-256, including new non-ignored source files."""
 
 from __future__ import annotations
 
@@ -14,13 +14,15 @@ MANIFEST = "PROJECT_MANIFEST.sha256"
 
 def tracked(root: Path) -> list[str]:
     result = subprocess.run(
-        ["git", "ls-files", "-z"], cwd=root, check=True, capture_output=True
+        ["git", "-c", f"safe.directory={root}", "ls-files", "-z",
+         "--cached", "--others", "--exclude-standard"],
+        cwd=root, check=True, capture_output=True
     )
-    return sorted(
+    return sorted({
         item.decode("utf-8")
         for item in result.stdout.split(b"\0")
         if item and item.decode("utf-8") != MANIFEST
-    )
+    })
 
 
 def digest(path: Path) -> str:

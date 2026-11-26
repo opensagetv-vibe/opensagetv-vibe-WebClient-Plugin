@@ -26,8 +26,21 @@ final class MiniClientCapabilityPolicy {
         return nativeDvdRoleEnabled() ? "MPEG2-PS" : "NONE";
     }
 
+    /** These private Core properties have no setter in this stock-compatible
+     * client. Rate is a media command, not a writable capability property.
+     * Keep legacy stock SET acknowledgement behavior outside this boundary. */
+    static boolean unsupportedExtensionSet(String name) {
+        return name.startsWith("DVD_DISC_") || "MEDIA_STATE_URL".equals(name)
+                || "VIDEO_PLAYBACK_RATE".equals(name);
+    }
+
     static String json() {
         return "{\"nativeDvdRoleEnabled\":"+nativeDvdRoleEnabled()+
-                ",\"inputDevices\":\""+inputDevices()+"\",\"pushContainers\":\""+pushContainers()+"\"}";
+                ",\"inputDevices\":\""+inputDevices()+"\",\"pushContainers\":\""+pushContainers()+"\""+
+                ",\"extensionContracts\":{\"schemaVersion\":1,\"modifiedCoreRequired\":false"+
+                ",\"companionDvdProfileSupported\":\"web-mpegps-v1\",\"companionDvdNegotiation\":\"optional-per-load\""+
+                ",\"dvdRepresentation\":\"native-mpegps\",\"extendedCoreDvd\":false,\"transformedMainFeature\":false"+
+                ",\"metadata\":\"public-sagetv-api\",\"privateMediaStateUrl\":false"+
+                ",\"forwardRateMin\":0.5,\"forwardRateMax\":2,\"reverseRate\":false,\"frameStep\":false}}";
     }
 }

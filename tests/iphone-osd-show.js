@@ -1,0 +1,1 @@
+(()=>{const s=window.__iphoneGate;if(!s?.api)throw Error('Missing exact test owner');s.done=false;s.api('command',{command:24}).then(()=>s.done=true).catch(e=>{s.error=e.message;s.done=true;});return{oneInfo:true};})()

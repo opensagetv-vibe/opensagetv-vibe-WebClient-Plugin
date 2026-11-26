@@ -2,6 +2,13 @@
   "repository": "opensagetv-vibe/opensagetv-vibe-android-client",
   "ref": "f1ba340e05fe18eaaba939253a933c3dfe6d6caf",
   "layoutBlob": "b55d384b6dcb9c86bf2cfa771f1a9d615710ed77",
+  "web038AdditionalAsset": {
+    "source": "source/dev/android-shared/src/main/res/drawable/ic_settings_white_24dp.xml",
+    "sourceSha256": "bc897de62182cc64e30a09fe8f96807c8a44bafb2a8a7e6aec8c0bdee41374a2",
+    "output": "icons/vibe/settings.svg",
+    "sha256": "ee759cb8c5d1fdab80d9428cdf71ff0bde455428e53b89f181f1d7e4f47bbd23",
+    "reference": "Existing sibling Android vector; WEB-038; Apache-2.0"
+  },
   "assets": [
     {
       "name": "help_outline",

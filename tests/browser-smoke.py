@@ -4,7 +4,7 @@ Requires optional Python playwright and a system Chromium. No Python runtime is
 needed by the deployed plugin. This test does NOT connect to a real SageTV server.
 """
 from pathlib import Path
-import json, base64, struct, os, re
+import json, base64, struct, os, re, time
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 WEB=ROOT/'src/main/webapp'
@@ -43,7 +43,7 @@ try:
           };
         })();
         """.replace('FRAME',json.dumps(FRAME)))
-        for filename in ['miniclient-core.js','miniclient-streaming.js','atsc-captions.js','miniclient-captions.js','miniclient-playback.js']:
+        for filename in ['miniclient-core.js','miniclient-input.js','miniclient-streaming.js','atsc-captions.js','miniclient-captions.js','miniclient-playback.js','miniclient-experience.js']:
             page.evaluate((WEB/'js'/filename).read_text())
         # This offline browser test injects only location/storage/fetch. The
         # shipped DOM, styles, renderer and gesture handlers run unchanged.
@@ -55,7 +55,7 @@ try:
         box=page.locator('#gfxCanvas').bounding_box();x=box['x']+200;y=box['y']+220
         before=len(calls('click'));page.mouse.move(x,y);page.mouse.down();page.wait_for_timeout(650);assert page.locator('#remotePanel').is_visible();page.mouse.up();page.wait_for_timeout(100)
         assert len(calls('click'))==before;passed('real pointer hold opens remote with no underlying click')
-        page.locator('#closeRemote').click();page.mouse.click(x,y);page.wait_for_timeout(150)
+        page.locator('#hideRemote').click();page.mouse.click(x,y);page.wait_for_timeout(150)
         assert len(calls('click'))==before+1;passed('real short click sends exactly one atomic click')
         page.locator('#remoteToggle').click();up=page.locator('#remotePanel [aria-label="Up"]');b=up.bounding_box();before=len(calls('command'))
         page.mouse.move(b['x']+b['width']/2,b['y']+b['height']/2);page.mouse.down();page.wait_for_timeout(820);page.mouse.up();page.wait_for_timeout(200)
@@ -64,20 +64,20 @@ try:
         page.locator('#remotePanel [data-command="29"]').click();page.wait_for_timeout(100);assert calls('command')[-1]['command']=='29';passed('SageTV Options remains distinct from local hold menu');page.locator('#remoteToggle').click()
         page.locator('#keyboardToggle').click();page.locator('#keyboardInput').fill('SageTV café');page.locator('#keyboardSend').click();page.wait_for_timeout(150)
         assert calls('text')[-1]['text']=='SageTV café';passed('keyboard text delivered literally as UTF-8 POST')
-        page.locator('#closeRemote').click();emit({'type':'menuHint','value':'menuName:Guide, popupName:'});page.wait_for_timeout(150)
+        page.locator('#hideRemote').click();emit({'type':'menuHint','value':'menuName:Guide, popupName:'});page.wait_for_timeout(150)
         before=len(calls('command'));page.mouse.click(x,y);page.wait_for_timeout(350);assert any(d['command']=='20' for d in calls('command')[before:]);passed('Guide click adds SELECT assist after native click')
         page.locator('#settingsToggle').click();page.locator('#osdTrigger').select_option('right_long');page.locator('#guideAssist').uncheck();page.locator('#closeSettings').click()
         page.mouse.move(x,y);before=len(calls('click'));page.mouse.down(button='right');page.wait_for_timeout(650);page.mouse.up(button='right');assert page.locator('#remotePanel').is_visible();assert len(calls('click'))==before;passed('right-hold setting opens remote without native context menu')
-        page.locator('#closeRemote').click();page.mouse.move(x,y);page.mouse.down();page.mouse.move(x+40,y+30,steps=4);page.mouse.up();page.wait_for_timeout(200);assert len(calls('click'))==before;passed('drag sends release but never activation click')
+        page.locator('#hideRemote').click();page.mouse.move(x,y);page.mouse.down();page.mouse.move(x+40,y+30,steps=4);page.mouse.up();page.wait_for_timeout(200);assert len(calls('click'))==before;passed('drag sends release but never activation click')
         page.locator('#remoteToggle').click();page.locator('#remoteHelp').click();page.locator('#renderOnlyBtn').click();page.wait_for_timeout(180)
         canvas=page.locator('#gfxCanvas').bounding_box();assert abs(canvas['width']/canvas['height']-1280/720)<.01;assert canvas['height']<=1001;assert canvas['width']<=1441
         page.keyboard.press('Escape');passed('render-only view fits logical 16:9 canvas and Escape restores toolbar')
         page.set_viewport_size({'width':390,'height':844});page.wait_for_timeout(200);page.locator('#remoteToggle').click();page.wait_for_timeout(100)
         assert page.evaluate('document.documentElement.scrollWidth')<=391
         card=page.locator('.mc-remote-card').bounding_box();assert card['x']>=-1 and card['x']+card['width']<=391;passed('mobile remote fits viewport without horizontal clipping')
-        out=ROOT/'build/test-results';out.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(out/'miniclient-mobile.png'))
-        page.set_viewport_size({'width':1440,'height':1000});page.screenshot(path=str(out/'miniclient-desktop.png'))
-        page.locator('#closeRemote').click()
+        out=Path(os.environ.get('SAGETV_ARTIFACT_DIR',ROOT/'build/test-results'));out.mkdir(parents=True,exist_ok=True);stamp=time.strftime('%Y%m%dT%H%M%SZ',time.gmtime());page.screenshot(path=str(out/(stamp+'-miniclient-mobile.png')))
+        page.set_viewport_size({'width':1440,'height':1000});page.screenshot(path=str(out/(stamp+'-miniclient-desktop.png')))
+        page.locator('#hideRemote').click()
         page.evaluate("""window.Hls=class { constructor(config){this.config=config;} static isSupported(){return true;} static Events={ERROR:'error',MANIFEST_PARSED:'manifest'}; static ErrorTypes={NETWORK_ERROR:'network',MEDIA_ERROR:'media'}; on(){} loadSource(){} attachMedia(){} startLoad(){} destroy(){} };
           window.TEST.hlsStatus={playlistReady:true,segments:1,hlsSeconds:5,hlsFillRate:2,running:true,endList:false,durationMs:300000};""")
         emit({'type':'videoStart','hlsSession':'mask-test','playlistUrl':'hls/mask-test/stream.m3u8','durationMs':300000})

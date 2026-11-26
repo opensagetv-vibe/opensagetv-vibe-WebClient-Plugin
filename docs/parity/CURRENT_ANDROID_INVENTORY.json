@@ -1,0 +1,2651 @@
+{
+  "schemaVersion": 1,
+  "task": "WEB-020",
+  "reference": "current sibling Android source/dev (including local changes)",
+  "androidVersion": "0.5.115",
+  "physicalParityClaimed": false,
+  "preferenceCount": 283,
+  "sources": [
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/codec_container_prefs.xml",
+      "sha256": "eb41d25eac7fc091509d480438a2618cbb331504bb1415c79b62c7911ad97429"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/diagnostics_prefs.xml",
+      "sha256": "3c0f0ea0ec3dafdbf669917c282f2895718d9cd06931ef378ebdea0906eacd89"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/disc_playback_prefs.xml",
+      "sha256": "14976b29276273dcae775de5f124a101a6224262cf1e4e973a9e8d32030c72ef"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/exoplayer_prefs.xml",
+      "sha256": "085a6ad0ca2c3efadc61e169524c6720848b100bedb6d95da6083708d34af394"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/gsyplayer_prefs.xml",
+      "sha256": "37c5a81d7ce5cab29e5a36661c77faac0111db714c0538fbb157d0fe9812ecf1"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/home_background_prefs.xml",
+      "sha256": "a3d1f4c680a1c07b9e3bcdd790d1ab1e8c6a7968d472dbad2acf11c3b3b98120"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/ijkplayer_prefs.xml",
+      "sha256": "75b26b6e3bb5703d3310683c97d00576905cd49b876b5f866b37374ab5cb1989"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/media3player_prefs.xml",
+      "sha256": "f1e105a87aab7ab2951145ec744d62c03a9120fa1a1bc81a2721b88067eb2202"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/media_mappings_prefs.xml",
+      "sha256": "53d7feb827a1bb110684e0157826e1dbe99f3446369a6f748411c300c5739bea"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/playback_track_prefs.xml",
+      "sha256": "86eed472ee6b0fc61a6a9f5e2363cf11a720b7839244dfa28c20e6049adf853e"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/prefs.xml",
+      "sha256": "29a291692f671eda8440f3b465a5bc992c209db088940b51cc2f1eff34be4360"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/push_prefs.xml",
+      "sha256": "e09093bbe60943ab33f310def8c2c3554577c2ed2eddc76b685f98ef67758a0d"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/remuxing_prefs.xml",
+      "sha256": "53abaa0d382f696ea1fd72091b8f8074f526eca1cc9a5de72ec18c582e07a2f2"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/smb_profile_prefs.xml",
+      "sha256": "0b57e73072e03cca0d2332349d7975f47f76816037d3c4e5dc4da4b6910fe001"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/touch_mappings_prefs.xml",
+      "sha256": "08993f1584b47e85c70228437ac94f853cd4612a445ac981527e484441815a6c"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/xml/transcoding_prefs.xml",
+      "sha256": "8b9f50f6c5f6d470ab018df559121d811c23835dd930f3fbbaff7a8322cbb739"
+    },
+    {
+      "path": "VERSION",
+      "sha256": "b28f05aff2253debde66c40324592d0059043d4c6ff1c619b793cce660e54e88"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/res/layout/navigation.xml",
+      "sha256": "b55d2a04e1d080db10e50875c41f9503adf060916571da7b1aacaa7354a6a5c5"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/java/opensagetv/vibe/miniclient/android/ActivePlayerAdjustmentsDialog.java",
+      "sha256": "9a3402ef8fecac37d952fa56e23881dfa36a89e03a4700d31ed6ac3bc788406b"
+    },
+    {
+      "path": "source/dev/core/src/main/java/opensagetv/vibe/miniclient/media/CaptionSlotPolicy.java",
+      "sha256": "381f9b12e5cb1dd92a9e665899d98a3885b37629e94b35d1a57f954c97bcd485"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/java/opensagetv/vibe/miniclient/android/preferences/TouchPreferences.java",
+      "sha256": "9f82dfadc9ad145681d567406c191debd9911531e0239db0619e97cd226e4eb6"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/java/opensagetv/vibe/miniclient/android/ui/keymaps/DvdTimeScrollPolicy.java",
+      "sha256": "ed38d1f4fa828b421ad899850b98fc533f686e91839fdf9c57842f39db9f88ac"
+    },
+    {
+      "path": "source/dev/android-shared/src/main/java/opensagetv/vibe/miniclient/android/ui/keymaps/DvdRemoteScanPolicy.java",
+      "sha256": "281519ca3cc4a14e802824ad343100e6629cdc986f2b6989632d9dc10ddc830f"
+    }
+  ],
+  "preferences": [
+    {
+      "screen": "codec_container_prefs.xml",
+      "key": "containers",
+      "title": "Containers",
+      "default": null,
+      "group": "Capabilities",
+      "adaptation": "Report actual browser codec support and server conversion; no Android-only capability advertisement",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "codec_container_prefs.xml",
+      "key": "video_codecs",
+      "title": "Video Codecs",
+      "default": null,
+      "group": "Capabilities",
+      "adaptation": "Report actual browser codec support and server conversion; no Android-only capability advertisement",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "codec_container_prefs.xml",
+      "key": "audio_codecs",
+      "title": "Audio Codecs",
+      "default": null,
+      "group": "Capabilities",
+      "adaptation": "Report actual browser codec support and server conversion; no Android-only capability advertisement",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "diagnostics_prefs.xml",
+      "key": "automatic_push_stall_diagnostics",
+      "title": "Automatic Push-stall diagnostics",
+      "default": "true",
+      "group": "Diagnostics",
+      "adaptation": "Redacted reports, stats/current-video test, server destination; Android logcat/filesystem permissions are native-only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "diagnostics_prefs.xml",
+      "key": "export_diagnostics",
+      "title": "Export diagnostic bundle",
+      "default": null,
+      "group": "Diagnostics",
+      "adaptation": "Redacted reports, stats/current-video test, server destination; Android logcat/filesystem permissions are native-only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "diagnostics_prefs.xml",
+      "key": "diagnostics_smb_settings",
+      "title": "SMB diagnostic export",
+      "default": null,
+      "group": "Diagnostics",
+      "adaptation": "Redacted reports, stats/current-video test, server destination; Android logcat/filesystem permissions are native-only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "diagnostics_prefs.xml",
+      "key": "use_log_to_sdcard",
+      "title": "@string/title_use_log_to_sdcard_preference",
+      "default": "false",
+      "group": "Diagnostics",
+      "adaptation": "Redacted reports, stats/current-video test, server destination; Android logcat/filesystem permissions are native-only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "diagnostics_prefs.xml",
+      "key": "log_level",
+      "title": "@string/title_list_loglevels_preference",
+      "default": "debug",
+      "group": "Diagnostics",
+      "adaptation": "Redacted reports, stats/current-video test, server destination; Android logcat/filesystem permissions are native-only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "diagnostics_prefs.xml",
+      "key": "share_log",
+      "title": "Share newest app log",
+      "default": null,
+      "group": "Diagnostics",
+      "adaptation": "Redacted reports, stats/current-video test, server destination; Android logcat/filesystem permissions are native-only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "diagnostics_prefs.xml",
+      "key": "debug_log_unmapped_keypresses",
+      "title": "@string/title_debug_log_unmapped_keypresses_preference",
+      "default": "false",
+      "group": "Diagnostics",
+      "adaptation": "Redacted reports, stats/current-video test, server destination; Android logcat/filesystem permissions are native-only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "diagnostics_prefs.xml",
+      "key": "debug_ar",
+      "title": "@string/title_debug_ar_preference",
+      "default": "false",
+      "group": "Diagnostics",
+      "adaptation": "Redacted reports, stats/current-video test, server destination; Android logcat/filesystem permissions are native-only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "disc_playback_prefs.xml",
+      "key": "disc_playback_policy",
+      "title": "@string/disc_playback_policy_title",
+      "default": "auto",
+      "group": "DVD",
+      "adaptation": "Native authored navigation plus H.264/AAC delivery; stock-safe optional capabilities only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "disc_playback_prefs.xml",
+      "key": "disc_skip_menus",
+      "title": "@string/disc_skip_menus_title",
+      "default": "false",
+      "group": "DVD",
+      "adaptation": "Native authored navigation plus H.264/AAC delivery; stock-safe optional capabilities only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "disc_playback_prefs.xml",
+      "key": "disc_skip_previews",
+      "title": "@string/disc_skip_previews_title",
+      "default": "false",
+      "group": "DVD",
+      "adaptation": "Native authored navigation plus H.264/AAC delivery; stock-safe optional capabilities only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "disc_playback_prefs.xml",
+      "key": "disc_compatibility_fallback",
+      "title": "@string/disc_compatibility_fallback_title",
+      "default": "true",
+      "group": "DVD",
+      "adaptation": "Native authored navigation plus H.264/AAC delivery; stock-safe optional capabilities only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "disc_playback_prefs.xml",
+      "key": "disc_decoder_compatibility_recovery",
+      "title": "@string/disc_decoder_compatibility_recovery_title",
+      "default": "true",
+      "group": "DVD",
+      "adaptation": "Native authored navigation plus H.264/AAC delivery; stock-safe optional capabilities only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "disc_playback_prefs.xml",
+      "key": "disc_mpeg2_timestamp_repair",
+      "title": "@string/disc_mpeg2_timestamp_repair_title",
+      "default": "auto",
+      "group": "DVD",
+      "adaptation": "Native authored navigation plus H.264/AAC delivery; stock-safe optional capabilities only",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "exoplayer_prefs.xml",
+      "key": "decoding_method",
+      "title": "@string/title_list_decoding_method",
+      "default": "hardware",
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no Exo/AudioTrack API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "exoplayer_prefs.xml",
+      "key": "disable_audio_passthrough",
+      "title": "Decode encoded audio to PCM",
+      "default": "true",
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no Exo/AudioTrack API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "exoplayer_prefs.xml",
+      "key": "exo2_codec_mode",
+      "title": "MediaCodec Queueing Mode",
+      "default": "sync",
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no Exo/AudioTrack API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "exoplayer_prefs.xml",
+      "key": "show_exo_decoders",
+      "title": "@string/show_exo_decoders",
+      "default": null,
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no Exo/AudioTrack API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "exoplayer_prefs.xml",
+      "key": "exoplayer_ffmpeg_extension",
+      "title": "@string/exoplayer_ffmpeg_extension_title",
+      "default": "1",
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no Exo/AudioTrack API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "exoplayer_prefs.xml",
+      "key": "exoversion",
+      "title": "ExoPlayer Version",
+      "default": null,
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no Exo/AudioTrack API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "gsyplayer_prefs.xml",
+      "key": "gsy_player_engine",
+      "title": "@string/gsy_engine_title",
+      "default": "auto",
+      "group": "Platform",
+      "adaptation": "Browser HTMLMediaElement/native HLS/MSE, not Android GSY delegates",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "gsyplayer_prefs.xml",
+      "key": "decoding_method",
+      "title": "@string/title_list_decoding_method",
+      "default": "hardware",
+      "group": "Platform",
+      "adaptation": "Browser HTMLMediaElement/native HLS/MSE, not Android GSY delegates",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "gsyplayer_prefs.xml",
+      "key": "gsy_version",
+      "title": "@string/gsy_version_title",
+      "default": null,
+      "group": "Platform",
+      "adaptation": "Browser HTMLMediaElement/native HLS/MSE, not Android GSY delegates",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "gsyplayer_prefs.xml",
+      "key": "gsy_architecture",
+      "title": "@string/gsy_architecture_title",
+      "default": null,
+      "group": "Platform",
+      "adaptation": "Browser HTMLMediaElement/native HLS/MSE, not Android GSY delegates",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "home_background_prefs.xml",
+      "key": "keep_session_in_background",
+      "title": "@string/keep_background_session_title",
+      "default": "false",
+      "group": "Lifecycle",
+      "adaptation": "Visibility/pagehide/bfcache and Media Session; iOS may suspend background execution and cannot provide an Android foreground service",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "home_background_prefs.xml",
+      "key": "resume_background_playback",
+      "title": "@string/resume_background_playback_title",
+      "default": "true",
+      "group": "Lifecycle",
+      "adaptation": "Visibility/pagehide/bfcache and Media Session; iOS may suspend background execution and cannot provide an Android foreground service",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "home_background_prefs.xml",
+      "key": "background_session_timeout_seconds",
+      "title": "@string/background_session_timeout_title",
+      "default": "300",
+      "group": "Lifecycle",
+      "adaptation": "Visibility/pagehide/bfcache and Media Session; iOS may suspend background execution and cannot provide an Android foreground service",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "ijkplayer_prefs.xml",
+      "key": "decoding_method",
+      "title": "@string/title_list_decoding_method",
+      "default": "hardware",
+      "group": "Platform",
+      "adaptation": "Use supported browser decoding/transcoding; IJK JNI/software decoder settings do not exist in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "ijkplayer_prefs.xml",
+      "key": "announce_software_decoder",
+      "title": "@string/title_announce_software_decoder_preference",
+      "default": "false",
+      "group": "Platform",
+      "adaptation": "Use supported browser decoding/transcoding; IJK JNI/software decoder settings do not exist in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "ijkplayer_prefs.xml",
+      "key": "ijk_software_deinterlace",
+      "title": "Software deinterlace",
+      "default": "auto",
+      "group": "Platform",
+      "adaptation": "Use supported browser decoding/transcoding; IJK JNI/software decoder settings do not exist in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "ijkplayer_prefs.xml",
+      "key": "prefer_android_software_decoders",
+      "title": "@string/title_prefer_android_software_decoders_preference",
+      "default": "false",
+      "group": "Platform",
+      "adaptation": "Use supported browser decoding/transcoding; IJK JNI/software decoder settings do not exist in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "ijkplayer_prefs.xml",
+      "key": "decoders",
+      "title": "@string/hardware_decoders",
+      "default": null,
+      "group": "Platform",
+      "adaptation": "Use supported browser decoding/transcoding; IJK JNI/software decoder settings do not exist in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media3player_prefs.xml",
+      "key": "decoding_method",
+      "title": "@string/title_list_decoding_method",
+      "default": "hardware",
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no MediaCodec queue or HDMI passthrough API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media3player_prefs.xml",
+      "key": "media3_codec_mode",
+      "title": "MediaCodec Queueing Mode",
+      "default": "sync",
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no MediaCodec queue or HDMI passthrough API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media3player_prefs.xml",
+      "key": "disable_audio_passthrough",
+      "title": "Decode encoded audio to PCM",
+      "default": "true",
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no MediaCodec queue or HDMI passthrough API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media3player_prefs.xml",
+      "key": "show_media3_decoders",
+      "title": "Show Media3 MediaCodecs",
+      "default": null,
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no MediaCodec queue or HDMI passthrough API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media3player_prefs.xml",
+      "key": "media3version",
+      "title": "Media3 Version",
+      "default": null,
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no MediaCodec queue or HDMI passthrough API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media3player_prefs.xml",
+      "key": "media3_decoder_policy",
+      "title": "Decoder Policy",
+      "default": null,
+      "group": "Platform",
+      "adaptation": "Browser transport/decoder selection replaces Android engine controls; no MediaCodec queue or HDMI passthrough API in HTML5",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "smart_remote_mappings",
+      "title": "Enable Smart Remote Mappings",
+      "default": "true",
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "repeat_key_ms",
+      "title": "@string/key_repeat_ms_title",
+      "default": "100",
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "repeat_key_delay_ms",
+      "title": "@string/key_repeat_delay_ms_title",
+      "default": "1000",
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "sound_effects_enabled",
+      "title": "Sound Effects",
+      "default": "false",
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "debug_key_presses",
+      "title": "Debug Key Presses",
+      "default": "false",
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "debug_sage_commands",
+      "title": "Debug Sage Commands",
+      "default": "false",
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "dvdplaying",
+      "title": "DVD Playback",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "dvdplaying_hold_arrows",
+      "title": "DVD arrow navigation",
+      "default": "true",
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "dvdplaying_hold_scan",
+      "title": "DVD FF/RW tap and hold",
+      "default": "true",
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "dvdplaying_left",
+      "title": "Left",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "dvdplaying_right",
+      "title": "Right",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "dvdplaying_left_long_press",
+      "title": "Hold Left",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "dvdplaying_right_long_press",
+      "title": "Hold Right",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_select",
+      "title": "Select",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_left",
+      "title": "Left",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_right",
+      "title": "Right",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_up",
+      "title": "Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_down",
+      "title": "Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_select_long_press",
+      "title": "Select (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_left_long_press",
+      "title": "Left (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_right_long_press",
+      "title": "Right (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_up_long_press",
+      "title": "Up (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_down_long_press",
+      "title": "Down (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_play",
+      "title": "Play",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_pause",
+      "title": "Pause",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_playpause",
+      "title": "Play/Pause",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_stop",
+      "title": "Stop",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_fastforward",
+      "title": "Fast Forward",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_rewind",
+      "title": "Rewind",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_next_track",
+      "title": "Next",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_previous_track",
+      "title": "Previous",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_volume_up",
+      "title": "Volume Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_volume_down",
+      "title": "Volume Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_mute",
+      "title": "Mute",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_channel_up",
+      "title": "Channel Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_channel_down",
+      "title": "Channel Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_page_up",
+      "title": "Page Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_page_down",
+      "title": "Page Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_menu",
+      "title": "Menu",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_guide",
+      "title": "Guide",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_info",
+      "title": "Info",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_search",
+      "title": "Search",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_delete",
+      "title": "Delete",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_forward_delete",
+      "title": "Forward Delete",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_insert",
+      "title": "Insert",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_0",
+      "title": "Num 0",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_1",
+      "title": "Num 1",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_2",
+      "title": "Num 2",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_3",
+      "title": "Num 3",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_4",
+      "title": "Num 4",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_5",
+      "title": "Num 5",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_6",
+      "title": "Num 6",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_7",
+      "title": "Num 7",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_8",
+      "title": "Num 8",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_num_9",
+      "title": "Num 9",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_yellow",
+      "title": "Yellow",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_blue",
+      "title": "Blue",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_red",
+      "title": "Red",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_green",
+      "title": "Green",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying",
+      "title": "Video Playback Active (Smart Remote)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_select",
+      "title": "Select",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_left",
+      "title": "Left",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_right",
+      "title": "Right",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_up",
+      "title": "Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_down",
+      "title": "Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_page_up",
+      "title": "Page Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_page_down",
+      "title": "Page Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_select_long_press",
+      "title": "Select (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_left_long_press",
+      "title": "Left (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_right_long_press",
+      "title": "Right (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_up_long_press",
+      "title": "Up (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videoplaying_down_long_press",
+      "title": "Down (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused",
+      "title": "Video Paused (Smart Remote)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_select",
+      "title": "Select",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_left",
+      "title": "Left",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_right",
+      "title": "Right",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_up",
+      "title": "Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_down",
+      "title": "Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_page_up",
+      "title": "Page Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_page_down",
+      "title": "Page Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_select_long_press",
+      "title": "Select (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_left_long_press",
+      "title": "Left (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_right_long_press",
+      "title": "Right (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_up_long_press",
+      "title": "Up (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "videopaused_down_long_press",
+      "title": "Down (Long Press)",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_A",
+      "title": "A",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_B",
+      "title": "B",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_X",
+      "title": "X",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_Y",
+      "title": "Y",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_R1",
+      "title": "R1",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_R2",
+      "title": "R2",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_L1",
+      "title": "L1",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_L2",
+      "title": "L2",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_gp_select",
+      "title": "Select",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "media_mappings_prefs.xml",
+      "key": "default_gp_start",
+      "title": "Start",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Keyboard/D-pad/transport/hold contexts; Android hardware scan codes and gamepad details need browser mappings, not Android API emulation",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "playback_track_prefs.xml",
+      "key": "preferred_audio_language",
+      "title": "@string/preferred_audio_language_title",
+      "default": "",
+      "group": "Subtitles / CC",
+      "adaptation": "Independent file/DVD subtitles and virtual CEA/Teletext/DVB slots; language/service preferences",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "playback_track_prefs.xml",
+      "key": "preferred_subtitle_language",
+      "title": "@string/preferred_subtitle_language_title",
+      "default": "",
+      "group": "Subtitles / CC",
+      "adaptation": "Independent file/DVD subtitles and virtual CEA/Teletext/DVB slots; language/service preferences",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "playback_track_prefs.xml",
+      "key": "preferred_caption_standard",
+      "title": "@string/preferred_caption_standard_title",
+      "default": "auto",
+      "group": "Subtitles / CC",
+      "adaptation": "Independent file/DVD subtitles and virtual CEA/Teletext/DVB slots; language/service preferences",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "playback_track_prefs.xml",
+      "key": "preferred_caption_service",
+      "title": "@string/preferred_caption_service_title",
+      "default": "1",
+      "group": "Subtitles / CC",
+      "adaptation": "Independent file/DVD subtitles and virtual CEA/Teletext/DVB slots; language/service preferences",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "playback_track_prefs.xml",
+      "key": "legacy_server_caption_mode",
+      "title": "@string/legacy_server_caption_mode_title",
+      "default": "stv",
+      "group": "Subtitles / CC",
+      "adaptation": "Independent file/DVD subtitles and virtual CEA/Teletext/DVB slots; language/service preferences",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "settings/section/playback",
+      "title": "Playback Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "default_player",
+      "title": "@string/title_list_default_player",
+      "default": "exoplayer",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "selected_player_settings",
+      "title": "Selected Player Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "playback_defaults_settings",
+      "title": "Video Filters and Display Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "decoding_method",
+      "title": "@string/title_list_decoding_method",
+      "default": "hardware",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "video_deinterlace_mode",
+      "title": "Player Deinterlace",
+      "default": "auto",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "use_opengl_ui",
+      "title": "@string/use_opengl_ui_title",
+      "default": "true",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "use_native_resolution",
+      "title": "@string/use_native_resolution_title",
+      "default": "true",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "wait_for_playback_before_first_osd",
+      "title": "@string/wait_for_playback_before_first_osd_title",
+      "default": "false",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "playback_track_settings",
+      "title": "Audio, Broadcast CC, and Subtitle Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "disc_playback_settings",
+      "title": "Disc and DVD Playback Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "settings/section/transport",
+      "title": "Transport Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "streaming_mode",
+      "title": "Transport Method",
+      "default": "dynamic",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "push_settings",
+      "title": "Push Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "fixed_transcoding",
+      "title": "Fixed Playback Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "smb_settings",
+      "title": "SMB Direct Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "playback_buffer_preset",
+      "title": "Source Buffering",
+      "default": "balanced",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "transport/advanced",
+      "title": "Advanced Compatibility",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "container_codec_settings",
+      "title": "Codec and Container Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "unified_graphics_surfaces",
+      "title": "@string/unified_graphics_surfaces_title",
+      "default": "true",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "settings/section/mappings",
+      "title": "Mappings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "media_key_mappings",
+      "title": "Media Key Mappings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "touch_mappings",
+      "title": "Touch Mappings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "settings/section/general",
+      "title": "General",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "auto_connect_to_last_server",
+      "title": "@string/title_auto_connect_to_last_server_preference",
+      "default": "false",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "auto_connect_delay",
+      "title": "@string/title_auto_connect_delay_preference",
+      "default": "10",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "exit_on_standby",
+      "title": "@string/exit_on_standby_title",
+      "default": "true",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "background_session_settings",
+      "title": "@string/background_session_settings_title",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "disable_sleep",
+      "title": "@string/disable_sleep_title",
+      "default": "true",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "use_tv_ui_on_tablet",
+      "title": "@string/use_tv_ui_on_tablet_title",
+      "default": "false",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "image_cache_size_mb",
+      "title": "@string/title_list_mem_cache_preference",
+      "default": "128",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "disk_image_cache_size_mb",
+      "title": "@string/title_list_disk_cache_preference",
+      "default": "512",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "reset_to_defaults",
+      "title": "Reset Settings to Defaults",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "settings/section/diagnostics",
+      "title": "Diagnostics",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "diagnostics_settings",
+      "title": "Diagnostics Settings",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "client_diagnostics_web/enabled",
+      "title": "Diagnostic web server",
+      "default": "false",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "client_diagnostics_web/port",
+      "title": "Client diagnostic web port",
+      "default": "8272",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "client_diagnostics_web/status",
+      "title": "Diagnostic web address",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "server_diagnostics/enabled",
+      "title": "Send diagnostic logs to server",
+      "default": "false",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "server_diagnostics/port",
+      "title": "Server diagnostic upload port",
+      "default": "8272",
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "server_diagnostics/upload_now",
+      "title": "Upload diagnostic report now",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "settings/section/about",
+      "title": "About",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "version",
+      "title": "Version",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "versionCode",
+      "title": "Version Code (Build Number)",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "clientid",
+      "title": "Client ID",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "ipaddress",
+      "title": "Device IP Address",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "screensize",
+      "title": "Native UI Resolution",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "prefs.xml",
+      "key": "appmemory",
+      "title": "Application Available Memory",
+      "default": null,
+      "group": "App and connection",
+      "adaptation": "Connection, identity, render/viewport, settings, diagnostics and wake/idle policies adapted to a PWA",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "push_prefs.xml",
+      "key": "push_buffer_limit",
+      "title": "@string/push_buffer_limit_title",
+      "default": "auto",
+      "group": "REVIEW_REQUIRED",
+      "adaptation": "New preference screen; review before parity claim",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "remuxing_prefs.xml",
+      "key": "fixed_remuxing/preference",
+      "title": "@string/title_list_remuxing_setting_preference",
+      "default": "needed",
+      "group": "Transcoding",
+      "adaptation": "Explicit Copy through compatible HTTP/MSE/HLS containers, no hidden video re-encode",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "remuxing_prefs.xml",
+      "key": "fixed_remuxing/format",
+      "title": "@string/title_list_remuxing_formats_preference",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "Explicit Copy through compatible HTTP/MSE/HLS containers, no hidden video re-encode",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/manage",
+      "title": "Manage SMB servers",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/selected",
+      "title": "SMB server / share to edit",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/edit/name",
+      "title": "Server name",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/edit/host",
+      "title": "Hostname or IP address",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/edit/share",
+      "title": "Share name",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/edit/port",
+      "title": "SMB port",
+      "default": "445",
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/edit/auth/mode",
+      "title": "Authentication",
+      "default": "anonymous",
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/edit/username",
+      "title": "Username",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/edit/password",
+      "title": "Password",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/edit/domain",
+      "title": "Domain",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/save",
+      "title": "Save server",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/test",
+      "title": "Test selected server",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_servers/delete",
+      "title": "Delete selected server",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_direct/source_prefix",
+      "title": "SageTV path prefix",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_direct/browse",
+      "title": "Media path mappings",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_direct/mappings",
+      "title": "@string/smb_mappings_title",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_direct/username",
+      "title": "@string/smb_username_title",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_direct/password",
+      "title": "@string/smb_password_title",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_direct/domain",
+      "title": "@string/smb_domain_title",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_direct/read_ahead_kb",
+      "title": "SMB read-ahead (KiB)",
+      "default": "256",
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_direct/test",
+      "title": "Test media SMB connection",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/browse",
+      "title": "Configuration folder",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/directory",
+      "title": "SMB configuration directory",
+      "default": "",
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/auth/username",
+      "title": "Configuration share username",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/auth/password",
+      "title": "Configuration share password",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/auth/domain",
+      "title": "Configuration share domain",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/test",
+      "title": "Test configuration SMB connection",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/mode",
+      "title": "Diagnostic SMB export",
+      "default": "off",
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/directory",
+      "title": "Diagnostics SMB directory",
+      "default": "",
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/browse",
+      "title": "Diagnostics folder",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/auth/mode",
+      "title": "Diagnostics authentication",
+      "default": "anonymous",
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/auth/username",
+      "title": "Diagnostics username",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/auth/password",
+      "title": "Diagnostics password",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/auth/domain",
+      "title": "Diagnostics domain",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/test",
+      "title": "Test diagnostics SMB connection",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/export",
+      "title": "Export Diagnostics",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_diagnostics/status",
+      "title": "Last diagnostics export",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/refresh",
+      "title": "Refresh profile list",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/selected",
+      "title": "Profile to import",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/name",
+      "title": "Profile name to save",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/save",
+      "title": "Save this client's settings",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "smb_profile_prefs.xml",
+      "key": "smb_profiles/load",
+      "title": "Import selected profile",
+      "default": null,
+      "group": "Profiles and server storage",
+      "adaptation": "Profile import/export and administrator-mounted diagnostic destination; browsers cannot speak SMB or receive share credentials",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_left",
+      "title": "Swipe Left",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_right",
+      "title": "Swipe Right",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_up",
+      "title": "Swipe Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_down",
+      "title": "Swipe Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "double_tap",
+      "title": "Double Tap",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "long_press",
+      "title": "Long Press",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_left_2",
+      "title": "Swipe Left",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_right_2",
+      "title": "Swipe Right",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_up_2",
+      "title": "Swipe Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_down_2",
+      "title": "Swipe Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "double_tap_2",
+      "title": "Double Tap",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "long_press_2",
+      "title": "Long Press",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_left_3",
+      "title": "Swipe Left",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_right_3",
+      "title": "Swipe Right",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_up_3",
+      "title": "Swipe Up",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "swipe_down_3",
+      "title": "Swipe Down",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "double_tap_3",
+      "title": "Double Tap",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "long_press_3",
+      "title": "Long Press",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "edge_size",
+      "title": "Edge Size (Pixels)",
+      "default": "50",
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "edge_swipe_top",
+      "title": "Swipe Down From Top Edge",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "edge_swipe_bottom",
+      "title": "Swipe Up From Bottom Edge",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "edge_swipe_right",
+      "title": "Swipe Right From Left Edge",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "edge_swipe_left",
+      "title": "Swipe Left From Right Edge",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "hotspot_size",
+      "title": "Hotspot Size (Pixels)",
+      "default": "50",
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "hotspot_top_left",
+      "title": "Top Left Corner",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "hotspot_top_right",
+      "title": "Top Right Corner",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "hotspot_bottom_left",
+      "title": "Bottom Left Corner",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "touch_mappings_prefs.xml",
+      "key": "hotspot_bottom_right",
+      "title": "Bottom Right Corner",
+      "default": null,
+      "group": "Input",
+      "adaptation": "Touch gestures, long-press and optional multi-finger/edge mappings; avoid stealing browser/native field input",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "mim_direct/mode",
+      "title": "Processing Method",
+      "default": "off",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "mim_direct/adjustment_method",
+      "title": "Automatic Bitrate Adjustment",
+      "default": "off",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "mim_direct/encoder_policy",
+      "title": "Video Encoder",
+      "default": "server",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "mim_direct/hardware_backend",
+      "title": "Hardware Encoder",
+      "default": "auto",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/video_codec",
+      "title": "Video Codec",
+      "default": "auto",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed/standard",
+      "title": "Output and Remuxing",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/preference",
+      "title": "@string/title_list_transcoding_setting_preference",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/format",
+      "title": "@string/title_list_transcoding_formats_preference",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_remuxing/preference",
+      "title": "Remuxing Method",
+      "default": "needed",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_remuxing/format",
+      "title": "Remux Container Format",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "mim_direct/minimum_kbps",
+      "title": "Minimum video bitrate (kbps)",
+      "default": "250",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/video_bitrate_kbps",
+      "title": "Maximum video bitrate (kbps)",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/video_resolution",
+      "title": "@string/title_list_video_resolution_preference",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/video_fps",
+      "title": "@string/title_list_video_fps_preference",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "mim_direct/deinterlace",
+      "title": "Server Deinterlace",
+      "default": "auto",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/audio_codec",
+      "title": "@string/title_list_audio_codec_preference",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/audio_bitrate_kbps",
+      "title": "@string/title_list_audio_bitrate_preference",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_encoding/audio_channels",
+      "title": "@string/title_list_audio_channels_preference",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_caption_side_channel/enabled",
+      "title": "Preserve broadcast captions",
+      "default": "false",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed_caption_side_channel/port",
+      "title": "Caption API port",
+      "default": "31910",
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    },
+    {
+      "screen": "transcoding_prefs.xml",
+      "key": "fixed/reset_transcoding",
+      "title": "Reset Transcoding Settings Only",
+      "default": null,
+      "group": "Transcoding",
+      "adaptation": "FFmpeg Plugin bridge; per-session copy/transcode, GPU/fallback, source cadence and bitrate/audio choices",
+      "status": "INVENTORIED_NOT_CERTIFIED"
+    }
+  ]
+}

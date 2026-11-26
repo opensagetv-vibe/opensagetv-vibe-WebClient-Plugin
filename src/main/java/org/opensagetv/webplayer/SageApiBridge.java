@@ -14,6 +14,7 @@ public final class SageApiBridge {
     private final Method getMediaFileId;
     private final Method getMediaFileForFilePath;
     private final Method isTVFile;
+    private final Method isVideoFile;
     private final Method getMediaFileAiring;
     private final Method getFileForSegment;
     private final Method getNumberOfSegments;
@@ -30,6 +31,7 @@ public final class SageApiBridge {
     private final Method isBluRay;
     private final Method isDVDDrive;
     private final Method getMediaFileMetadata;
+    private final Method getMediaFileRelativePath;
 
     private final Method getAiringStartTime;
     private final Method getAiringDuration;
@@ -139,6 +141,7 @@ public final class SageApiBridge {
         getMediaFileId = mediaFileApi.getMethod("GetMediaFileID", Object.class);
         getMediaFileForFilePath = mediaFileApi.getMethod("GetMediaFileForFilePath", File.class);
         isTVFile = mediaFileApi.getMethod("IsTVFile", Object.class);
+        isVideoFile = mediaFileApi.getMethod("IsVideoFile", Object.class);
         getMediaFileAiring = mediaFileApi.getMethod("GetMediaFileAiring", Object.class);
         getFileForSegment = mediaFileApi.getMethod("GetFileForSegment", Object.class, int.class);
         getNumberOfSegments = mediaFileApi.getMethod("GetNumberOfSegments", Object.class);
@@ -154,6 +157,7 @@ public final class SageApiBridge {
         isBluRay = optionalMethod(mediaFileApi, "IsBluRay", Object.class);
         isDVDDrive = optionalMethod(mediaFileApi, "IsDVDDrive", Object.class);
         getMediaFileMetadata = optionalMethod(mediaFileApi, "GetMediaFileMetadata", Object.class, String.class);
+        getMediaFileRelativePath = optionalMethod(mediaFileApi, "GetMediaFileRelativePath", Object.class);
 
         Class<?> airingApi = Class.forName("sagex.api.AiringAPI");
         getAiringStartTime = airingApi.getMethod("GetAiringStartTime", Object.class);
@@ -280,11 +284,19 @@ public final class SageApiBridge {
     public Object getMediaFile(int id) { return invoke(getMediaFileForId, id); }
     public Object[] getMediaFiles() { return asArray(invoke(getMediaFiles)); }
     public int getMediaFileId(Object mediaFile) { return integer(invoke(getMediaFileId, mediaFile)); }
+    public String getMediaFileRelativePath(Object mediaFile) {
+        return getMediaFileRelativePath == null ? "" : string(invoke(getMediaFileRelativePath, mediaFile));
+    }
     public Object getMediaFileForFilePath(File file) { return invoke(getMediaFileForFilePath, file); }
     public boolean isTVFile(Object mediaFile) { return bool(invoke(isTVFile, mediaFile)); }
+    public boolean isVideoFile(Object mediaFile) { return bool(invoke(isVideoFile, mediaFile)); }
     public Object getMediaFileAiring(Object mediaFile) { return invoke(getMediaFileAiring, mediaFile); }
     public File getFileForSegment(Object mediaFile, int segment) { return (File) invoke(getFileForSegment, mediaFile, segment); }
     public int getNumberOfSegments(Object mediaFile) { return integer(invoke(getNumberOfSegments, mediaFile)); }
+    public long getSegmentDuration(Object mediaFile,int segment) {
+        try{return Math.max(0L,longValue(invoke(getNumberOfSegments.getDeclaringClass().getMethod("GetDurationForSegment",Object.class,int.class),mediaFile,segment)));}
+        catch(NoSuchMethodException unavailable){return 0L;}
+    }
     public String getMediaTitle(Object mediaFile) { return string(invoke(getMediaTitle, mediaFile)); }
     public boolean isFileCurrentlyRecording(Object mediaFile) { return bool(invoke(isFileCurrentlyRecording, mediaFile)); }
     public String getServerAddress() { return string(invoke(getServerAddress)); }

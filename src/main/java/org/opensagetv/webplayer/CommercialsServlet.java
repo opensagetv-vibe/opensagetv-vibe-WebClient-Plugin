@@ -12,6 +12,7 @@ import java.util.List;
 
 /** Reads Comskip EDL markers adjacent to SageTV-owned MediaFiles. */
 public class CommercialsServlet extends HttpServlet {
+    private static final int MAX_BYTES=1024*1024,MAX_LINE=4096,MAX_MARKERS=4096;
     private static final class Marker { double start, end; int type; }
 
     @Override protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
@@ -52,8 +53,10 @@ public class CommercialsServlet extends HttpServlet {
         return null;
     }
     private static List<Marker> readEdl(File file) throws IOException {
+        if(file.length()>MAX_BYTES)throw new IOException("Comskip file exceeds bounded size");
         List<Marker> out = new ArrayList<Marker>(); BufferedReader r = new BufferedReader(new FileReader(file));
-        try { String line; while ((line = r.readLine()) != null) {
+        try { String line; int total=0; while ((line = boundedLine(r)) != null) {
+            total+=line.length()+1;if(total>MAX_BYTES||out.size()>=MAX_MARKERS)break;
             line = line.trim(); if (line.isEmpty() || line.startsWith("#")) continue;
             String[] p = line.split("\\s+"); if (p.length < 2) continue;
             try { double s = Double.parseDouble(p[0]), e = Double.parseDouble(p[1]); int type = p.length > 2 ? Integer.parseInt(p[2]) : 0;
@@ -61,5 +64,11 @@ public class CommercialsServlet extends HttpServlet {
             } catch (NumberFormatException ignore) {}
         }} finally { r.close(); }
         return out;
+    }
+    /** Bound individual lines too, including a file growing after length(). */
+    private static String boundedLine(BufferedReader reader)throws IOException{
+        StringBuilder line=new StringBuilder();int value;
+        while((value=reader.read())!=-1){if(value=='\n')return line.toString();if(line.length()>=MAX_LINE)throw new IOException("Comskip line exceeds bounded size");line.append((char)value);}
+        return line.length()==0?null:line.toString();
     }
 }

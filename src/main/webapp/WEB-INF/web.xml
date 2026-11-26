@@ -47,6 +47,11 @@
         <servlet-class>org.opensagetv.webplayer.GuideServlet</servlet-class>
     </servlet>
     <servlet-mapping><servlet-name>guide</servlet-name><url-pattern>/api/guide</url-pattern></servlet-mapping>
+    <servlet>
+        <servlet-name>channelLogo</servlet-name>
+        <servlet-class>org.opensagetv.webplayer.ChannelLogoServlet</servlet-class>
+    </servlet>
+    <servlet-mapping><servlet-name>channelLogo</servlet-name><url-pattern>/api/channelLogo</url-pattern></servlet-mapping>
 
 
     <servlet>
@@ -167,7 +172,11 @@
     </servlet>
     <servlet-mapping><servlet-name>codecHlsTestMedia</servlet-name><url-pattern>/codec-test-media/*</url-pattern></servlet-mapping>
 
-    <welcome-file-list><welcome-file>index.html</welcome-file></welcome-file-list>
+    <mime-mapping><extension>webmanifest</extension><mime-type>application/manifest+json</mime-type></mime-mapping>
+    <servlet><servlet-name>avSync</servlet-name><servlet-class>org.opensagetv.webplayer.AvSyncServlet</servlet-class></servlet>
+    <servlet-mapping><servlet-name>avSync</servlet-name><url-pattern>/api/av-sync</url-pattern></servlet-mapping>
+    <servlet-mapping><servlet-name>avSync</servlet-name><url-pattern>/av-sync/*</url-pattern></servlet-mapping>
+    <welcome-file-list><welcome-file>miniclient.html</welcome-file></welcome-file-list>
   <servlet><servlet-name>continuous-stream</servlet-name><servlet-class>org.opensagetv.webplayer.ContinuousStreamServlet</servlet-class><async-supported>true</async-supported></servlet>
   <servlet-mapping><servlet-name>continuous-stream</servlet-name><url-pattern>/continuous/*</url-pattern></servlet-mapping>
   <servlet><servlet-name>caption-stream</servlet-name><servlet-class>org.opensagetv.webplayer.CaptionsServlet</servlet-class></servlet>

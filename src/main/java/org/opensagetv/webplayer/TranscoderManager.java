@@ -439,6 +439,10 @@ final class TranscoderManager {
             cmd.add("-preset"); cmd.add("veryfast");
             cmd.add("-profile:v"); cmd.add("main");
             cmd.add("-bf"); cmd.add("0");
+            // WEB-097: this default public-HLS builder predates StreamCommand.
+            // Forced I pictures alone did not publish a segment while raw
+            // growing input remained open; use the same QSV IDR contract.
+            cmd.add("-forced_idr"); cmd.add("1");
             cmd.add("-b:v"); cmd.add("8M");
             cmd.add("-maxrate"); cmd.add("12M");
             cmd.add("-bufsize"); cmd.add("16M");
@@ -486,6 +490,46 @@ final class TranscoderManager {
 
 
     /** Build a short-latency HLS converter for one stock MiniDVDPlayer MPEG-PS generation. */
+    /** Per-client DVD filters, still one stock VM-owned MPEG-PS pipe.
+     * Physical stream-id mapping remains VM-authoritative, never VOB concat. */
+    static List<String> buildDvdHlsCommand(Probe probe,int audioWireCode,File outputDir,StreamOptions options){
+        StreamPlan plan=dvdCommandPlan(options);
+        List<String> cmd=StreamCommand.build(probe,null,false,true,0,outputDir,plan);
+        int input=cmd.indexOf("-i");cmd.add(input,"-f");cmd.add(input+1,"mpeg");
+        for(int i=0;i+1<cmd.size();i++)if("-map".equals(cmd.get(i))){
+            if("0:v:0".equals(cmd.get(i+1)))cmd.set(i+1,"0:v:0?");
+            else{
+                if(audioWireCode>=0){
+                    DvdAudioStreamCode code=DvdAudioStreamCode.decode(audioWireCode);
+                    if(!code.supportedByFfmpegPolicy())throw new IllegalArgumentException("Unsupported DVD audio selector: "+code.description());
+                    cmd.set(i+1,"0:i:"+code.ffmpegStreamId()+"?");
+                }else cmd.set(i+1,"0:a:0?");
+            }
+        }
+        int vf=cmd.indexOf("-vf");if(vf>=0)cmd.set(vf+1,cmd.get(vf+1)+",setpts=PTS-STARTPTS");
+        int interval=cmd.indexOf("-hls_time");if(interval>=0)cmd.set(interval+1,"0.5");
+        int gop=cmd.indexOf("-g");if(gop>=0)cmd.set(gop+1,"15");
+        int key=cmd.indexOf("-force_key_frames");if(key>=0)cmd.set(key+1,"expr:gte(t,n_forced*0.5)");
+        // WEB-099: the DVD MPEG-PS encode-only path reproduced a native
+        // libmfx-gen crash with QSV's default concurrent surface queue. The
+        // same source/profile completes with one in-flight encode frame.
+        // Keep QSV/GPU encoding, bitrate, cadence and user filters; restrict
+        // this low-latency surface bound to DVD, not ordinary TV/recordings.
+        if("h264_qsv".equals(probe.videoEncoder)){
+            int codec=cmd.indexOf("-c:v");cmd.add(codec+2,"-async_depth");cmd.add(codec+3,"1");
+        }
+        return cmd;
+    }
+    static StreamPlan dvdCommandPlan(StreamOptions options){
+        // Let MPEG-2's actual frame flags control Auto's deint=interlaced.
+        // Do not invent source dimensions before the first pipe header.
+        MediaProbe.Info source=new MediaProbe.Info();MediaProbe.Track video=new MediaProbe.Track();
+        video.index=0;video.type="video";video.codec="mpeg2video";video.field="tt";source.tracks.add(video);
+        MediaProbe.Track audio=new MediaProbe.Track();audio.index=1;audio.type="audio";audio.codec="ac3";audio.channels=2;source.tracks.add(audio);
+        return new StreamPlan((options==null?StreamOptions.defaults():options).forDvdTranscode(),source);
+    }
+
+    /** Historical regression comparator; production uses per-client overload. */
     static List<String> buildDvdHlsCommand(Probe probe, int audioWireCode, File outputDir) {
         List<String> cmd = new ArrayList<String>();
         cmd.add(probe.executable);

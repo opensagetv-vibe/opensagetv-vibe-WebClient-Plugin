@@ -1,0 +1,4 @@
+/* Exact phone only, after external zero-recording/other-client activity proof.
+ * User permits stopping its test playback for updates. Synthetic production
+ * controls, not physical touch proof; no playback/source/settings replay. */
+(()=>{if(document.visibilityState!=='visible'||(localStorage.getItem('sagetvWebMiniClientId')||'').replace(/:/g,'').toLowerCase()!=='123c8282e1ee'||window.__iphoneGate?.companionForm)throw Error('Wrong/borrowed phone');const c=window.__approvedInterruption={client:localStorage.getItem('sagetvWebMiniClientSettings.v1'),streaming:localStorage.getItem('sagetvWebStreaming.v1'),captions:localStorage.getItem('sagetvWebCaptionAuthority.v1')};document.getElementById('closeRemote').click();if(!document.getElementById('exitClientDialog').open)throw Error('No production confirmation');document.getElementById('confirmClientExit').click();return{productionExitRequested:true,settingsChanged:false};})()

@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -20,6 +21,9 @@ from typing import Any
 import zipfile
 
 ROOT=Path(__file__).resolve().parents[2]
+_manifest_spec=importlib.util.spec_from_file_location('parity_source_manifest',ROOT/'scripts/project_manifest.py')
+_source_manifest=importlib.util.module_from_spec(_manifest_spec)
+_manifest_spec.loader.exec_module(_source_manifest)
 PIN='f1ba340e05fe18eaaba939253a933c3dfe6d6caf'
 WAR_SHA='069ec4cd1b080f896311e98a63a6c9168bdc9091039f4326e1506f54f965742d'
 RUNTIME_PREFIXES=('src/','dist/','third_party/','tests/')
@@ -39,7 +43,7 @@ def safe_relative(value: str) -> bool:
 
 def manifest_errors(root: Path) -> list[str]:
     errors=[]; seen=set()
-    for line in (root/'PROJECT_MANIFEST.sha256').read_text().splitlines():
+    for line in (root/'PROJECT_MANIFEST.sha256').read_text(encoding='utf-8').splitlines():
         if not line.strip(): continue
         if '  ' not in line: errors.append('malformed manifest line'); continue
         expected,name=line.split('  ',1)
@@ -48,7 +52,9 @@ def manifest_errors(root: Path) -> list[str]:
         seen.add(name); path=root/name
         if path.is_symlink() or any(p.is_symlink() for p in path.parents if p!=root.parent): errors.append('symlink entry: '+name)
         elif not path.is_file(): errors.append('missing: '+name)
-        elif digest(path)!=expected: errors.append('hash mismatch: '+name)
+        # This is the current logical-source manifest, whose UTF-8 text hashes
+        # normalize CRLF. Keep digest() byte-exact for pinned WARs/evidence.
+        elif _source_manifest.digest(path)!=expected: errors.append('hash mismatch: '+name)
     return errors
 
 
@@ -138,8 +144,8 @@ def run_baseline(root: Path, output: Path, browser: bool=True, timeout: int=900)
 
 
 def check_ledger(root: Path) -> list[str]:
-    data=json.loads((root/'docs/parity/UPSTREAM_FIX_LEDGER.json').read_text())
-    index=json.loads((root/'docs/parity/TASK_INDEX.json').read_text())
+    data=json.loads((root/'docs/parity/UPSTREAM_FIX_LEDGER.json').read_text(encoding='utf-8'))
+    index=json.loads((root/'docs/parity/TASK_INDEX.json').read_text(encoding='utf-8'))
     tasks={t['id'] for p in index['phases'] for t in p['tasks']};seen=set();errors=[]
     for entry in data['entries']:
         if entry['id'] in seen: errors.append('duplicate fix '+entry['id'])
@@ -148,17 +154,33 @@ def check_ledger(root: Path) -> list[str]:
         if not entry.get('reason'): errors.append('missing disposition reason '+entry['id'])
         if not entry.get('target_task_ids') or not set(entry['target_task_ids'])<=tasks: errors.append('invalid target '+entry['id'])
         if PIN not in entry['upstream_source']: errors.append('unpinned source '+entry['id'])
-        if entry['implementation_status'] not in ['NOT_PORTED','PARTIAL_BASELINE','ADAPTATION_REQUIRED_NOT_VERIFIED','RETAINED_BASELINE','REFERENCE_ONLY','UPSTREAM_GATE_OPEN']: errors.append('unexpected implementation state '+entry['id'])
-    checklist=(root/'TASKS.md').read_text()
+        if entry['implementation_status'] not in ['NOT_PORTED','PARTIAL_BASELINE','ADAPTATION_REQUIRED_NOT_VERIFIED','RETAINED_BASELINE','REFERENCE_ONLY','UPSTREAM_GATE_OPEN','PORTED_P04_LOCAL_GENERATED']: errors.append('unexpected implementation state '+entry['id'])
+        if entry['implementation_status']=='PORTED_P04_LOCAL_GENERATED' and not all(target.startswith('WP04-') for target in entry.get('target_task_ids',[])):
+            errors.append('P04 generated status used outside P04 '+entry['id'])
+    checklist=(root/'TASKS.md').read_text(encoding='utf-8')
     # Regex returns checkbox first: preserve duplicates/identity with a second map.
-    pairs=re.findall(r'^- \[([ x])\] \*\*(WP\d{2}-\d{3})',checklist,re.M)
+    matches=list(re.finditer(r'^- \[([ x*\-])\] (?:\*\*)?(WP\d{2}-\d{3})\b',checklist,re.M))
+    pairs=[(m[1],m[2]) for m in matches]
+    blocks={m[2]:checklist[m.end():matches[i+1].start() if i+1<len(matches) else len(checklist)]
+            for i,m in enumerate(matches)}
     by_id={task:box for box,task in pairs}
     if len(by_id)!=len(pairs) or set(by_id)!=tasks: errors.append('Task IDs/checklist mirror mismatch')
     for phase in index['phases']:
         for task in phase['tasks']:
-            if (by_id.get(task['id'])=='x') != (task['status']=='DONE'):
+            complete=task['status']=='DONE' or task['status'].startswith('COMPLETE')
+            key=task['id'];waived=task['status']=='REMOVED_USER_REQUEST'
+            starred=task['status']=='POSSIBLY_FIXED_NOT_REPEATABLE'
+            if (by_id.get(key)=='*') != starred:
+                errors.append('Task starred-status/checklist mismatch: '+key)
+            if starred and not re.search(r'\*\*(?:Status|Current\d{4}-\d{2}-\d{2})[^\n]*?:\*\*\s*POSSIBLY_FIXED_NOT_REPEATABLE\b',blocks.get(key,'')):
+                errors.append('Missing explicit non-repeatable status: '+key)
+            if (by_id.get(key)=='-') != waived:
+                errors.append('Task waiver/checklist mismatch: '+key)
+            if waived and not re.search(r'\*\*(?:Status|Current\d{4}-\d{2}-\d{2})[^\n]*?:\*\*\s*REMOVED_USER_REQUEST\b',blocks.get(key,'')):
+                errors.append('Missing explicit user-removal status: '+key)
+            if (by_id.get(key)=='x') != complete:
                 errors.append('Task checkbox/status mismatch: '+task['id'])
-            if task['status']=='DONE':
+            if complete:
                 for path in task.get('evidence',[]):
                     if not safe_relative(path) or not (root/path).is_file(): errors.append('Missing task evidence: '+task['id'])
     intake=next(t for phase in index['phases'] for t in phase['tasks'] if t['id']=='WP01-001')

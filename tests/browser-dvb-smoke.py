@@ -9,7 +9,9 @@ ROOT=Path(__file__).resolve().parents[1];WEB=ROOT/'src/main/webapp';count=0
 def passed(s):
  global count;count+=1;print('PASS '+s,flush=True)
 with sync_playwright() as p:
- browser=p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/bin/chromium'),headless=True,args=['--no-sandbox'])
+ engine=os.getenv('SAGETV_BROWSER_ENGINE','chromium')
+ if engine not in ('chromium','webkit'):raise ValueError('Unsupported browser')
+ browser=(p.webkit.launch(headless=True) if engine=='webkit' else p.chromium.launch(executable_path=os.getenv('CHROMIUM_PATH','/usr/local/bin/vibe-chromium'),headless=True,args=['--no-sandbox']))
  page=browser.new_page(viewport={'width':1280,'height':800});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
  html=re.sub(r'<script[^>]*>.*?</script>','',(WEB/'miniclient.html').read_text(),flags=re.S);html=re.sub(r'<link[^>]*>','',html);page.set_content(html);page.add_style_tag(content=(WEB/'css/miniclient.css').read_text())
  page.evaluate(r"""(()=>{const T=window.TEST={requests:[],pending:[],stream:null,time:0,subtitlePolls:0,storage:{}};T.emit=e=>T.stream?T.stream.enqueue(new TextEncoder().encode(JSON.stringify(e)+'\n')):T.pending.push(e);
@@ -20,7 +22,7 @@ with sync_playwright() as p:
  window.fetch=async(url,options={})=>{const u=new URL(url),q=new URLSearchParams(u.search);if(options.body)new URLSearchParams(options.body).forEach((v,k)=>q.set(k,v));const d=Object.fromEntries(q),a=d.action;T.requests.push({path:u.pathname,data:d,method:options.method||'GET'});const j=x=>new Response(JSON.stringify(x));
  if(a==='stream')return new Response(new ReadableStream({start(c){T.stream=c;for(const x of T.pending)T.emit(x);T.pending=[]}}));if(a==='start')return j({session:'p04-browser'});if(a==='streamSettings')return j({ok:true,active:T.active});if(a==='status')return j({transport:'mpegts',running:true,hlsSeconds:30,streamSettings:T.active});if(u.pathname.endsWith('/api/captions'))return j({cursor:0,packets:[]});
  if(u.pathname.endsWith('/api/subtitles')){T.subtitlePolls++;const cues=T.subtitlePolls===1?[{kind:'bitmap',owner:'local_dvb',ptsMs:0,durationMs:700,clear:true,canvas:{width:720,height:576},rect:[100,400,2,1],format:'rgba-straight',data:'/wAA/wD/AIA='}]:[];return j({contractVersion:1,cues,dvbBitmap:{active:true,selectedTrack:22784,services:[{trackId:22784,pid:336,language:'eng',subtitlingType:16,compositionPageId:1,ancillaryPageId:1,hearingImpaired:false}]}})}return j({ok:true});};})();""")
- for fn in ['miniclient-core.js','miniclient-streaming.js','miniclient-caption-authority.js','atsc-captions.js','miniclient-captions.js','miniclient-playback.js']:page.evaluate((WEB/'js'/fn).read_text())
+ for fn in ['miniclient-core.js','miniclient-input.js','miniclient-streaming.js','miniclient-caption-authority.js','atsc-captions.js','miniclient-captions.js','miniclient-playback.js','miniclient-experience.js']:page.evaluate((WEB/'js'/fn).read_text())
  page.evaluate("(function(location,localStorage){\n"+(WEB/'js/miniclient.js').read_text()+"\n})({href:'https://fixture.test/miniclient.html',origin:'https://fixture.test',search:''},{getItem:k=>TEST.storage[k]||null,setItem:(k,v)=>TEST.storage[k]=v})")
  page.wait_for_function("document.querySelector('#connectionStatus').textContent.startsWith('Connected')")
  page.locator('#settingsToggle').click();page.wait_for_function("document.querySelector('#stream_dvbService').options.length===2")
@@ -33,5 +35,24 @@ with sync_playwright() as p:
  assert geom['cw']>0 and geom['ch']>0 and abs((geom['cw']/geom['ch'])-(720/576))<0.01 and abs((geom['left']*2+geom['cw'])-geom['bw'])<2 and abs((geom['top']*2+geom['ch'])-geom['bh'])<2;passed('DVB bitmap surface follows the source aspect/cover transform while leaving the existing video bounds unchanged')
  page.evaluate('TEST.time=1.0');page.wait_for_function("document.querySelector('#dvbCaptions').getContext('2d').getImageData(100,400,1,1).data[3]===0",timeout=3000);passed('DVB duration timeout clears bitmap without a new video/GFX segment')
  assert page.locator('#localCaptions').inner_text()=='';passed('DVB bitmap path does not activate the text-caption renderer')
+ page.evaluate("""(()=>{
+  const real=window.fetch;
+  TEST.time=299;TEST.eofCue=true;
+  Object.defineProperty(videoPlane,'ended',{get:()=>!!TEST.ended});
+  window.fetch=async function(...args){
+   const u=new URL(args[0]);
+   if(u.searchParams.get('action')==='status')return new Response(JSON.stringify({session:u.searchParams.get('session'),transport:'mpegts',running:false,endList:true,activeRecording:false,exitCode:0,hlsSeconds:300,durationMs:300000,streamSettings:TEST.active}));
+   if(u.pathname.endsWith('/api/subtitles')){
+    const cues=TEST.eofCue?[{kind:'bitmap',owner:'local_dvb',ptsMs:299000,durationMs:30000,clear:true,canvas:{width:720,height:576},rect:[100,400,2,1],format:'rgba-straight',data:'/wAA/wD/AIA='}]:[];
+    TEST.eofCue=false;return new Response(JSON.stringify({cues,dvbBitmap:{active:true,selectedTrack:22784,services:[{trackId:22784}]}}));
+   }
+   return real.apply(this,args);
+  };
+  videoPlane.dispatchEvent(new Event('timeupdate'));
+ })()""")
+ page.wait_for_function("dvbCaptions.getContext('2d').getImageData(100,400,1,1).data[3]===255")
+ page.evaluate("TEST.time=300;TEST.ended=true;videoPlane.dispatchEvent(new Event('ended'))")
+ page.wait_for_function("dvbCaptions.getContext('2d').getImageData(100,400,1,1).data[3]===0",timeout=5000)
+ passed('confirmed finite native-ended clears its last DVB picture without a native Stop or another video/GFX frame')
  assert not errors,errors;browser.close()
-print(f'Chromium DVB P04: {count} tests PASS (mock native/vendor transport; production DOM/controller)')
+print(f'{engine} DVB P04: {count} tests PASS (mock native/vendor transport; production DOM/controller)')

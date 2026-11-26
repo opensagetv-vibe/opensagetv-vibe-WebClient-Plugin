@@ -8,7 +8,16 @@ final class StreamCommand {
     static List<String> build(TranscoderManager.Probe p,File input,boolean concat,boolean pipe,double start,File dir,StreamPlan plan) {
         StreamOptions o=plan.options;List<String> c=new ArrayList<String>();
         add(c,p.executable,"-hide_banner","-loglevel","warning","-y","-nostats","-progress",new File(dir,"progress.log").getAbsolutePath());
-        if(!pipe)add(c,"-nostdin");
+        boolean runtimeRate=o.runtimeBitrateControl&&!pipe&&!o.ts()&&!plan.copyVideo&&o.bFrames==0&&"h264_qsv".equals(p.videoEncoder)&&RuntimeRateControlBridge.enabled();
+        if(runtimeRate){
+            add(c,"-sagetvruntimebitrate");
+            // Otherwise a fast GPU can encode minutes ahead before the first
+            // bandwidth decision. Reconfiguring it then cannot change those
+            // already-produced segments. Keep only this explicit optional path
+            // real-time paced, with a short burst for responsive startup.
+            add(c,"-readrate","1","-readrate_initial_burst","6");
+        }
+        else if(!pipe)add(c,"-nostdin");
         if(!pipe&&start>0)add(c,"-ss",String.format(Locale.US,"%.3f",start));
         add(c,"-thread_queue_size","1024","-fflags","+genpts+discardcorrupt","-err_detect","ignore_err","-analyzeduration","2000000","-probesize","4000000");
 
@@ -16,12 +25,9 @@ final class StreamCommand {
         boolean deinterlace=transcoding&&("on".equals(o.deinterlace)||("auto".equals(o.deinterlace)&&plan.video!=null&&plan.video.interlaced()));
         boolean scale=transcoding&&!"source".equals(o.resolution);
         boolean frameRate=transcoding&&!"source".equals(o.fps);
-        boolean gpuFilterPath=transcoding&&p.hardwareDecode&&p.hardwareFilters&&gpuFilterEncoder(p.videoEncoder);
-        // If the source dimensions are unknown, keep the decode hardware path but
-        // use software scaling rather than risk an unintended GPU upscale.
-        if(gpuFilterPath&&scale&&(plan.video==null||plan.video.height<=0))gpuFilterPath=false;
+        boolean gpuFilterPath=usesGpuFilters(p,plan);
         addHardwareDecode(c,p,gpuFilterPath);
-        if(transcoding&&"h264_vaapi".equals(p.videoEncoder)&&!p.hardwareDecode)
+        if(transcoding&&"h264_vaapi".equals(p.videoEncoder)&&!gpuFilterPath)
             add(c,"-vaapi_device",System.getProperty("sagetv.webplayer.vaapiDevice","/dev/dri/renderD128"));
 
         if(concat)add(c,"-f","concat","-safe","0");
@@ -44,6 +50,15 @@ final class StreamCommand {
             int rate=(int)Math.ceil("source".equals(o.fps)?sourceFps(plan.video):Double.parseDouble(o.fps));
             int gop=Math.max(1,Math.min(600,rate*o.keyFrameSeconds));
             add(c,"-g",String.valueOf(gop),"-force_key_frames","expr:gte(t,n_forced*"+o.keyFrameSeconds+")");
+            // WEB-043: QSV's forced I-frames are not necessarily IDR frames.
+            // HLS can only publish an independently decodable segment at an
+            // appropriate keyframe; the affected driver otherwise emitted a
+            // 34s first segment despite the requested 1s cadence. Ask QSV to
+            // make forced frames IDR, leaving GOP/quality choices intact.
+            // This belongs to the producer: no browser-side buffer setting
+            // can close an unpublished segment. Scope the private encoder
+            // option to QSV HLS, never Copy, other encoders or continuous TS.
+            if(!o.ts()&&"h264_qsv".equals(p.videoEncoder))add(c,"-forced_idr","1");
         }
         add(c,"-c:a",plan.audioEncoder);
         if(!plan.copyAudio){
@@ -57,7 +72,12 @@ final class StreamCommand {
         add(c,"-max_muxing_queue_size","2048","-muxdelay","0","-muxpreload","0","-flush_packets","1","-avoid_negative_ts","make_zero");
         if(o.ts())add(c,"-f","mpegts","-mpegts_flags","+resend_headers+initial_discontinuity",new File(dir,"stream.ts").getAbsolutePath());
         else {
-            add(c,"-f","hls","-hls_time","3","-hls_init_time","1","-hls_segment_type","mpegts","-hls_list_size","0","-hls_playlist_type","event");
+            // WEB-044: hls_init_time cannot shorten the first EVENT segment
+            // when list_size is zero. Use a real short target for the regular
+            // local transcode path; never split between decodable keyframes.
+            // Copy, DVD/remote pipe and concat retain their established cadence.
+            int segmentSeconds=!plan.copyVideo&&!pipe&&!concat?Math.min(3,o.keyFrameSeconds):3;
+            add(c,"-f","hls","-hls_time",String.valueOf(segmentSeconds),"-hls_init_time","1","-hls_segment_type","mpegts","-hls_list_size","0","-hls_playlist_type","event");
             add(c,"-hls_flags",plan.copyVideo?"temp_file":"independent_segments+temp_file","-hls_segment_filename",new File(dir,"seg_%05d.ts").getAbsolutePath(),new File(dir,"stream.m3u8").getAbsolutePath());
         }
         if(o.captionsEnabled()) {
@@ -83,6 +103,11 @@ final class StreamCommand {
         else if(d.contains("videotoolbox"))add(c,"-hwaccel","videotoolbox");
     }
 
+    static boolean usesGpuFilters(TranscoderManager.Probe p,StreamPlan plan){
+        StreamOptions o=plan.options;boolean deinterlace="on".equals(o.deinterlace)||"auto".equals(o.deinterlace)&&plan.video!=null&&plan.video.interlaced();
+        return !plan.copyVideo&&p.hardwareDecode&&p.hardwareFilters&&gpuFilterEncoder(p.videoEncoder)&&
+            (!deinterlace||"auto".equals(o.deinterlaceFilter))&&("source".equals(o.resolution)||plan.video!=null&&plan.video.height>0);
+    }
     private static boolean gpuFilterEncoder(String encoder){return "h264_nvenc".equals(encoder)||"h264_qsv".equals(encoder)||"h264_vaapi".equals(encoder);}
 
     private static String gpuVideoFilter(String encoder,StreamOptions o,StreamPlan plan,boolean deinterlace,boolean scale,boolean frameRate){
@@ -108,7 +133,7 @@ final class StreamCommand {
 
     private static String softwareVideoFilter(String encoder,StreamOptions o,StreamPlan plan,boolean deinterlace,boolean scale,boolean frameRate){
         StringBuilder vf=new StringBuilder();
-        if(deinterlace)vf.append("yadif=mode=send_frame:parity=auto:deint=").append("on".equals(o.deinterlace)?"all":"interlaced").append(',');
+        if(deinterlace)vf.append("bwdif".equals(o.deinterlaceFilter)?"bwdif":"yadif").append("=mode=send_frame:parity=auto:deint=").append("on".equals(o.deinterlace)?"all":"interlaced").append(',');
         if(scale)vf.append("scale=w=-2:h='min(ih,").append(o.resolution).append(")':force_divisible_by=2,");
         if(frameRate)vf.append("fps=").append(fps(o.fps)).append(',');
         boolean vaapi="h264_vaapi".equals(encoder);

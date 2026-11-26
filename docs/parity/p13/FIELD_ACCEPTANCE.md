@@ -1,5 +1,15 @@
 # P13 field acceptance
 
+2026-11-19 qualified stock-Linux scope: original TT/DVB OFF/ON7rows each,
+DVD MPEG-PS Push OFF/ON5rows each, actual diagnostic OFF/ON/OFF3rows PASS
+with no unknown opcodes/frame timeouts/queues. Same stock232/hostWebKit/
+ephemeral identity; saved settings/Core unchanged. Repeated Y/UV colors,
+unload and HD300 handle fallback use controlled production-DOM inputs in
+Chrome/WebKit12cases each, not claimed emitted by the physical stock runs.
+See `artifacts/results/WP13-003/RESULT.md`. Default staysOFF; scoped task is
+complete, not physical iPhone/all-source/vendor video-surface certification.
+The original protocol below remains as reproducible test guidance.
+
 ## WP13-003 — stock UNIFIED OFF/ON A/B
 
 Required before calling unified graphics fully accepted:

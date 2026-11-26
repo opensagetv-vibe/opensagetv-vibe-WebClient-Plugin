@@ -1,0 +1,1 @@
+(()=>{const s=window.__vibePollTrial;if(!s)throw Error('No trial');return{events:s.events,restored:s.restored,elapsedMs:Date.now()-s.started,revision:[...document.scripts].filter(x=>x.src.includes('/miniclient.js')).map(x=>new URL(x.src).searchParams.get('v')),stats:document.getElementById('stats').textContent.slice(0,2400)};})()

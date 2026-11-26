@@ -20,3 +20,10 @@ Record OS, filesystem/mount type, SageTV/WebPlayer versions, destination-test re
 ## Current-video field spot check
 
 On a normal completed recording longer than 30 seconds, invoke **Test Current Video** once while playing and once while paused. Confirm cadence/buffer evidence is present, the reversible seek returns to the original position, mute/volume/rate/pause intent are unchanged, and a different recording never receives a stale recovery seek. On a growing recording or DVD/menu session, confirm unsafe mutation is skipped with a reason.
+
+For current070 follow-up, acceptance requires a changed producer and its actual
+presented picture near the forward and restore targets. A logical anchor, ACK
+or naturally advancing frame from the old producer is not settled output.
+Deliberately withheld frames/unchanged producer must return ATTENTION and never
+replay restoration after a late source event. A missing frame API skips unsafe
+mutation with an explicit reason. Keep historical state-only passes dated.

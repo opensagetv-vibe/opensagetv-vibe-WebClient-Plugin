@@ -1,0 +1,1 @@
+({visible:document.visibilityState,focused:document.hasFocus(),ready:document.readyState,viewport:{w:innerWidth,h:innerHeight},media:[...document.querySelectorAll('video')].map(v=>({source:!!(v.currentSrc||v.getAttribute('src')),paused:v.paused}))})

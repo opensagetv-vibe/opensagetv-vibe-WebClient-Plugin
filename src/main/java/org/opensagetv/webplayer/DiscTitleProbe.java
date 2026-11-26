@@ -47,7 +47,7 @@ final class DiscTitleProbe {
     private static String unquote(String s){s=s==null?"":s.trim();return s.length()>=2&&s.startsWith("\"")&&s.endsWith("\"")?s.substring(1,s.length()-1):s;}
     private static double number(String s,double d){try{return Double.parseDouble(unquote(s));}catch(Exception e){return d;}}
     private static Title unavailable(int title,String e){return new Title(title,false,0,0,0,0,new ArrayList<Chapter>(),e);}
-    private static String ffprobe(String ffmpeg){File f=new File(ffmpeg);if(f.getParentFile()!=null){String n=System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("win")?"ffprobe.exe":"ffprobe";File p=new File(f.getParentFile(),n);if(p.isFile())return p.getAbsolutePath();}return "ffprobe";}
+    private static String ffprobe(String ffmpeg){return MediaProbe.ffprobeCommand(ffmpeg);}
     private static String compact(String s){if(s==null||s.trim().isEmpty())return "dvdvideo probe failed";s=s.replace('\r',' ').replace('\n',' ').trim();return s.length()>400?s.substring(0,400):s;}
     private static String fmt(double v){return String.format(Locale.US,"%.3f",Math.max(0,v));}
 }

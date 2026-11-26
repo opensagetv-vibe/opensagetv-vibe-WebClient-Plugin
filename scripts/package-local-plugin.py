@@ -6,24 +6,25 @@ ROOT = Path(__file__).resolve().parents[1]
 DIST = ROOT / 'dist'
 DEV = DIST / 'local-install' / 'SageTVPluginsDev.d'
 WAR = DIST / 'SageTVWebPlayer.war'
-VERSION = '3.2.30'
+VERSION = '3.3.0'
 PKG = DEV / f'sagetv-webplayer-{VERSION}.zip'
 MANIFEST = DEV / 'sagetv-webplayer.xml'
 WINDOWS_MANIFEST = DEV / 'sagetv-webplayer-windows.xml'
 
-source_date_epoch = int(next(
-    line.split('=', 1)[1]
-    for line in (ROOT / 'release.properties').read_text(encoding='utf-8').splitlines()
-    if line.startswith('SOURCE_DATE_EPOCH=')
-))
+release_properties = dict(line.split('=',1) for line in
+    (ROOT / 'release.properties').read_text(encoding='utf-8').splitlines()
+    if '=' in line and not line.startswith('#'))
+source_date_epoch = int(release_properties['SOURCE_DATE_EPOCH'])
+ffmpeg_plugin_version = release_properties['FFMPEG_PLUGIN_VERSION']
+ffmpeg_plugin_linux_min = release_properties.get('FFMPEG_PLUGIN_LINUX_MIN_VERSION', ffmpeg_plugin_version)
+ffmpeg_plugin_windows_min = release_properties.get('FFMPEG_PLUGIN_WINDOWS_MIN_VERSION', ffmpeg_plugin_version)
 zip_timestamp = time.gmtime(max(source_date_epoch, 315532800))[:6]
 
 if not WAR.exists():
     raise SystemExit(f'Missing {WAR}; run scripts/build-local.sh first')
 DEV.mkdir(parents=True, exist_ok=True)
-for old in DEV.glob('sagetv-webplayer-*.zip'):
-    if old != PKG:
-        old.unlink()
+# Do not delete older verification packages here. The task's reviewed artifact
+# retirement moves superseded owned outputs recoverably to workspace deleteme.
 with zipfile.ZipFile(PKG, 'w', zipfile.ZIP_DEFLATED) as z:
     entry = zipfile.ZipInfo('jetty/webapps/SageTVWebPlayer.war', zip_timestamp)
     entry.compress_type = zipfile.ZIP_DEFLATED
@@ -37,12 +38,22 @@ manifest = f'''<?xml version="1.0" encoding="UTF-8"?>
   <Description>Browser MiniClient and media player for stock SageTV servers. Uses the required OpenSageTV Vibe FFmpeg Plugin for transcoding while preserving the stock Sage.jar and stock ffmpeg.</Description>
   <Author>OpenSageTV Vibe</Author>
   <CreationDate>2026.09.22</CreationDate>
-  <ModificationDate>2026.09.27</ModificationDate>
+  <ModificationDate>2026.11.26</ModificationDate>
   <Version beta="true">{VERSION}</Version>
   <OS>Linux</OS>
   <Desktop>false</Desktop>
   <ResourcePath>sagetvwebplayer</ResourcePath>
   <ReleaseNotes><![CDATA[
+3.3.0
+- Compact General/Playback/Transport/Input/Diagnostics/Recovery tabs, shorter phone settings and independent graph/information controls.
+- Preserve stock SageTV with client-owned recovery, live segment handling, bounded seeking and shared optional MIM buffer-driven bitrate adjustment.
+- Add the MiniClient Home Screen PWA, safe-area/mobile layouts, Safari installation help, explicit wake lock and Media Session controls.
+- Add configurable keyboard tap/hold/repeat and one/two/three-finger, edge and corner mappings.
+- Add a 25 ms audio-offset slider, diagnostic destination/share choices and backward-compatible version2 profile backups.
+- Prefer native HLS automatically when reported, and offer explicit native/MSE transports without copying Android-only decoder settings.
+- Resolve English-first CEA/Teletext/DVB virtual slots and exact-local stock STV caption selection; separate broadcast/file/DVD caption epochs and clocks.
+- Bound concurrent transcoding Apply requests and reject changes belonging to a retired recording.
+
 3.2.30
 - Adopt the OpenSageTV Vibe project workflow and release contracts.
 - Require the platform-matching OpenSageTV Vibe FFmpeg Plugin and discover its SageTVTranscoder bridge instead of SageTV's stock ffmpeg.
@@ -369,7 +380,7 @@ manifest = f'''<?xml version="1.0" encoding="UTF-8"?>
   <Dependency><JVM/><MinVersion>1.8</MinVersion></Dependency>
   <Dependency><Plugin>Jetty</Plugin><MinVersion>3.0.1</MinVersion></Dependency>
   <Dependency><Plugin>sagex-api</Plugin><MinVersion>9.1.7.0</MinVersion></Dependency>
-  <Dependency><Plugin>SageTVFFmpegPluginLinux</Plugin><MinVersion>0.1.4</MinVersion></Dependency>
+  <Dependency><Plugin>SageTVFFmpegPluginLinux</Plugin><MinVersion>{ffmpeg_plugin_linux_min}</MinVersion></Dependency>
   <PluginType>Standard</PluginType>
   <Package>
     <PackageType>System</PackageType>
@@ -383,7 +394,8 @@ manifest = f'''<?xml version="1.0" encoding="UTF-8"?>
 MANIFEST.write_text(manifest, encoding='utf-8')
 windows_manifest = (manifest
     .replace('<OS>Linux</OS>', '<OS>Windows</OS>')
-    .replace('<Plugin>SageTVFFmpegPluginLinux</Plugin>', '<Plugin>SageTVFFmpegPluginWinx64</Plugin>'))
+    .replace('<Plugin>SageTVFFmpegPluginLinux</Plugin><MinVersion>'+ffmpeg_plugin_linux_min+'</MinVersion>',
+             '<Plugin>SageTVFFmpegPluginWinx64</Plugin><MinVersion>'+ffmpeg_plugin_windows_min+'</MinVersion>'))
 WINDOWS_MANIFEST.write_text(windows_manifest, encoding='utf-8')
 print(PKG)
 print(MANIFEST)

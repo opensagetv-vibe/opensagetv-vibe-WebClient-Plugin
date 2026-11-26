@@ -1,0 +1,1 @@
+(()=>{let p=document.getElementById('remotePanel'),open=!p.hidden;document.getElementById('closeRemote').click();return{syntheticLongPressOpened:open,closedAfterCheck:p.hidden,controlsHidden:!document.getElementById('appMenuBtn').getClientRects().length,showControlsPreference:document.getElementById('appShowControls')?.checked}})()

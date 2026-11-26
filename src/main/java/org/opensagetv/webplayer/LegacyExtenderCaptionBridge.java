@@ -16,9 +16,11 @@ final class LegacyExtenderCaptionBridge {
     static final int PTS_VALID=0x01, FLUSH_SUBTITLE_QUEUE=0x02, CC_SUBTITLE=0x10;
     interface Sink { void postSubtitleInfo(long pts45Khz,long duration45Khz,byte[] data,int flags); }
     private final Sink sink;
+    private final Object emissionLock=new Object();
     private final ArrayDeque<Pending> pending=new ArrayDeque<Pending>();
     private final ArrayDeque<Recent> recent=new ArrayDeque<Recent>();
     private static final int MAX_RECENT=256;
+    private static final int MAX_BATCH_BYTES=16*1024;
     private long forwardedBytes; private int forwardedSamples;
 
     LegacyExtenderCaptionBridge(Sink sink){if(sink==null)throw new IllegalArgumentException("sink");this.sink=sink;}
@@ -35,15 +37,39 @@ final class LegacyExtenderCaptionBridge {
         }
         byte[] payload=records.toByteArray();if(payload.length==0)return false;
         recent.addLast(new Recent(timeMs,hash,Arrays.copyOf(sample,sample.length)));while(recent.size()>MAX_RECENT)recent.removeFirst();
-        Pending p=new Pending(timeMs,pts,payload);if(pending.isEmpty()||pending.peekLast().timeMs<=timeMs)pending.addLast(p);else{
-            ArrayDeque<Pending> q=new ArrayDeque<Pending>();boolean inserted=false;while(!pending.isEmpty()){Pending old=pending.removeFirst();if(!inserted&&p.timeMs<old.timeMs){q.addLast(p);inserted=true;}q.addLast(old);}if(!inserted)q.addLast(p);pending.addAll(q);
-        }
+        for(int start=0;start<payload.length;start+=MAX_BATCH_BYTES)
+            enqueue(new Pending(timeMs,pts,Arrays.copyOfRange(payload,start,Math.min(payload.length,start+MAX_BATCH_BYTES))));
         return true;
     }
-
-    void drainTo(long playbackMs){List<Pending> due=new ArrayList<Pending>();synchronized(this){while(!pending.isEmpty()&&pending.peekFirst().timeMs<=playbackMs+80L){Pending p=pending.removeFirst();due.add(p);forwardedSamples++;forwardedBytes+=p.payload.length;}}for(Pending p:due)sink.postSubtitleInfo(p.pts45,0,p.payload,CC_SUBTITLE|PTS_VALID);}
-    synchronized void clearPending(){pending.clear();recent.clear();}
-    void postFlush(){sink.postSubtitleInfo(0,0,buildCea608ResetRecords(),CC_SUBTITLE|FLUSH_SUBTITLE_QUEUE);}
+    private void enqueue(Pending p){
+        if(pending.isEmpty()||pending.peekLast().timeMs<=p.timeMs){pending.addLast(p);return;}
+        ArrayDeque<Pending> q=new ArrayDeque<Pending>();boolean inserted=false;
+        while(!pending.isEmpty()){Pending old=pending.removeFirst();if(!inserted&&p.timeMs<old.timeMs){q.addLast(p);inserted=true;}q.addLast(old);}
+        if(!inserted)q.addLast(p);pending.addAll(q);
+    }
+    /** One bounded callback per existing clock tick. Every complete8-byte
+     * record keeps its own PTS/type/parity/control bytes; no caption rewriting.
+     * Serialize dequeue+write with FLUSH without holding the sample queue over
+     * network I/O. Unknown sink delivery is never automatically replayed. */
+    void drainTo(long playbackMs){
+        synchronized(emissionLock){
+            List<Pending> due=new ArrayList<Pending>();int bytes=0;
+            synchronized(this){
+                while(!pending.isEmpty()){
+                    Pending p=pending.peekFirst();
+                    if(p.timeMs>playbackMs+80L||bytes+p.payload.length>MAX_BATCH_BYTES)break;
+                    due.add(pending.removeFirst());bytes+=p.payload.length;
+                }
+            }
+            if(due.isEmpty())return;
+            byte[] payload=new byte[bytes];int offset=0;
+            for(Pending p:due){System.arraycopy(p.payload,0,payload,offset,p.payload.length);offset+=p.payload.length;}
+            sink.postSubtitleInfo(due.get(0).pts45,0,payload,CC_SUBTITLE|PTS_VALID);
+            synchronized(this){forwardedSamples+=due.size();forwardedBytes+=bytes;}
+        }
+    }
+    void clearPending(){synchronized(emissionLock){synchronized(this){pending.clear();recent.clear();}}}
+    void postFlush(){synchronized(emissionLock){sink.postSubtitleInfo(0,0,buildCea608ResetRecords(),CC_SUBTITLE|FLUSH_SUBTITLE_QUEUE);}}
     synchronized int pendingSamples(){return pending.size();}
     synchronized int forwardedSamples(){return forwardedSamples;}
     synchronized long forwardedBytes(){return forwardedBytes;}

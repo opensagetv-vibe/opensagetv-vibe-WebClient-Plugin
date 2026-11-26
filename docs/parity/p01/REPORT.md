@@ -1,5 +1,11 @@
 # SageTV WebPlayer — P01 completion checkpoint, revision 3
 
+Dated current update2026-11-17: WP01-004 actual pinned mpegts.js1.8.0 and
+hls.js1.7.3 MSE start/advance/Pause/resume now PASS on stock232/Chromium.
+See artifacts/results/WEB-020/REAL_VENDOR_MSE.md and current TASKS ledger.
+The original revision3 environment-limitation report below is preserved as
+history, not the current acceptance status or physical iPhone certification.
+
 Date: 2026-09-24 (evidence generated into 2026-09-25 UTC). Runtime remains **3.2.4 unchanged**. This is an audit/baseline checkpoint, not a deployable playback release.
 
 ## Phase result

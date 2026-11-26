@@ -1,0 +1,1 @@
+(()=>{const t=window.__iphoneGate?.clockTrace;return{done:t?.done,restored:t?.restored,inputs:t?.inputs,events:t?.events,stats:document.getElementById('stats').textContent.slice(0,2300),video:{time:videoPlane.currentTime,paused:videoPlane.paused},visible:document.visibilityState};})()

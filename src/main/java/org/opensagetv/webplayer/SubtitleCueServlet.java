@@ -17,7 +17,21 @@ public final class SubtitleCueServlet extends HttpServlet {
             boolean dvdScope="dvd".equalsIgnoreCase(req.getParameter("scope"));
             boolean fileScope="file".equalsIgnoreCase(req.getParameter("scope"));
             PlaybackSessionContext.Token token; SubtitleCueQueue queue;
-            if(dvdScope){if(s.dvdSource==null){HttpUtil.jsonError(resp,409,"This stream has no DVD SPU context");return;}token=s.dvdSource.spu().token();queue=s.dvdSource.spu().queue();}
+            if(dvdScope){
+                if(s.dvdSource==null){HttpUtil.jsonError(resp,409,"This stream has no DVD SPU context");return;}
+                if(s.dvdGeneration!=s.dvdSource.generation()){HttpUtil.jsonError(resp,409,"DVD subtitle generation retired");return;}
+                token=s.dvdSource.spu().token();queue=s.dvdSource.spu().queue();
+                // Cues retain the stock NAV/title clock. A browser decoder
+                // starts again near0 after a chapter/seek; its local time is
+                // not the title position. Reuse the existing anchor without
+                // mutating it or making caption polling a playback control.
+                time=s.dvdSource.clock().subtitlePresentationMillis(time);
+                // Flush between the first check and token read cannot let an
+                // old HLS reader consume the replacement's queue. A later
+                // flush invalidates token inside drainDue itself.
+                if(s.dvdGeneration!=s.dvdSource.generation()){HttpUtil.jsonError(resp,409,"DVD subtitle generation retired");return;}
+                if(!s.dvdSource.spu().presentAt(s.dvdGeneration,time)){HttpUtil.jsonError(resp,409,"DVD subtitle generation retired");return;}
+            }
             else {if(s.playbackContext==null||s.playbackToken==null){HttpUtil.jsonError(resp,409,"This stream has no subtitle cue context");return;}token=s.playbackToken;queue=fileScope?s.playbackContext.fileCues():s.playbackContext.cues();}
             List<SubtitleCue> cues=queue.drainDue(token,time,max);
             StringBuilder b=new StringBuilder("{\"contractVersion\":1,\"session\":").append(token.json()).append(",\"cues\":[");

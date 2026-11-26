@@ -1,5 +1,12 @@
 # P06 report — ordinary text, PGS and VobSub/file subtitles
 
+Current scoped2026-11-18: WP06-004 genuine external field acceptance is complete
+on stock Linux232/normal-manager113129:22actual WebKit/Chromium assertions,
+palette/forced-negative/missing/seek/visible bitmap/clear and restored fixture.
+See `artifacts/results/WP06-004/RESULT.md` and dated FIELD_ACCEPTANCE.md for
+runtime corrections, provenance and limitations. Historical checkpoint below
+is retained; it is not current physical iPhone/all-format certification.
+
 Runtime checkpoint: **3.2.9-P06** (2026-09-25).
 
 P06 adds ordinary file subtitles without changing the broadcast-caption authority model from P05. Ordinary subtitle cues use `SubtitleCue.Owner.LOCAL_FILE` and a dedicated `PlaybackSessionContext.fileCues()` queue. The queue shares the same source/seek/flush generation token as broadcast Teletext/DVB/CEA so stale callbacks die together, but polling one family cannot consume the other.

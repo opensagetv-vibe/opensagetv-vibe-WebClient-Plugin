@@ -1,0 +1,1 @@
+(()=>{if(!window.__iphoneGate?.done||videoPlane.getAttribute('src')||videoPlane.readyState||document.visibilityState!=='visible')throw Error('Require fresh current unloaded test owner');return{freshOwnerReady:true,unloaded:true,visible:true}})()

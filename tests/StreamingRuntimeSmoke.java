@@ -43,6 +43,10 @@ public final class StreamingRuntimeSmoke {
         StreamPlan mpeg2Copy=new StreamPlan(options("player","hls","videoMode","copy","deinterlace","auto"),mpeg2Info);check(mpeg2Copy.copyVideo&&mpeg2Copy.reason.contains("MPEG-2 video is passed through"),"MPEG-2 copy policy");
         rejects(()->new StreamPlan(options("player","hls","videoMode","copy","deinterlace","on"),mpeg2Info));
         check(options("player","mpegts","videoMode","copy").hlsFallback().videoMode.equals("copy"),"TS-to-HLS fallback lost Copy selection");
+        StreamOptions tsCopy=options("player","mpegts","videoMode","copy","audioLanguage","eng","captionOffsetMs","75");
+        StreamOptions codecReplacement=tsCopy.compatibilityFallback(true,true);
+        check(codecReplacement.videoMode.equals("transcode")&&codecReplacement.player.equals("hls")&&codecReplacement.audioLanguage.equals("eng")&&codecReplacement.captionOffsetMs==75,"TS Copy decode replacement lost active options");
+        check(tsCopy.videoMode.equals("copy")&&tsCopy.player.equals("mpegts")&&tsCopy.compatibilityFallback(true,false).videoMode.equals("copy"),"compatibility fallback changed defaults or old transport semantics");
         check(options("player","hls","videoMode","copy").transcodeFallback().videoMode.equals("transcode"),"Copy decode fallback did not force H.264 transcode");
         MediaProbe.Info vp9Info=MediaProbe.parse("streams.stream.0.index=0\nstreams.stream.0.codec_type=video\nstreams.stream.0.codec_name=vp9\nstreams.stream.1.index=1\nstreams.stream.1.codec_type=audio\nstreams.stream.1.codec_name=aac\nstreams.stream.1.channels=2\n");
         StreamPlan vp9Copy=new StreamPlan(options("player","hls","videoMode","copy","deinterlace","off"),vp9Info);check(vp9Copy.copyVideo&&vp9Copy.reason.contains("vp9 video is passed through"),"explicit Copy must not pre-reject a source codec before FFmpeg tries it");

@@ -1,5 +1,10 @@
 # P07 native DVD protocol report
 
+Dated2026-11-17 update: WP07-001 stock-role field scope is complete on stock
+232/current111206. See FIELD_ACCEPTANCE.md and ../2026-11-17-ACCEPTANCE.md.
+The original protocol-only snapshot below remains historical; its opt-in/no-
+visible-consumer boundaries no longer describe the current A/V/SPU runtime.
+
 Runtime checkpoint: **3.2.10-P07** (2026-09-25).
 
 ## Scope

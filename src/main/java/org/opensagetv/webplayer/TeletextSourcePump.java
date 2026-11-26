@@ -34,6 +34,7 @@ final class TeletextSourcePump {
     private void run(){
         long skip=absoluteStart;int segment=session.firstSegment;byte[] buffer=new byte[64*1024];
         try{
+            SubtitlePumpPosition position=SubtitlePumpPosition.resolve(session,sage,mediaFile);skip=position.absoluteByte;decoder.discontinuity(position.anchorMs);
             while(active()){
                 int count=sage.getNumberOfSegments(mediaFile);boolean recording=sage.isFileCurrentlyRecording(mediaFile);
                 if(segment>=count){if(!recording)break;sleep(200);continue;}
@@ -42,6 +43,7 @@ final class TeletextSourcePump {
                     long len=Math.max(0L,src.length());if(skip>=len&&len>0&&segment<count-1){skip-=len;segment++;continue;}
                     long pos=Math.min(skip,len);if(pos>0)src.seek(pos);skip=0;
                     while(active()){
+                        if(SubtitlePumpPosition.shouldWait(session,decoder.latestMediaMs())){sleep(40);continue;}
                         long available=Math.max(0L,src.length()-pos);
                         if(available<=0){count=sage.getNumberOfSegments(mediaFile);recording=sage.isFileCurrentlyRecording(mediaFile);if(src.length()>pos)continue;if(segment<count-1||!recording)break;sleep(200);continue;}
                         int n=src.read(buffer,0,(int)Math.min(buffer.length,available));if(n<=0){if(recording){sleep(200);continue;}break;}

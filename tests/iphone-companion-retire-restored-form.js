@@ -1,0 +1,2 @@
+/* Retire only a completed test observer after exact saved-state restoration. */
+(()=>{const s=window.__iphoneGate,t=s?.companionForm;if(!s||!t)throw Error('No old form observer');if(localStorage.getItem('sagetvWebStreaming.v1')!==s.streaming||t.streaming!==s.streaming||localStorage.getItem('sagetvWebMiniClientSettings.v1')!==s.settings||localStorage.getItem('sagetvWebCaptionAuthority.v1')!==t.captions)throw Error('Old borrow not exactly restored; preserve it');delete s.companionForm;return{oldRestoredObserverRetired:true,settingsUnchanged:true};})()

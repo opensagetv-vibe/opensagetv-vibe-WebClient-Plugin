@@ -1,0 +1,2 @@
+/* Read-only completion; never sends/repeats the native transition. */
+(()=>{const s=window.__iphoneGate?.dvdFullscreen;if(!s||s.pending)throw Error('Setup not complete');if(s.error)throw Error(s.error);s.observing=true;s.read().then(r=>s.after={ready:r.ready,layout:r.layout}).catch(e=>s.error=e.message).finally(()=>s.observing=false);return{before:s.before,commandSent:s.commandSent,accepted:s.accepted,after:s.after||null}})()

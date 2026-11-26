@@ -12,13 +12,15 @@ final class DvdPtsClock {
     private long playerAnchorMs = Long.MIN_VALUE;
     private long clockAnchor90k = -1;
     private boolean anchorOnNextPlayerClock;
+    private long firstEpochAvPts90k = Long.MIN_VALUE;
+    private boolean preferAvAnchor = true;
 
     synchronized void onNewCell(int wireOffset45k) {
         ptsOffset90k = ((long) wireOffset45k) * 2L;
         lastMappedPts90k = -1;
-        playerAnchorMs = Long.MIN_VALUE;
-        clockAnchor90k = -1;
-        anchorOnNextPlayerClock = currentClock90k >= 0;
+        // NEWCELL accompanies read-ahead bytes, not a new presented decoder.
+        // Its offset maps subsequent PES/SPU only. Re-anchoring here moves the
+        // clock while an earlier cell is still playing in the browser.
     }
 
     synchronized long ptsOffset90k() { return ptsOffset90k; }
@@ -27,8 +29,14 @@ final class DvdPtsClock {
         if (rawPts90k < 0) return -1;
         long wrapped = wrap33(rawPts90k + ptsOffset90k);
         long reference = currentClock90k >= 0 ? currentClock90k : lastMappedPts90k;
-        long mapped = reference >= 0 ? unwrapNear(wrapped, reference) : wrapped;
+        long signed=rawPts90k+ptsOffset90k;
+        long mapped = reference >= 0 ? unwrapNear(wrapped, reference) :
+                signed<0&&signed>=-90000L?signed:wrapped;
         lastMappedPts90k = mapped;
+        if(firstEpochAvPts90k==Long.MIN_VALUE){
+            firstEpochAvPts90k=mapped;
+            if(preferAvAnchor)anchorOnNextPlayerClock=true;
+        }
         return mapped;
     }
 
@@ -38,6 +46,7 @@ final class DvdPtsClock {
         wrapped &= MASK;
         currentClock90k = currentClock90k >= 0 ? unwrapNear(wrapped, currentClock90k) : wrapped;
         anchorOnNextPlayerClock = true;
+        preferAvAnchor = false;
         return currentClock90k;
     }
 
@@ -45,7 +54,13 @@ final class DvdPtsClock {
         if (positionMs < 0) return currentClock90k;
         if (playerAnchorMs == Long.MIN_VALUE || anchorOnNextPlayerClock) {
             playerAnchorMs = positionMs;
-            clockAnchor90k = currentClock90k >= 0 ? currentClock90k : positionMs * 90L;
+            if(preferAvAnchor&&firstEpochAvPts90k!=Long.MIN_VALUE){
+                // FFmpeg's new consumer clock is relative to this first A/V
+                // origin. Stock seeks do not invariably send fresh SETSTC.
+                // Do not reuse the old file anchor or let a SPU packet set it.
+                clockAnchor90k=Math.max(0L,firstEpochAvPts90k)+positionMs*90L;
+                preferAvAnchor=false;
+            }else clockAnchor90k = currentClock90k >= 0 ? currentClock90k : positionMs * 90L;
             anchorOnNextPlayerClock = false;
         }
         currentClock90k = clockAnchor90k + (positionMs - playerAnchorMs) * 90L;
@@ -53,6 +68,16 @@ final class DvdPtsClock {
     }
 
     synchronized long currentClock90k() { return currentClock90k; }
+    synchronized long firstEpochAvPts90k() { return firstEpochAvPts90k; }
+
+    /** Read-only decoder-relative -> title time for the SPU presentation
+     * queue. Caption polling must never advance/re-anchor the playback clock.
+     * A new cell/discontinuity waits for the ordinary current-player anchor. */
+    synchronized long subtitlePresentationMillis(long playerPositionMs) {
+        if(playerPositionMs<0||playerAnchorMs==Long.MIN_VALUE||clockAnchor90k<0||anchorOnNextPlayerClock)
+            return currentMillis();
+        return Math.max(0L,clockAnchor90k/90L+(playerPositionMs-playerAnchorMs));
+    }
 
     synchronized long currentMillis() {
         return currentClock90k < 0 ? 0L : Math.max(0L, currentClock90k / 90L);
@@ -64,6 +89,8 @@ final class DvdPtsClock {
         playerAnchorMs = Long.MIN_VALUE;
         clockAnchor90k = -1;
         anchorOnNextPlayerClock = currentClock90k >= 0;
+        firstEpochAvPts90k=Long.MIN_VALUE;
+        preferAvAnchor=true;
     }
 
     synchronized void resetPresentationClock() {

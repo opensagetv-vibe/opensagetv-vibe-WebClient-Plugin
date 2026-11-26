@@ -20,7 +20,8 @@ fi
 # Build the WAR with Python's standard ZIP writer instead of `jar --date`.
 # `jar --date` is unavailable in the Java 11 toolchain that this stock-SageTV
 # plugin supports, while the Python path retains sorted entries, a fixed UTC
-# timestamp, stable permissions, and byte-identical output across JDK versions.
+# timestamp and stable permissions. Compiler-emitted class bytes can differ
+# across JDK versions; compare reproducibility within a recorded toolchain.
 python3 - "$BUILD/war" "$ROOT/dist/SageTVWebPlayer.war" "$SOURCE_DATE_EPOCH" <<'PY'
 from pathlib import Path
 import time

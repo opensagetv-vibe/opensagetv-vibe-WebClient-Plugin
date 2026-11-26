@@ -22,6 +22,16 @@ public final class P14DiagnosticSupportSmoke {
         String sanitized=DiagnosticSupport.sanitize("{\"password\":\"pw\",\"Authorization\":\"Bearer abc\",\"subtitleText\":\"hello\",\"count\":7}");
         ok(!sanitized.contains("Bearer abc")&&!sanitized.contains("hello")&&!sanitized.contains("\"pw\""),"server sanitizer removes credentials and subtitle content");
         ok(sanitized.contains("[redacted]")&&sanitized.contains("[omitted-content]")&&sanitized.contains("\"count\":7"),"server sanitizer retains safe counters");
+        String nested=DiagnosticSupport.sanitize("{\"crypto\":{\"stage\":\"active\",\"nested\":[1,{\"key\":\"secret bytes\"}]},\"safe\":2}");
+        ok(nested.equals("{\"crypto\":\"[redacted]\",\"safe\":2}"),"nested crypto object is wholly redacted without stray braces/corrupt JSON");
+        ok(DiagnosticSupport.sanitize("{\"captionText\":[[1,2],{\"text\":\"secret\"}],\"safe\":true}").equals("{\"captionText\":\"[omitted-content]\",\"safe\":true}"),"nested content arrays retain valid surrounding JSON");
+        ok(DiagnosticSupport.sanitize("{\"pass\\u0077ord\":\"pw\"}").equals("{\"password\":\"[redacted]\"}"),"escaped sensitive keys cannot bypass the redactor");
+        ok(DiagnosticSupport.sanitize("{\"safe\":1}evil").contains("Invalid diagnostic JSON"),"invalid JSON is omitted, never spliced into a report");
+        ok(DiagnosticSupport.sanitize("[1,]").contains("Invalid diagnostic JSON"),"trailing JSON commas fail closed");
+        StringBuilder deep=new StringBuilder();for(int i=0;i<40;i++)deep.append('[');deep.append('0');for(int i=0;i<40;i++)deep.append(']');
+        ok(DiagnosticSupport.sanitize(deep.toString()).contains("Invalid diagnostic JSON"),"nested diagnostic input has a strict depth budget");
+        char[] oversized=new char[DiagnosticSupport.MAX_BROWSER_JSON+1];Arrays.fill(oversized,' ');
+        ok(DiagnosticSupport.sanitize(new String(oversized)+"PRIVATE").contains("exceeds limit"),"oversize input is omitted, not truncated into invalid/leaking JSON");
         byte[] zip=DiagnosticSupport.zip("{\"password\":\"pw\",\"counter\":3}","{\"sessionKey\":\"deadbeef\",\"queuedEvents\":2}","{\"captionText\":\"secret\",\"segments\":9}","{\"available\":true}","{\"result\":\"PASS\"}");
         Map<String,byte[]> entries=unzip(zip);ok(entries.containsKey("report.json")&&entries.containsKey("hashes.sha256")&&entries.containsKey("README.txt"),"diagnostic ZIP contains report/hash/readme entries");
         String report=new String(entries.get("report.json"),StandardCharsets.UTF_8),hashes=new String(entries.get("hashes.sha256"),StandardCharsets.UTF_8);

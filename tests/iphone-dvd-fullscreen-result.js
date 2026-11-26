@@ -1,0 +1,1 @@
+(()=>{const s=window.__iphoneGate?.dvdFullscreen;if(!s||s.pending||s.observing||s.error||!s.after?.ready||s.after.layout!=='fullscreen')throw Error('Native fullscreen not confirmed');return{ready:true,before:s.before,after:s.after,oneTV:s.commandSent}})()

@@ -6,13 +6,16 @@ import java.util.regex.*;
 
 /** FFmpeg-family metadata, deliberately independent of SageTV UI/STV implementations. */
 final class MediaProbe {
-    static final class Track {
+    private static final MediaProbeCache COMPLETED_CACHE=new MediaProbeCache(64);
+    static final class Track implements Cloneable {
         int index,channels,width,height,sourcePid=-1,programId=-1,teletextType=-1,teletextMagazine=-1,teletextPage=-1,compositionPageId=-1,ancillaryPageId=-1;
         String type="",codec="",language="",title="",field="",rate="",serviceKind="",evidence="metadata",availability="metadata-only",sourceKind="embedded",sidecarFormat="";
         File sidecarFile; int sidecarSubstream=-1;
         boolean defaultTrack,forced,hearingImpaired,visualImpaired;
+        Track copy(){try{return (Track)super.clone();}catch(CloneNotSupportedException e){throw new AssertionError(e);}}
         boolean interlaced(){return !field.isEmpty()&&!"unknown".equals(field)&&!"progressive".equals(field);}
         boolean subtitleLike(){return "subtitle".equals(type)||!serviceKind.isEmpty();}
+        boolean packetForcedFilter(){String c=codec==null?"":codec.toLowerCase(Locale.ROOT);return c.contains("pgs")||c.contains("dvd_subtitle")||c.contains("vobsub");}
         boolean ordinarySubtitle(){String c=codec==null?"":codec.toLowerCase(Locale.ROOT);return "subtitle".equals(type)&&serviceKind.isEmpty()&&(c.contains("subrip")||c.contains("webvtt")||c.equals("ass")||c.equals("ssa")||c.contains("pgs")||c.contains("dvd_subtitle")||c.contains("vobsub"));}
         String json(){return "{\"index\":"+index+",\"sourcePid\":"+sourcePid+",\"programId\":"+programId+",\"type\":\""+HttpUtil.json(type)+"\",\"codec\":\""+HttpUtil.json(codec)+"\",\"channels\":"+channels+
             ",\"language\":\""+HttpUtil.json(language)+"\",\"title\":\""+HttpUtil.json(title)+"\",\"width\":"+width+",\"height\":"+height+",\"field\":\""+HttpUtil.json(field)+"\",\"serviceKind\":\""+HttpUtil.json(serviceKind)+"\",\"teletextType\":"+teletextType+",\"teletextMagazine\":"+teletextMagazine+",\"teletextPage\":"+teletextPage+",\"compositionPageId\":"+compositionPageId+",\"ancillaryPageId\":"+ancillaryPageId+",\"default\":"+defaultTrack+",\"forced\":"+forced+",\"hearingImpaired\":"+hearingImpaired+",\"visualImpaired\":"+visualImpaired+",\"evidence\":\""+HttpUtil.json(evidence)+"\",\"sourceKind\":\""+HttpUtil.json(sourceKind)+"\",\"sidecarFormat\":\""+HttpUtil.json(sidecarFormat)+"\"}";}
@@ -20,6 +23,7 @@ final class MediaProbe {
     static final class Info {
         final List<Track> tracks=new ArrayList<Track>();
         final List<TsServiceInventoryProbe.Service> services=new ArrayList<TsServiceInventoryProbe.Service>();String warning="",probeMethod="none";
+        boolean probeCacheHit;
         Track video(){for(Track t:tracks)if("video".equals(t.type))return t;return null;}
         List<Track> audio(){List<Track> a=new ArrayList<Track>();for(Track t:tracks)if("audio".equals(t.type))a.add(t);return a;}
         List<Track> subtitles(){List<Track> a=new ArrayList<Track>();for(Track t:tracks)if(t.subtitleLike())a.add(t);return a;}
@@ -27,26 +31,35 @@ final class MediaProbe {
         String json(){StringBuilder b=new StringBuilder("{\"warning\":\"").append(HttpUtil.json(warning)).append("\",\"probeMethod\":\"").append(HttpUtil.json(probeMethod)).append("\",\"tracks\":[");for(int i=0;i<tracks.size();i++){if(i>0)b.append(',');b.append(tracks.get(i).json());}b.append("],\"services\":[");for(int i=0;i<services.size();i++){if(i>0)b.append(',');b.append(services.get(i).json());}return b.append("],\"subtitleCapabilities\":").append(SubtitleCapabilities.json()).append("}").toString();}
     }
     static Info read(File source,String ffmpeg) {
+        Info info=readEmbedded(source,ffmpeg);if(!info.tracks.isEmpty())finish(info,source);return info;
+    }
+    /** Caller must independently establish that this is not an active recording.
+     * Never use for a temporary remote sample or a growing source. */
+    static Info readCompleted(File source,String ffmpeg){
+        Info info=COMPLETED_CACHE.read(source,ffmpeg,ffprobeCommand(ffmpeg),()->readEmbedded(source,ffmpeg));
+        if(!info.tracks.isEmpty())finish(info,source);return info;
+    }
+    private static Info readEmbedded(File source,String ffmpeg) {
         String probe=ffprobeCommand(ffmpeg);
         String ffprobeFailure="";
         try {
             ProcessCapture.Result r=ProcessCapture.run(Arrays.asList(probe,"-v","error","-analyzeduration","2000000","-probesize","4000000","-show_entries",
                 "stream=index,id,codec_type,codec_name,channels,width,height,field_order,r_frame_rate:stream_disposition=default,forced,hearing_impaired,visual_impaired:stream_tags=language,title","-of","flat",source.getAbsolutePath()),10,256*1024);
-            if(r.exit==0){Info info=parse(r.text);if(!info.tracks.isEmpty()){info.probeMethod="ffprobe";finish(info,source);return info;}ffprobeFailure="ffprobe returned no source tracks";}
+            if(r.exit==0){Info info=parse(r.text);if(!info.tracks.isEmpty()){info.probeMethod="ffprobe";return info;}ffprobeFailure="ffprobe returned no source tracks";}
             else ffprobeFailure="ffprobe exited with status "+r.exit;
         }catch(IOException e){ffprobeFailure=compact(e.getMessage());}
         Info fallback=readWithFfmpeg(source,ffmpeg);
         if(!fallback.tracks.isEmpty()){
             fallback.probeMethod="ffmpeg";
             fallback.warning="ffprobe unavailable or failed ("+ffprobeFailure+"); metadata discovered with FFmpeg fallback";
-            finish(fallback,source);return fallback;
+            return fallback;
         }
         if(fallback.warning.isEmpty())fallback.warning="Source metadata unavailable after ffprobe and FFmpeg probing; using conservative transcode";
         else fallback.warning="ffprobe unavailable or failed ("+ffprobeFailure+"); FFmpeg fallback failed ("+fallback.warning+")";
         return fallback;
     }
 
-    private static String ffprobeCommand(String ffmpeg){
+    static String ffprobeCommand(String ffmpeg){
         String explicit=System.getProperty("sagetv.webplayer.ffprobe",System.getenv("SAGETV_WEBPLAYER_FFPROBE"));
         if(explicit!=null&&!explicit.trim().isEmpty())return explicit.trim();
         File ff=ffmpeg==null?null:new File(ffmpeg),parent=ff==null?null:ff.getParentFile();String name=System.getProperty("os.name","").toLowerCase(Locale.ROOT).contains("win")?"ffprobe.exe":"ffprobe";
@@ -126,6 +139,7 @@ final class MediaProbe {
         File dir=source.getParentFile();String[] exts={"srt","vtt","ass","ssa","sup","idx"};int idx=128;for(Track t:info.tracks)idx=Math.max(idx,t.index+1);
         for(String ext:exts){File f=new File(dir,base+"."+ext);if(!f.isFile())continue;
             if("idx".equals(ext)){
+                try{VobSubPalette.configure(new ArrayList<String>(),f);}catch(IOException contextError){info.warning=(info.warning.isEmpty()?"":info.warning+"; ")+"VobSub unavailable: "+contextError.getMessage();continue;}
                 File sub=new File(dir,base+".sub");if(!sub.isFile())continue;List<String> lines=readTextLines(f,256*1024);int defaultStream=-1;boolean forced=false;for(String line:lines){String v=line.trim().toLowerCase(Locale.ROOT);if(v.startsWith("langidx:"))defaultStream=integer(v.substring(8).trim());else if(v.startsWith("forced subs:"))forced=v.contains("on")||v.contains("yes")||v.endsWith("1");}
                 boolean any=false;Pattern id=Pattern.compile("(?i)^\\s*id:\\s*([a-z]{2,3})(?:\\s*,\\s*index:\\s*(\\d+))?.*$");for(String line:lines){Matcher m=id.matcher(line);if(!m.matches())continue;Track t=new Track();t.index=idx++;t.type="subtitle";t.codec="dvd_subtitle";t.sourceKind="sidecar";t.sidecarFile=f;t.sidecarFormat="idx";t.sidecarSubstream=m.group(2)==null?0:integer(m.group(2));t.language=m.group(1).toLowerCase(Locale.ROOT);t.defaultTrack=t.sidecarSubstream==defaultStream;t.forced=forced;t.evidence="associated-idx-sub";t.availability="observed";t.title=f.getName()+" · stream "+t.sidecarSubstream;info.tracks.add(t);any=true;}if(!any){Track t=new Track();t.index=idx++;t.type="subtitle";t.codec="dvd_subtitle";t.sourceKind="sidecar";t.sidecarFile=f;t.sidecarFormat="idx";t.sidecarSubstream=0;t.forced=forced;t.evidence="associated-idx-sub";t.availability="observed";t.title=f.getName();info.tracks.add(t);}continue;
             }

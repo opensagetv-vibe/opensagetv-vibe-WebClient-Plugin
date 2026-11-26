@@ -1,0 +1,2 @@
+/* Fresh exact-page observation after the approved stopped-source reload. */
+(()=>{if((localStorage.getItem('sagetvWebMiniClientId')||'').replace(/:/g,'').toLowerCase()!=='123c8282e1ee')throw Error('Wrong phone');const revision=[...document.scripts].find(e=>e.src.includes('miniclient-playback.js'))?.src.split('?')[1];if(revision!=='v=3.3.0-web096.1')throw Error('Wrong installed playback');return{revision,visible:document.visibilityState,assigned:!!videoPlane.getAttribute('src'),ready:videoPlane.readyState,paused:videoPlane.paused,connected:connectionStatus.textContent}})()

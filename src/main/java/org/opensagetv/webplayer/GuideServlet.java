@@ -36,6 +36,13 @@ public class GuideServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setHeader("Cache-Control", "no-store");
         try {
+            if ("recordStatus".equals(request.getParameter("action"))) {
+                int id=HttpUtil.requiredInt(request.getParameter("airingId"),"airingId");
+                if(id<=0)throw new IllegalArgumentException("Invalid airingId");
+                SageApiBridge sage=SageApiBridge.create();Object airing=sage.getAiringForId(id);
+                if(airing==null){HttpUtil.jsonError(response,404,"Airing no longer available");return;}
+                response.getWriter().write("{\"ok\":true,\"scheduled\":"+sage.isManualRecord(airing)+"}");return;
+            }
             long now = System.currentTimeMillis();
             long start = optionalLong(request.getParameter("start"), now - 30L * 60L * 1000L);
             int hours = HttpUtil.optionalInt(request.getParameter("hours"), 4, "hours");
@@ -56,7 +63,9 @@ public class GuideServlet extends HttpServlet {
                 if (x.end <= x.start) x.end = x.start + sage.getAiringDuration(airing);
                 x.channelName = sage.getAiringChannelName(airing);
                 x.channelNumber = sage.getAiringChannelNumber(airing);
-                x.channelLogoUrl = x.channelName.isEmpty() ? "" : "/sagex/media/logo/" + urlEncode(x.channelName) + "?scalex=96&scaley=54";
+                Object channel=sage.getChannel(airing);
+                int stationId=channel==null?0:sage.getStationId(channel);
+                x.channelLogoUrl = stationId>0 ? "api/channelLogo?stationId="+stationId : "";
                 x.manualRecord = sage.isManualRecord(airing);
                 x.currentlyAiring = now >= x.start && now < x.end;
                 x.watched = sage.isWatched(airing);
@@ -148,7 +157,7 @@ public class GuideServlet extends HttpServlet {
 
             Object result = Boolean.TRUE;
             if (!sage.isManualRecord(airing) && sage.getMediaFileForAiring(airing) == null) result = sage.recordAiring(airing);
-            boolean ok = result instanceof Boolean ? ((Boolean) result) : "true".equalsIgnoreCase(String.valueOf(result));
+            boolean ok = recordAccepted(result);
             if (!ok) { HttpUtil.jsonError(response, 409, String.valueOf(result)); return; }
 
             int mediaId = 0;
@@ -162,12 +171,19 @@ public class GuideServlet extends HttpServlet {
                 Object mf = sage.getMediaFileForAiring(airing);
                 if (mf != null) mediaId = sage.getMediaFileId(mf);
             }
-            response.getWriter().write("{\"ok\":true,\"action\":\"" + HttpUtil.json(action.toLowerCase()) + "\",\"airingId\":" + id + ",\"mediaId\":" + mediaId + ",\"pending\":" + ("watch".equalsIgnoreCase(action) && mediaId == 0) + "}");
+            boolean scheduled=sage.isManualRecord(airing);
+            response.getWriter().write("{\"ok\":true,\"accepted\":true,\"scheduled\":"+scheduled+",\"action\":\"" + HttpUtil.json(action.toLowerCase()) + "\",\"airingId\":" + id + ",\"mediaId\":" + mediaId + ",\"pending\":" + ("watch".equalsIgnoreCase(action) ? mediaId == 0 : !scheduled) + "}");
         } catch (IllegalArgumentException e) {
             HttpUtil.jsonError(response, 400, e.getMessage());
         } catch (RuntimeException e) {
             HttpUtil.jsonError(response, 500, e.getMessage());
         }
+    }
+
+    static boolean recordAccepted(Object result) {
+        // Stock Record returns a public async receipt. Dispatch acceptance is
+        // NOT proof of a scheduled recording; observe IsManualRecord separately.
+        return result != null && !Boolean.FALSE.equals(result) && !(result instanceof String);
     }
 
     private static String urlEncode(String value) {

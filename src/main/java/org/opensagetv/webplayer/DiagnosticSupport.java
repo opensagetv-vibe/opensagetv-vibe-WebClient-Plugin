@@ -20,8 +20,6 @@ final class DiagnosticSupport {
     static final int MAX_BROWSER_JSON=256*1024;
     static final long MAX_SPOOL_BYTES=10L*1024L*1024L;
     static final int MAX_SPOOL_FILES=10;
-    private static final Pattern SECRET=Pattern.compile("(?i)\\\"(authorization|cookie|password|passwd|secret|token|credential|session.?key|crypto[^\\\"]*|private.?key|share.?user|share.?pass)\\\"\\s*:\\s*(\\\"(?:\\\\.|[^\\\"])*\\\"|[^,}\\r\\n]+)");
-    private static final Pattern CONTENT=Pattern.compile("(?i)\\\"(payload|subtitle.?text|caption.?text|media.?bytes|raw.?data|cue.?data)\\\"\\s*:\\s*(\\\"(?:\\\\.|[^\\\"])*\\\"|\\[[^]]*]|[^,}\\r\\n]+)");
     private static final DateTimeFormatter TS=DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss-SSS").withZone(ZoneOffset.UTC);
     private static final ConcurrentHashMap<String,AtomicBoolean> OPERATIONS=new ConcurrentHashMap<String,AtomicBoolean>();
 
@@ -34,17 +32,18 @@ final class DiagnosticSupport {
         String json(){return "{\"ok\":"+ok+",\"stage\":\""+HttpUtil.json(stage)+"\",\"detail\":\""+HttpUtil.json(detail)+"\"}";}
     }
     static String sanitize(String raw){
-        if(raw==null)return "null"; if(raw.length()>MAX_BROWSER_JSON)raw=raw.substring(0,MAX_BROWSER_JSON);
-        raw=replace(SECRET,raw,"[redacted]"); raw=replace(CONTENT,raw,"[omitted-content]"); return raw;
+        return DiagnosticJson.sanitize(raw,MAX_BROWSER_JSON);
     }
-    private static String replace(Pattern p,String in,String value){Matcher m=p.matcher(in);StringBuffer b=new StringBuffer();while(m.find())m.appendReplacement(b,Matcher.quoteReplacement("\""+m.group(1)+"\":\""+value+"\""));m.appendTail(b);return b.toString();}
     static byte[] zip(String browser,String mini,String hls,String transcoder,String recentTest)throws IOException{
         String report="{\n  \"schemaVersion\":1,\n  \"generatedAt\":\""+HttpUtil.json(Instant.now().toString())+"\",\n  \"version\":\""+HttpUtil.json(PluginVersion.VERSION)+"\",\n  \"browser\":"+sanitize(browser)+",\n  \"miniClient\":"+sanitize(mini)+",\n  \"stream\":"+sanitize(hls)+",\n  \"transcoder\":"+sanitize(transcoder)+",\n  \"recentVideoTest\":"+sanitize(recentTest)+"\n}\n";
         byte[] data=report.getBytes(StandardCharsets.UTF_8);String hash=sha256(data);
         ByteArrayOutputStream raw=new ByteArrayOutputStream(Math.min(1024*1024,data.length+2048));
         try(ZipOutputStream z=new ZipOutputStream(raw,StandardCharsets.UTF_8)){
             entry(z,"report.json",data);
-            entry(z,"hashes.sha256",(hash+"  report.json\n").getBytes(StandardCharsets.UTF_8));
+            byte[] health=StreamHealthDiagnostics.json(null).getBytes(StandardCharsets.UTF_8),journal;
+            try{journal=StreamHealthDiagnostics.journal();}catch(IOException unavailable){journal=new byte[0];}
+            entry(z,"stream-health.json",health);entry(z,"stream-health.jsonl",journal);
+            entry(z,"hashes.sha256",(hash+"  report.json\n"+sha256(health)+"  stream-health.json\n"+sha256(journal)+"  stream-health.jsonl\n").getBytes(StandardCharsets.UTF_8));
             entry(z,"README.txt",("SageTV WebPlayer diagnostic bundle\nGenerated UTC: "+Instant.now()+"\nContent/media payloads and recognized credential fields are omitted or redacted.\nServer share writes are disabled unless an administrator enables sagetv.webplayer.diagnostics.writeEnabled and configures sagetv.webplayer.diagnostics.dir.\n").getBytes(StandardCharsets.UTF_8));
         }
         return raw.toByteArray();

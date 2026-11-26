@@ -2,6 +2,13 @@
   "repository": "opensagetv-vibe/opensagetv-vibe-android-client",
   "ref": "f1ba340e05fe18eaaba939253a933c3dfe6d6caf",
   "layoutBlob": "b55d384b6dcb9c86bf2cfa771f1a9d615710ed77",
+  "web038AdditionalAsset": {
+    "source": "source/dev/android-shared/src/main/res/drawable/ic_settings_white_24dp.xml",
+    "sourceSha256": "bc897de62182cc64e30a09fe8f96807c8a44bafb2a8a7e6aec8c0bdee41374a2",
+    "output": "icons/vibe/settings.svg",
+    "sha256": "ee759cb8c5d1fdab80d9428cdf71ff0bde455428e53b89f181f1d7e4f47bbd23",
+    "reference": "Existing sibling Android vector; WEB-038; Apache-2.0"
+  },
   "assets": [
     {
       "name": "help_outline",
@@ -384,6 +391,21 @@
       "blobSha": "9ef2d8f9fbe5914285f0776e412c4d1be25d17aa",
       "output": "icons/vibe/close.png",
       "sha256": "d1d2fac160ff33e854621747466f02160d8c382176c48204db93e1009ee5e4cf"
+    }
+  ],
+  "currentAdditionalAssets": [
+    {
+      "name": "last_channel",
+      "reference": "current sibling Android source/dev; WEB-018",
+      "source": "source/dev/android-shared/src/main/res/drawable/ic_last_channel_white_24dp.xml",
+      "sourceSha256": "5eef5fe184165be5196a75455735dcd4d3d44bcc59d382d622a280e2c9b5b627",
+      "output": "icons/vibe/last_channel.svg",
+      "sha256": "2050100059ec371ff004198a1f38707ba4659ee265c49734790ee875f71c29e9",
+      "paths": [
+        "M12,3C7.8,3 4.2,5.9 3.2,9.8L1,7.6V14H7.4L4.9,11.5C5.2,7.8 8.2,5 12,5C15.9,5 19,8.1 19,12C19,15.9 15.9,19 12,19C9.8,19 7.8,18 6.5,16.4L5,17.7C6.7,19.8 9.2,21 12,21C17,21 21,17 21,12C21,7 17,3 12,3Z",
+        "M9,9H16V15H9Z M10.5,10.5V13.5H14.5V10.5Z"
+      ],
+      "colors": ["#ffffff", "#ffffff"]
     }
   ]
 }

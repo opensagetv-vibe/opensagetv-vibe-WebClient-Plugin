@@ -10,10 +10,18 @@
   else root.SageMiniCore = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function() {
   'use strict';
+  // Finite JSON responses avoid the affected iOS Fetch streaming path. This
+  // selects only STV event delivery; media/HLS quality and decoder are separate.
+  function eventDelivery(environment) {
+    const n=environment.navigator||{};
+    const ios=/iPhone|iPad|iPod/i.test(n.userAgent||'')||
+      (n.platform==='MacIntel'&&Number(n.maxTouchPoints)>1);
+    return ios||!environment.ReadableStream||!environment.TextDecoder?'long-poll':'stream';
+  }
   const DEFAULTS = Object.freeze({
     bufferPreset: 'auto', startSegments: 0, maxBufferSeconds: 180, uiResolution: 'window',
     osdTrigger: 'left_long', clickMode: 'native', guideAssist: true,
-    mouseBack: true, showStats: false, renderOnly: false, videoMaskAssist: true,
+    mouseBack: true, showStats: false, showStatsInfo: false, adaptiveQuality: false, adaptiveMinimumKbps: 250, scrubPreviews: false, renderOnly: false, videoMaskAssist: true,
     videoFit: 'cover', videoViewport: 'browser', displayPolicyVersion: 2, mute: false, fullscreenOnConnect: false,
     inputMode: 'remote', unifiedGraphics: false, autoDiagnosticCapture: false, saveDiagnosticsToServer: false
   });
@@ -41,6 +49,10 @@
     });
     result.startSegments = Math.round(Math.max(0, Math.min(10, finite(source.startSegments, 0))));
     result.maxBufferSeconds = Math.round(Math.max(30, Math.min(600, finite(source.maxBufferSeconds, 180))));
+    result.adaptiveMinimumKbps = Math.round(Math.max(250,Math.min(50000,finite(source.adaptiveMinimumKbps,250))));
+    // Legacy showStats enabled both text and graphs. Preserve that on upgrade;
+    // subsequent independent choices retain explicit false values.
+    if(typeof source.showStatsInfo!=='boolean')result.showStatsInfo=result.showStats;
     return result;
   }
   // Startup latency is independent of the forward reserve. A low measured
@@ -78,10 +90,15 @@
     const scale=Math.min(width/uiWidth,height/uiHeight),w=uiWidth*scale,h=uiHeight*scale;
     return {left:(width-w)/2,top:(height-h)/2,width:w,height:h};
   }
-  function logicalSize(width, height, resolution) {
+  function logicalSize(width, height, resolution, pixelRatio) {
     const fixed=/^(1280x720|1920x1080)$/.exec(resolution||'');
     if(fixed){const a=fixed[1].split('x').map(Number);return {w:a[0],h:a[1]};}
     width=Math.max(1,finite(width,1280));height=Math.max(1,finite(height,720));
+    // CSS pixels are not display pixels on Retina/HDMI. Ask SageTV to rasterize
+    // sharper text instead of enlarging one low-density canvas. Bound density
+    // and retain existing1920x1080 limits; fixed/manual resolutions stay exact.
+    const density=Math.max(1,Math.min(2,finite(pixelRatio,1)));
+    width*=density;height*=density;
     // Keep the viewport aspect while limiting rendering load. Very narrow or
     // short windows use a bounded logical minimum and are fitted without crop.
     const scale=Math.min(1,1920/width,1080/height);
@@ -157,12 +174,19 @@
     return base;
   }
   function incompleteEnd(status, timeSeconds, durationMs, startSeconds) {
-    if (!status || status.running || !status.endList) return false;
+    if (!status || status.producerPreparing===true || status.running || !status.endList) return false;
     const produced = finite(status.hlsSeconds, 0);
     // ENDLIST alone is NOT an error: FFmpeg often finishes before playback does.
     if (produced - finite(timeSeconds, 0) > 1.5) return false;
     if (status.activeRecording) return true;
     if (status.exitCode != null && status.exitCode !== 0) return true;
+    // Stock owns physical recording-piece advance. Capture gaps can make its
+    // wall-clock duration longer than the actual encoded samples. Once this
+    // exact non-growing piece is cleanly exhausted, replaying its tail cannot
+    // create the missing seconds; let the real browser ended reach stock EOS.
+    // Whole-library truncation and unknown/growing/failed producers keep the
+    // old recovery checks. Encoder EOF alone still never manufactures ended.
+    if(status.nativeSegment===true&&status.activeRecording===false&&status.exitCode===0&&!status.error)return false;
     return durationMs > 0 && (finite(startSeconds, 0) + produced) * 1000 + 2500 < durationMs;
   }
   function menuIsGuide(hint) {
@@ -223,6 +247,32 @@
       return this.rgba.slice(row*this.width*4,(row+1)*this.width*4);
     }
     complete(){for(let i=0;i<this.height;i++)if(!this.ySeen[i]||!this.uvSeen[i])return false;return true;}
+  }
+  // DOM-independent keyboard/spatial policy. Local dialogs own navigation;
+  // only an unobstructed stage/toolbar sends commands to the remote SageTV UI.
+  function remoteCommand(key) {
+    const keys={ArrowLeft:2,ArrowRight:3,ArrowUp:4,ArrowDown:5,Enter:20,Escape:75,
+      Backspace:75,PageUp:55,PageDown:56,Home:28,' ':59,MediaPlayPause:59,
+      MediaPlay:7,MediaPause:6,MediaStop:89,MediaTrackNext:61,MediaTrackPrevious:62,
+      MediaFastForward:8,MediaRewind:9,AudioVolumeUp:13,AudioVolumeDown:14,AudioVolumeMute:26};
+    if(Object.prototype.hasOwnProperty.call(keys,key))return keys[key];
+    if(/^[0-9]$/.test(key))return 30+Number(key);
+    return ({g:18,i:24,o:29,r:25,m:26,s:89,l:42,t:15})[String(key||'').toLowerCase()];
+  }
+  function spatialTarget(items,current,key) {
+    const vector={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[key];
+    if(!vector||!items.length)return current;
+    const from=items.find(item=>item.id===current)||items[0],horizontal=!!vector[0];
+    const x=from.x+from.width/2,y=from.y+from.height/2;
+    const choices=items.filter(item=>item!==from).map(item=>{
+      const dx=item.x+item.width/2-x,dy=item.y+item.height/2-y;
+      const primary=dx*vector[0]+dy*vector[1],secondary=Math.abs(horizontal?dy:dx);
+      const overlap=horizontal?Math.min(from.y+from.height,item.y+item.height)-Math.max(from.y,item.y)
+        :Math.min(from.x+from.width,item.x+item.width)-Math.max(from.x,item.x);
+      return {id:item.id,primary,secondary,overlap:overlap>1};
+    }).filter(item=>item.primary>1);
+    choices.sort((a,b)=>Number(b.overlap)-Number(a.overlap)||(a.primary+a.secondary*2)-(b.primary+b.secondary*2));
+    return choices.length?choices[0].id:from.id;
   }
   class CommandRepeat {
     constructor(options){this.o=options||{};this.clock=this.o.clock||{setTimeout:(f,m)=>setTimeout(f,m),clearTimeout:i=>clearTimeout(i),setInterval:(f,m)=>setInterval(f,m),clearInterval:i=>clearInterval(i)};this.active=null;this.delay=null;this.interval=null;}
@@ -331,5 +381,5 @@
     }
   }
   return {DEFAULTS, fitRect, logicalSize, stageRect, videoPresentation, videoLayerRect, canvasPoint, mediaContentRect, fullscreenMatte, normalizeSettings, requiredStartSegments, startupReady, hlsConfig,
-    bufferedAhead, resumeTarget, incompleteEnd, menuIsGuide, rectIntersection, videoMask, timeText, RecoveryBudget, PointerGesture, UnifiedYuvImage, CommandRepeat};
+    bufferedAhead, resumeTarget, incompleteEnd, menuIsGuide, rectIntersection, videoMask, timeText, RecoveryBudget, PointerGesture, UnifiedYuvImage, CommandRepeat, remoteCommand, spatialTarget, eventDelivery};
 });

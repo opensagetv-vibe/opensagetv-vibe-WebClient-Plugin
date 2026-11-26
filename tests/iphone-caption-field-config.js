@@ -1,0 +1,2 @@
+/* Current selection only; no payload, queue, API or preference mutation. */
+(()=>({mode:captionAuthorityMode.value,cc1Type:cc1Type.value,cc1Language:cc1Language.value,cc2Type:cc2Type.value,cc2Language:cc2Language.value,authority:captionAuthorityEffective.textContent,profilesPreserved:__deliveryField.settings===localStorage.getItem('sagetvWebMiniClientSettings.v1')&&__deliveryField.stream===localStorage.getItem('sagetvWebStreaming.v1')&&__deliveryField.captions===localStorage.getItem('sagetvWebCaptionAuthority.v1')}))()

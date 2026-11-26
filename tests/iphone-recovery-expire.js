@@ -1,0 +1,1 @@
+(()=>{if([...document.querySelectorAll('video')].some(v=>v.currentSrc||v.getAttribute('src')))throw Error('Refuse expire during active media');if(!document.getElementById('connectionRecovery'))throw Error('Stale page');window.dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));return{ownedPageSessionRetired:true,syntheticLifecycle:true}})()
